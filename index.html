@@ -855,10 +855,80 @@
     margin-top: 1px;
   }
 
-  .check-info { flex: 1; }
+  .check-info { flex: 1; min-width: 0; }
   .check-name { font-size: 12px; color: var(--branco); font-weight: 500; margin-bottom: 3px; }
   .check-detail { font-size: 11px; color: var(--texto-muted); }
-  .check-badge { margin-top: 4px; }
+  .check-badge { margin-top: 4px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+
+  /* Produto dentro do card (agrupa os lotes do produto) */
+  .checklist-produto { border-bottom: 1px solid rgba(42,63,95,0.55); }
+  .checklist-produto:last-child { border-bottom: none; }
+  .checklist-prod-head {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 9px 16px 7px;
+    background: rgba(37,99,184,0.07);
+  }
+  .prod-cod {
+    font-family: monospace; font-size: 11px; font-weight: 700;
+    color: var(--brand-dk); background: rgba(96,165,250,0.12);
+    padding: 1px 6px; border-radius: 4px; flex-shrink: 0;
+  }
+  .prod-nome { font-size: 12px; font-weight: 700; color: var(--branco); flex: 1; min-width: 0; }
+  .prod-lotes-tag { font-size: 10px; color: var(--texto-muted); white-space: nowrap; }
+  .prod-extra-tag {
+    font-size: 10px; font-weight: 700; color: #5fd4a0;
+    background: rgba(20,105,58,0.25); padding: 1px 6px; border-radius: 4px; white-space: nowrap;
+  }
+  .checklist-item { align-items: flex-start; }
+  .check-obs {
+    width: 100%; margin-top: 6px; resize: vertical;
+    background: var(--azul-navy); border: 1px solid var(--borda);
+    border-radius: 6px; color: var(--texto); font-size: 11px;
+    font-family: inherit; padding: 5px 8px; min-height: 28px; line-height: 1.4;
+  }
+  .check-obs:focus { outline: none; border-color: var(--azul-claro); }
+  .check-obs::placeholder { color: var(--texto-muted); opacity: 0.7; }
+  .btn-remover-lote {
+    margin-left: auto; background: rgba(220,38,38,0.15); color: #f87171;
+    border: 1px solid rgba(220,38,38,0.35); border-radius: 5px;
+    width: 22px; height: 20px; font-size: 11px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .btn-remover-lote:hover { background: rgba(220,38,38,0.3); }
+
+  /* Busca + adicionar lotes ao checklist */
+  .checklist-busca-wrap { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .checklist-busca-box { position: relative; max-width: 560px; }
+  .checklist-busca-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--texto-muted); font-size: 14px; pointer-events: none;
+  }
+  .checklist-busca-input {
+    width: 100%; padding: 10px 12px 10px 34px;
+    background: var(--card-bg); border: 1px solid var(--borda);
+    border-radius: 8px; color: var(--texto); font-size: 13px; font-family: inherit;
+  }
+  .checklist-busca-input:focus { outline: none; border-color: var(--azul-claro); }
+  .checklist-busca-hint { font-size: 11px; color: var(--texto-muted); display: flex; align-items: center; gap: 5px; }
+  .checklist-busca-resultados {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--azul-navy); border: 1px solid var(--borda); border-radius: 8px;
+    max-height: 340px; overflow-y: auto; z-index: 150; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  }
+  .checklist-busca-resultados.open { display: block; }
+  .busca-res-item {
+    padding: 9px 12px; border-bottom: 1px solid var(--borda); cursor: pointer;
+    transition: background 0.1s;
+  }
+  .busca-res-item:last-child { border-bottom: none; }
+  .busca-res-item:hover:not(.incluso) { background: var(--azul-medio); }
+  .busca-res-item.incluso { opacity: 0.55; cursor: default; }
+  .busca-res-info { display: flex; align-items: center; gap: 8px; }
+  .busca-res-nome { font-size: 12px; font-weight: 600; color: var(--branco); }
+  .busca-res-meta { font-size: 11px; color: var(--texto-muted); margin-top: 2px; }
+  .busca-res-acao { font-size: 11px; font-weight: 700; color: var(--azul-claro); margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+  .busca-res-item.incluso .busca-res-acao { color: #5fd4a0; }
+  .busca-res-vazio { padding: 14px; text-align: center; font-size: 12px; color: var(--texto-muted); }
 
   /* HEATMAP SAZONALIDADE */
   .heatmap-container { overflow-x: auto; }
@@ -1079,6 +1149,7 @@
   .print-badge.critico { background: #fee2e2; color: #991b1b; }
   .print-badge.alerta { background: #fef3c7; color: #92400e; }
   .print-badge.atencao { background: #fef9c3; color: #854d0e; }
+  .print-badge.manual { background: #e0e7ff; color: #3730a3; }
   .print-check-col { width: 32px; text-align: center; }
   .print-check-box {
     width: 18px; height: 18px;
@@ -1563,9 +1634,9 @@
     <div id="tab-auditoria" class="hidden">
       <div style="margin-bottom:20px; display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px;">
         <div>
-          <div class="section-title">Top 5 Lotes por Linha — Prioridade de Conferência Física</div>
+          <div class="section-title">Top 5 Produtos por Linha — Prioridade de Conferência Física</div>
           <p style="font-size:12px; color:var(--texto-muted);">
-            Seleção estratégica baseada em score de risco — maior exposição financeira, menor cobertura e menor prazo de vencimento.
+            Seleção estratégica baseada em score de risco — os 5 produtos de maior risco de cada linha, com todos os seus lotes. Adicione lotes extras pela busca abaixo.
           </p>
         </div>
         <div style="display:flex; gap:8px;">
@@ -1579,6 +1650,16 @@
             <i class="ti ti-printer"></i> Gerar Folha de Contagem
           </button>
         </div>
+      </div>
+      <div class="checklist-busca-wrap">
+        <div class="checklist-busca-box">
+          <i class="ti ti-search checklist-busca-icon"></i>
+          <input type="text" id="busca-checklist" class="checklist-busca-input" autocomplete="off"
+                 placeholder="Adicionar lote ao checklist — buscar por código, produto ou lote..."
+                 oninput="buscarLotesChecklist()">
+          <div class="checklist-busca-resultados" id="checklist-busca-resultados"></div>
+        </div>
+        <span class="checklist-busca-hint"><i class="ti ti-info-circle"></i> Lotes adicionados aqui entram no checklist e na folha de contagem.</span>
       </div>
       <div class="checklist-grid" id="checklist-container"></div>
     </div>
@@ -1845,6 +1926,8 @@ const APP = {
   filteredRisco: [],
   filteredVencidos: [],
   filteredSemGiro: [],
+  checklistExtras: [],   // lotes adicionados manualmente ao checklist (além dos que o sistema traz)
+  checklistObs: {},      // observações por item { 'codProduto|lote': 'texto' }
 };
 
 // CFOPs de venda real (excluindo 5116,5117,6116,6117 = remessa entrega futura)
@@ -2012,7 +2095,9 @@ function processarDados() {
       APP.dataAuditoria = hoje;
       APP.vencidos = [];
       APP.emRisco = [];
-      
+      APP.checklistExtras = [];
+      APP.checklistObs = {};
+
       // Meses futuros contados a partir de hoje
       for (const lote of APP.lotes) {
         const diasVenc = lote.diasVencimento;
@@ -2347,40 +2432,127 @@ function renderTabelaSemGiro(page) {
 }
 
 function renderChecklist() {
-  const top5 = getTop5PorLinha();
-  const porLinha = {};
-  for (const l of top5) {
-    if (!porLinha[l.linha]) porLinha[l.linha] = [];
-    porLinha[l.linha].push(l);
-  }
-  
+  const sel = getChecklistSelecao();
   const container = document.getElementById('checklist-container');
-  if (Object.keys(porLinha).length === 0) {
-    container.innerHTML = '<div class="empty"><i class="ti ti-circle-check"></i><p>Nenhum lote de risco encontrado para gerar checklist</p></div>';
+
+  if (Object.keys(sel).length === 0) {
+    container.innerHTML = '<div class="empty"><i class="ti ti-circle-check"></i><p>Nenhum lote de risco encontrado para gerar checklist</p><p style="font-size:11px;margin-top:4px;">Use a busca acima para adicionar lotes manualmente.</p></div>';
     return;
   }
-  
-  container.innerHTML = Object.entries(porLinha).map(([linha, lotes]) => `
+
+  // Ordena linhas pelo maior score de produto (linhas mais críticas primeiro)
+  const linhasOrdenadas = Object.entries(sel).sort((a, b) => {
+    const ma = Math.max(...a[1].map(p => p.maxScore), 0);
+    const mb = Math.max(...b[1].map(p => p.maxScore), 0);
+    return mb - ma;
+  });
+
+  container.innerHTML = linhasOrdenadas.map(([linha, produtos]) => {
+    const totalLotes = produtos.reduce((s, p) => s + p.lotes.length, 0);
+    let n = 0;
+    return `
     <div class="checklist-card">
       <div class="checklist-header">
         <div class="checklist-linha"><i class="ti ti-layers-intersect" style="margin-right:6px; opacity:0.6;"></i>${getNomeLinha(linha)}</div>
-        <div class="checklist-count">${lotes.length} lote${lotes.length>1?'s':''} para conferir</div>
+        <div class="checklist-count">${produtos.length} produto${produtos.length>1?'s':''} · ${totalLotes} lote${totalLotes>1?'s':''}</div>
       </div>
-      ${lotes.map((l,i) => `
-        <div class="checklist-item">
-          <div class="check-num">${i+1}</div>
-          <div class="check-info">
-            <div class="check-name">${l.nomeProduto.trim()}</div>
-            <div class="check-detail">Cód: <strong style="color:var(--brand-dk);font-family:monospace;">${l.codProduto}</strong> · Lote: <strong>${l.lote.trim()}</strong> · Vence: ${l.dtVencimento} · Qtd: ${l.quantidade.toLocaleString('pt-BR')}</div>
-            <div class="check-badge">
-              <span class="badge ${l.nivel === 'CRÍTICO' ? 'critico' : l.nivel === 'ALERTA' ? 'alerta' : 'atencao'}">${l.nivel}</span>
-              <span style="font-size:11px; color:var(--texto-muted); margin-left:8px;">Score: ${l.score} · Risco: ${formatValor(l.valorRisco)}</span>
-            </div>
+      ${produtos.map(p => `
+        <div class="checklist-produto">
+          <div class="checklist-prod-head">
+            <span class="prod-cod">${p.cod}</span>
+            <span class="prod-nome">${p.nome.trim()}</span>
+            ${p.extra ? '<span class="prod-extra-tag"><i class="ti ti-plus"></i> adicionado</span>' : ''}
+            <span class="prod-lotes-tag">${p.lotes.length} lote${p.lotes.length>1?'s':''}</span>
           </div>
+          ${p.lotes.map(l => {
+            const key = l.codProduto + '|' + String(l.lote).trim();
+            const obs = (APP.checklistObs[key] || '').replace(/</g, '&lt;');
+            return `
+            <div class="checklist-item">
+              <div class="check-num">${++n}</div>
+              <div class="check-info">
+                <div class="check-detail">Lote: <strong style="color:var(--branco);">${String(l.lote).trim()}</strong> · Vence: ${l.dtVencimento} · Qtd: ${(l.quantidade||0).toLocaleString('pt-BR')}</div>
+                <div class="check-badge">
+                  <span class="badge ${l.nivel === 'CRÍTICO' ? 'critico' : l.nivel === 'ALERTA' ? 'alerta' : l.nivel === 'ATENÇÃO' ? 'atencao' : 'atencao'}">${l.nivel || 'MANUAL'}</span>
+                  <span style="font-size:11px; color:var(--texto-muted); margin-left:8px;">Score: ${l.score ?? '—'}${l.valorRisco != null ? ' · Risco: ' + formatValor(l.valorRisco) : ''}</span>
+                  ${l.extra ? `<button class="btn-remover-lote" title="Remover do checklist" onclick="removerLoteChecklist('${l.codProduto}','${String(l.lote).trim().replace(/'/g,"\\'")}')"><i class="ti ti-x"></i></button>` : ''}
+                </div>
+                <textarea class="check-obs" rows="1" placeholder="Observação (divergências, condição, localização...)" oninput="setChecklistObs('${key.replace(/'/g,"\\'")}', this.value)">${obs}</textarea>
+              </div>
+            </div>`;
+          }).join('')}
         </div>
       `).join('')}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+function setChecklistObs(key, val) {
+  if (val && val.trim()) APP.checklistObs[key] = val;
+  else delete APP.checklistObs[key];
+}
+
+function removerLoteChecklist(cod, lote) {
+  APP.checklistExtras = (APP.checklistExtras || []).filter(
+    e => !(String(e.codProduto) === String(cod) && String(e.lote).trim() === String(lote).trim())
+  );
+  renderChecklist();
+  renderTabelaRisco(APP.pages.risco);
+}
+
+// ---- Busca + adicionar lotes ao checklist ----
+function buscarLotesChecklist() {
+  const termo = (document.getElementById('busca-checklist')?.value || '').toLowerCase().trim();
+  const box = document.getElementById('checklist-busca-resultados');
+  if (!box) return;
+  if (termo.length < 2) { box.classList.remove('open'); box.innerHTML = ''; return; }
+
+  // Lotes já no checklist (para marcar como adicionados)
+  const jaInclusos = new Set(getTop5PorLinha().map(l => l.codProduto + '|' + String(l.lote).trim()));
+
+  const resultados = APP.lotes.filter(l => {
+    const t = `${l.codProduto} ${l.nomeProduto} ${l.lote}`.toLowerCase();
+    return t.includes(termo);
+  }).slice(0, 30);
+
+  if (resultados.length === 0) {
+    box.innerHTML = '<div class="busca-res-vazio">Nenhum lote encontrado</div>';
+    box.classList.add('open');
+    return;
+  }
+
+  box.innerHTML = resultados.map(l => {
+    const key = l.codProduto + '|' + String(l.lote).trim();
+    const incluso = jaInclusos.has(key);
+    const arg = `'${l.codProduto}','${String(l.lote).trim().replace(/'/g,"\\'")}'`;
+    return `
+      <div class="busca-res-item ${incluso ? 'incluso' : ''}" ${incluso ? '' : `onclick="adicionarLoteChecklist(${arg})"`}>
+        <div class="busca-res-info">
+          <span class="prod-cod">${l.codProduto}</span>
+          <span class="busca-res-nome">${l.nomeProduto.trim()}</span>
+        </div>
+        <div class="busca-res-meta">${getNomeLinha(l.linha)} · Lote ${String(l.lote).trim()} · Vence ${l.dtVencimento} · Qtd ${(l.quantidade||0).toLocaleString('pt-BR')}</div>
+        <div class="busca-res-acao">${incluso ? '<i class="ti ti-check"></i> já no checklist' : '<i class="ti ti-plus"></i> Adicionar'}</div>
+      </div>`;
+  }).join('');
+  box.classList.add('open');
+}
+
+function adicionarLoteChecklist(cod, lote) {
+  const lt = APP.lotes.find(l => String(l.codProduto) === String(cod) && String(l.lote).trim() === String(lote).trim());
+  if (!lt) return;
+  // Reaproveita dados de risco se o lote já estiver classificado
+  const risco = APP.emRisco.find(l => String(l.codProduto) === String(cod) && String(l.lote).trim() === String(lote).trim());
+  const base = risco || lt;
+  if (!APP.checklistExtras.some(e => String(e.codProduto) === String(cod) && String(e.lote).trim() === String(lote).trim())) {
+    APP.checklistExtras.push({ ...base, nivel: base.nivel || 'MANUAL' });
+  }
+  const inp = document.getElementById('busca-checklist');
+  if (inp) inp.value = '';
+  const box = document.getElementById('checklist-busca-resultados');
+  if (box) { box.classList.remove('open'); box.innerHTML = ''; }
+  renderChecklist();
+  renderTabelaRisco(APP.pages.risco);
 }
 
 function renderSazonalidade() {
@@ -2507,6 +2679,9 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.export-dropdown')) {
     document.querySelectorAll('.export-menu.open').forEach(m => m.classList.remove('open'));
   }
+  if (!e.target.closest('.checklist-busca-box')) {
+    document.getElementById('checklist-busca-resultados')?.classList.remove('open');
+  }
 });
 
 // ==================== LIMPAR FILTROS ====================
@@ -2601,8 +2776,8 @@ function abrirModalImpressao() {
               <td style="text-align:center; color:${l.nivel==='CRÍTICO'?'#dc2626':'#d97706'}; font-weight:700;">${l.dtVencimento}</td>
               <td style="text-align:center; font-weight:700;">${l.quantidade.toLocaleString('pt-BR')}</td>
               <td style="text-align:center;"><div style="border-bottom:1px solid #94a3b8; height:20px;"></div></td>
-              <td style="text-align:center;"><span class="print-badge ${l.nivel.toLowerCase().replace('í','i').replace('ã','a')}">${l.nivel}</span></td>
-              <td><div class="print-obs-line"></div><div class="print-obs-line"></div></td>
+              <td style="text-align:center;"><span class="print-badge ${(l.nivel||'').toLowerCase().replace('í','i').replace('ã','a')}">${l.nivel||'MANUAL'}</span></td>
+              <td>${(() => { const o = APP.checklistObs[l.codProduto+'|'+String(l.lote).trim()]; return o ? `<div style="font-size:10px;color:#1e293b;white-space:pre-wrap;">${o.replace(/</g,'&lt;')}</div>` : '<div class="print-obs-line"></div><div class="print-obs-line"></div>'; })()}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -2799,7 +2974,7 @@ function baixarHTMLMobile() {
             </div>
             <div class="campo" style="margin-top:8px;">
               <label>Observações</label>
-              <textarea class="campo-textarea" id="obs-${itemIdx}" placeholder="Anote divergências, condições do produto, localização..."></textarea>
+              <textarea class="campo-textarea" id="obs-${itemIdx}" placeholder="Anote divergências, condições do produto, localização...">${(APP.checklistObs[l.codProduto+'|'+String(l.lote).trim()]||'').replace(/</g,'&lt;')}</textarea>
             </div>
           </div>
         </div>`;
@@ -3295,15 +3470,54 @@ function renderPlanoAcao() {
 }
 
 // ==================== HELPERS ====================
-function getTop5PorLinha() {
+// Seleção do checklist: 5 PRODUTOS por linha (de maior risco) com TODOS os lotes
+// respectivos de cada produto, mais os lotes adicionados manualmente pelo auditor.
+// Retorna { linha: [ { cod, nome, maxScore, extra, lotes:[...] } ] }
+function getChecklistSelecao() {
+  // Agrupa lotes em risco por linha e, dentro dela, por produto
   const porLinha = {};
   for (const l of APP.emRisco) {
-    if (!porLinha[l.linha]) porLinha[l.linha] = [];
-    porLinha[l.linha].push(l);
+    if (!porLinha[l.linha]) porLinha[l.linha] = {};
+    if (!porLinha[l.linha][l.codProduto]) porLinha[l.linha][l.codProduto] = [];
+    porLinha[l.linha][l.codProduto].push(l);
   }
+
+  const resultado = {};
+  for (const [linha, produtos] of Object.entries(porLinha)) {
+    const arr = Object.entries(produtos).map(([cod, lotes]) => ({
+      cod,
+      nome: lotes[0].nomeProduto,
+      maxScore: Math.max(...lotes.map(x => x.score)),
+      extra: false,
+      lotes: lotes.slice().sort((a, b) => b.score - a.score),
+    }));
+    // Os 5 produtos de maior risco da linha
+    arr.sort((a, b) => b.maxScore - a.maxScore);
+    resultado[linha] = arr.slice(0, 5);
+  }
+
+  // Incorpora lotes adicionados manualmente (sempre incluídos, mesmo fora dos top 5)
+  for (const ex of (APP.checklistExtras || [])) {
+    if (!resultado[ex.linha]) resultado[ex.linha] = [];
+    let prod = resultado[ex.linha].find(p => p.cod === ex.codProduto);
+    if (!prod) {
+      prod = { cod: ex.codProduto, nome: ex.nomeProduto, maxScore: ex.score || 0, extra: true, lotes: [] };
+      resultado[ex.linha].push(prod);
+    }
+    if (!prod.lotes.some(x => String(x.lote).trim() === String(ex.lote).trim())) {
+      prod.lotes.push({ ...ex, extra: true });
+    }
+  }
+  return resultado;
+}
+
+// Versão achatada (lista de lotes) — usada pela folha de contagem, HTML mobile e
+// marcação da tabela de risco. Mantém a ordem por linha → produto → score.
+function getTop5PorLinha() {
+  const sel = getChecklistSelecao();
   const resultado = [];
-  for (const lotes of Object.values(porLinha)) {
-    resultado.push(...lotes.slice(0, 5));
+  for (const produtos of Object.values(sel)) {
+    for (const p of produtos) resultado.push(...p.lotes);
   }
   return resultado;
 }
