@@ -1388,6 +1388,10 @@
       <i class="ti ti-skull nav-icon"></i> Vencidos
       <span class="nav-badge hidden" id="badge-vencidos">0</span>
     </div>
+    <div class="nav-item" onclick="showTab('alerta')" id="nav-alerta">
+      <i class="ti ti-bell-ringing nav-icon"></i> Alerta de Vencimento
+      <span class="nav-badge hidden" id="badge-alerta">0</span>
+    </div>
     <div class="nav-item" onclick="showTab('semgiro')" id="nav-semgiro">
       <i class="ti ti-package-off nav-icon"></i> Sem Giro
       <span class="nav-badge orange hidden" id="badge-semgiro">0</span>
@@ -1612,6 +1616,68 @@
           </table>
         </div>
         <div class="pagination" id="pag-vencidos"></div>
+      </div>
+    </div>
+
+    <!-- ALERTA DE VENCIMENTO (painel de cobrança do supervisor) -->
+    <div id="tab-alerta" class="hidden">
+      <div class="metodologia-bar">
+        <i class="ti ti-info-circle met-icon"></i>
+        <div class="met-texto">
+          <strong>Alerta de Vencimento — Painel de Cobrança Diária do Supervisor.</strong>
+          Lista o estoque <strong>ainda válido</strong> que vence nos próximos <strong>90 dias</strong>, agrupado por janela de urgência,
+          para o supervisor <strong>cobrar do gerente da filial uma ação corretiva antes do vencimento</strong>.
+          Difere da aba <strong>Vencidos</strong> (o que já venceu = prejuízo) e da <strong>Análise de Risco</strong> (score técnico de todo o estoque):
+          aqui o foco é a <strong>agenda de ação</strong> — o que precisa de decisão <em>hoje</em> e quem é o responsável.
+          A coluna <strong>Vai sobrar</strong> usa a projeção de venda da própria filial: se o lote não vende o suficiente até vencer, vira cobrança imediata.
+        </div>
+      </div>
+      <div id="alerta-responsavel" style="margin-bottom:14px;"></div>
+      <div class="summary-grid" id="summary-alerta"></div>
+      <div id="alerta-cobranca" style="margin-bottom:16px;"></div>
+      <div class="table-container">
+        <div class="table-header">
+          <div class="table-title"><i class="ti ti-bell-ringing" style="color:var(--laranja)"></i> Estoque a Vencer em 90 dias</div>
+          <div class="table-actions">
+            <select class="select-sm" id="filtro-janela-a" onchange="filtrarAlerta()">
+              <option value="">Todas as janelas</option>
+              <option value="critico">≤ 30 dias (crítico)</option>
+              <option value="urgente">31–60 dias (urgente)</option>
+              <option value="atencao">61–90 dias (atenção)</option>
+              <option value="sobra">Só os que vão sobrar</option>
+            </select>
+            <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-alerta" oninput="filtrarAlerta()">
+            <button class="btn-limpar" onclick="limparFiltros('alerta')"><i class="ti ti-x"></i> Limpar</button>
+            <div class="export-dropdown" id="dd-alerta">
+              <button class="btn-sm primary" onclick="toggleDropdown('dd-alerta')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
+              <div class="export-menu" id="menu-dd-alerta">
+                <div class="export-menu-item" onclick="exportarAlertaExcel();toggleDropdown('dd-alerta')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</div>
+                <div class="export-menu-item" onclick="exportarPNG('tabela-alerta-wrap','alerta');toggleDropdown('dd-alerta')"><i class="ti ti-photo"></i> Imagem (.png)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;" id="tabela-alerta-wrap">
+          <table id="tabela-alerta">
+            <thead>
+              <tr>
+                <th>Janela</th>
+                <th>Linha</th>
+                <th>Código</th>
+                <th>Produto</th>
+                <th>Lote</th>
+                <th>Vence em</th>
+                <th>Dias</th>
+                <th>Qtd</th>
+                <th>Vlr Parado</th>
+                <th>Giro aqui?</th>
+                <th>Vai sobrar</th>
+                <th>Ação sugerida</th>
+              </tr>
+            </thead>
+            <tbody id="body-alerta"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -2041,6 +2107,8 @@ const APP = {
   filteredRisco: [],
   filteredVencidos: [],
   filteredSemGiro: [],
+  alerta: [],
+  filteredAlerta: [],
   checklistExtras: [],   // lotes adicionados manualmente ao checklist (além dos que o sistema traz)
   checklistObs: {},      // observações por item { 'codProduto|lote': 'texto' }
 };
@@ -2303,6 +2371,8 @@ function processarDados() {
       renderTabelaRisco();
       renderTabelaVencidos();
       renderTabelaSemGiro();
+      computarAlerta();
+      renderAlerta();
       renderChecklist();
       renderSazonalidade();
       // Plano de ação pré-calculado silenciosamente
@@ -2488,6 +2558,174 @@ function renderTabelaVencidos(page) {
   }).join('');
   
   renderPagination('vencidos', data.length);
+}
+
+// ==================== ALERTA DE VENCIMENTO (cobrança do supervisor) ====================
+// Janelas de urgência para o estoque AINDA VÁLIDO que vence em até 90 dias.
+const ALERTA_JANELAS = {
+  critico: { max: 30,  label: '≤ 30 dias',  cor: '#ef4444', bg: 'rgba(239,68,68,0.12)',  nome: 'Crítico'  },
+  urgente: { max: 60,  label: '31–60 dias', cor: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  nome: 'Urgente'  },
+  atencao: { max: 90,  label: '61–90 dias', cor: '#eab308', bg: 'rgba(234,179,8,0.12)',   nome: 'Atenção'  },
+};
+function janelaDe(dias) {
+  if (dias <= 30) return 'critico';
+  if (dias <= 60) return 'urgente';
+  return 'atencao';
+}
+
+// Monta a lista de lotes válidos vencendo em até 90 dias, com projeção de giro da própria filial.
+function computarAlerta() {
+  const hoje = APP.dataAuditoria || new Date();
+  APP.alerta = APP.lotes
+    .filter(l => l.situacao !== 'Vencido' && l.diasVencimento >= 0 && l.diasVencimento <= 90)
+    .map(l => {
+      const meses = Math.max(1, Math.ceil(l.diasVencimento / 30));
+      const projecao = projetarVendas(l.codProduto, APP.sigla, meses, hoje);
+      const sobra = Math.max(0, Math.round(l.quantidade - projecao));
+      const giroAqui = vendeNestaFilial(l.codProduto, APP.sigla);
+      const valorSobra = sobra * l.vlrCusto;
+      let acao;
+      if (!giroAqui)        acao = 'Sem giro nesta filial — destinar já (venda/bonificação/devolução)';
+      else if (sobra > 0)   acao = 'Giro insuficiente — acelerar venda/campanha antes de vencer';
+      else                  acao = 'Tende a vender no prazo — monitorar';
+      return { ...l, janela: janelaDe(l.diasVencimento), projecao: Math.round(projecao), sobra, giroAqui, valorSobra, acaoAlerta: acao };
+    })
+    .sort((a, b) => a.diasVencimento - b.diasVencimento || b.valorSobra - a.valorSobra);
+  APP.filteredAlerta = [...APP.alerta];
+}
+
+function renderAlerta() {
+  const resp = document.getElementById('alerta-responsavel');
+  const info = BASE_FILIAIS[APP.sigla] || {};
+  const filialNome = APP.lotes[0]?.descricao?.split('(')[0]?.trim() || info.loja || APP.sigla;
+  resp.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; gap:18px; align-items:center; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:12px 16px;">
+      <div><div style="font-size:10px; color:var(--texto-muted); text-transform:uppercase; letter-spacing:.5px;">Filial</div><div style="font-weight:700;">${APP.sigla} — ${filialNome}</div></div>
+      <div style="width:1px; align-self:stretch; background:var(--border);"></div>
+      <div><div style="font-size:10px; color:var(--texto-muted); text-transform:uppercase; letter-spacing:.5px;">Gerente (responsável pela ação)</div><div style="font-weight:700;">${info.gerente || '—'}</div></div>
+      <div style="width:1px; align-self:stretch; background:var(--border);"></div>
+      <div><div style="font-size:10px; color:var(--texto-muted); text-transform:uppercase; letter-spacing:.5px;">Supervisor (acompanha/cobra)</div><div style="font-weight:700;">${info.supervisor || '—'}</div></div>
+      <div style="margin-left:auto; font-size:11px; color:var(--texto-muted);">Atualizado em ${(APP.dataAuditoria||new Date()).toLocaleDateString('pt-BR')}</div>
+    </div>`;
+
+  const porJanela = j => APP.alerta.filter(l => l.janela === j);
+  const valJanela = j => porJanela(j).reduce((s, l) => s + l.vlrCustoTotal, 0);
+  const acaoHoje = APP.alerta.filter(l => l.janela === 'critico' && l.sobra > 0);
+  const valAcaoHoje = acaoHoje.reduce((s, l) => s + l.valorSobra, 0);
+
+  const card = (j) => {
+    const m = ALERTA_JANELAS[j];
+    const n = porJanela(j).length;
+    return `
+    <div class="summary-card" style="border-left:4px solid ${m.cor};">
+      <div class="summary-label">${m.nome} · ${m.label}</div>
+      <div class="summary-value" style="color:${m.cor};">${n}</div>
+      <div class="summary-sub">${n === 1 ? 'lote' : 'lotes'} · ${formatValor(valJanela(j))} em estoque</div>
+      <i class="ti ti-clock-exclamation summary-icon"></i>
+    </div>`;
+  };
+  document.getElementById('summary-alerta').innerHTML = `
+    ${card('critico')}${card('urgente')}${card('atencao')}
+    <div class="summary-card" style="border-left:4px solid #ef4444; background:rgba(239,68,68,0.06);">
+      <div class="summary-label">Ação prioritária hoje</div>
+      <div class="summary-value" style="color:#ef4444;">${acaoHoje.length}</div>
+      <div class="summary-sub">vencem em ≤30d e não terão giro · ${formatValor(valAcaoHoje)} em risco</div>
+      <i class="ti ti-alert-octagon summary-icon"></i>
+    </div>`;
+
+  const cob = document.getElementById('alerta-cobranca');
+  if (acaoHoje.length) {
+    cob.innerHTML = `
+    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start;">
+      <i class="ti ti-message-report" style="color:#ef4444; font-size:20px; margin-top:1px;"></i>
+      <div style="font-size:13px; line-height:1.6;">
+        <strong>Cobrança do dia:</strong> ${info.supervisor ? `<strong>${info.supervisor}</strong> deve cobrar de <strong>${info.gerente || 'o gerente'}</strong>` : 'O supervisor deve cobrar do gerente'}
+        ação corretiva sobre <strong>${acaoHoje.length} ${acaoHoje.length === 1 ? 'lote' : 'lotes'}</strong>
+        que vence${acaoHoje.length === 1 ? '' : 'm'} em até 30 dias e, pela projeção de venda desta filial, <strong>não terá giro suficiente</strong> —
+        risco de <strong style="color:#ef4444;">${formatValor(valAcaoHoje)}</strong> virar prejuízo se nada for feito.
+      </div>
+    </div>`;
+  } else if (APP.alerta.length) {
+    cob.innerHTML = `
+    <div style="background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.25); border-radius:10px; padding:14px 16px; display:flex; gap:12px; align-items:center;">
+      <i class="ti ti-circle-check" style="color:var(--verde); font-size:20px;"></i>
+      <div style="font-size:13px; line-height:1.6;">Nenhum lote crítico (≤30d) sem giro. Há estoque a vencer em até 90 dias — manter acompanhamento, mas <strong>sem ação emergencial</strong> hoje.</div>
+    </div>`;
+  } else {
+    cob.innerHTML = '';
+  }
+
+  renderTabelaAlerta();
+}
+
+function renderTabelaAlerta() {
+  const tbody = document.getElementById('body-alerta');
+  const data = APP.filteredAlerta;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><i class="ti ti-circle-check" style="color:var(--verde)"></i><p>Nenhum lote vencendo nos próximos 90 dias nesta seleção.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(l => {
+    const m = ALERTA_JANELAS[l.janela];
+    const giroTag = l.giroAqui
+      ? '<span style="color:var(--verde); font-weight:600;">Sim</span>'
+      : '<span style="color:var(--vermelho); font-weight:700;">Não</span>';
+    const sobraTag = l.sobra > 0
+      ? `<span style="color:${m.cor}; font-weight:700;">${l.sobra.toLocaleString('pt-BR')} un</span>`
+      : '<span style="color:var(--verde);">—</span>';
+    return `<tr>
+      <td><span style="display:inline-block; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; color:${m.cor}; background:${m.bg};">${m.nome}</span></td>
+      <td><span style="font-size:11px; color:var(--texto-muted);">${getNomeLinha(l.linha)}</span></td>
+      <td><span style="font-family:monospace; font-size:11px; color:var(--brand-dk); font-weight:700;">${l.codProduto}</span></td>
+      <td><div class="nome-produto" title="${l.nomeProduto}">${l.nomeProduto}</div></td>
+      <td style="font-family:monospace; font-size:11px;">${l.lote}</td>
+      <td style="color:${m.cor};">${l.dtVencimento}</td>
+      <td><span style="color:${m.cor}; font-weight:700;">${l.diasVencimento}d</span></td>
+      <td>${l.quantidade.toLocaleString('pt-BR')}</td>
+      <td>${formatValor(l.vlrCustoTotal)}</td>
+      <td>${giroTag}</td>
+      <td>${sobraTag}</td>
+      <td style="font-size:11px; color:var(--texto-muted); max-width:240px;">${l.acaoAlerta}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filtrarAlerta() {
+  const j = document.getElementById('filtro-janela-a').value;
+  const busca = (document.getElementById('busca-alerta').value || '').toLowerCase();
+  APP.filteredAlerta = APP.alerta.filter(l => {
+    const mJanela = !j || (j === 'sobra' ? l.sobra > 0 : l.janela === j);
+    const mBusca = !busca || l.nomeProduto.toLowerCase().includes(busca) || String(l.lote).toLowerCase().includes(busca) || String(l.codProduto).includes(busca);
+    return mJanela && mBusca;
+  });
+  renderTabelaAlerta();
+}
+
+function exportarAlertaExcel() {
+  const info = BASE_FILIAIS[APP.sigla] || {};
+  const ws = XLSX.utils.json_to_sheet(APP.filteredAlerta.map(l => ({
+    'Filial': APP.sigla,
+    'Gerente': info.gerente || '',
+    'Supervisor': info.supervisor || '',
+    'Janela': ALERTA_JANELAS[l.janela].nome,
+    'Linha': getNomeLinha(l.linha),
+    'Cód Produto': l.codProduto,
+    'Produto': l.nomeProduto,
+    'Lote': l.lote,
+    'Dt Vencimento': l.dtVencimento,
+    'Dias p/ Vencer': l.diasVencimento,
+    'Quantidade': l.quantidade,
+    'Vlr Custo Unit': l.vlrCusto,
+    'Vlr Parado': l.vlrCustoTotal,
+    'Giro nesta filial': l.giroAqui ? 'Sim' : 'Não',
+    'Venda projetada até vencer': l.projecao,
+    'Vai sobrar (un)': l.sobra,
+    'Valor em risco': l.valorSobra,
+    'Ação sugerida': l.acaoAlerta,
+  })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Alerta Vencimento');
+  XLSX.writeFile(wb, `alerta_vencimento_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.xlsx`);
 }
 
 // Metadados das rotas de destinação (ordem, cor, rótulo executivo)
@@ -2890,6 +3128,10 @@ function limparFiltros(tipo) {
     document.getElementById('busca-sazonal').value = '';
     document.getElementById('filtro-linha-s').value = '';
     filtrarSazonalidade();
+  } else if (tipo === 'alerta') {
+    document.getElementById('filtro-janela-a').value = '';
+    document.getElementById('busca-alerta').value = '';
+    filtrarAlerta();
   }
 }
 
@@ -3840,10 +4082,17 @@ function atualizarSidebar() {
   const badgeR = document.getElementById('badge-risco');
   const badgeV = document.getElementById('badge-vencidos');
   const badgeSG = document.getElementById('badge-semgiro');
+  const badgeA = document.getElementById('badge-alerta');
 
   if (criticos > 0) { badgeR.textContent = criticos; badgeR.classList.remove('hidden'); }
   if (vencidos > 0) { badgeV.textContent = vencidos; badgeV.classList.remove('hidden'); }
   if (semGiroProdutos > 0) { badgeSG.textContent = semGiroProdutos; badgeSG.classList.remove('hidden'); }
+  // Badge do alerta = lotes que vencem em ≤30 dias e não terão giro suficiente (ação imediata)
+  const alertaAcao = (APP.alerta || []).filter(l => l.janela === 'critico' && l.sobra > 0).length;
+  if (badgeA) {
+    if (alertaAcao > 0) { badgeA.textContent = alertaAcao; badgeA.classList.remove('hidden'); }
+    else badgeA.classList.add('hidden');
+  }
   
   document.getElementById('filial-nome').textContent = `${APP.sigla} — ${APP.lotes[0]?.descricao?.split('(')[0]?.trim() || ''}`;
   document.getElementById('info-filial').textContent = `Filial ${APP.filial} — ${APP.sigla}`;
@@ -3856,7 +4105,7 @@ function atualizarSidebar() {
 
 // ==================== NAVEGAÇÃO ====================
 function showTab(tab) {
-  ['upload','risco','vencidos','semgiro','auditoria','sazonalidade','plano','historico'].forEach(t => {
+  ['upload','risco','vencidos','alerta','semgiro','auditoria','sazonalidade','plano','historico'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
     document.getElementById(`nav-${t}`)?.classList.toggle('active', t === tab);
   });
