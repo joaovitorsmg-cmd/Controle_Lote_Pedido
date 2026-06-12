@@ -286,6 +286,7 @@ def main():
     ap.add_argument("arquivo", help="caminho do .xlsx de vendas (com várias abas)")
     ap.add_argument("-o", "--saida", default="sazonal_base.json", help="arquivo de saída (padrão: sazonal_base.json)")
     ap.add_argument("--sim", action="store_true", help="não perguntar confirmação (assume sim)")
+    ap.add_argument("--diag", action="store_true", help="modo diagnóstico: mostra o formato de cada aba e sai")
     args = ap.parse_args()
 
     try:
@@ -297,6 +298,22 @@ def main():
     if not os.path.exists(args.arquivo):
         print(f"ERRO: arquivo não encontrado: {args.arquivo}")
         sys.exit(1)
+
+    if args.diag:
+        print(f"\n=== DIAGNÓSTICO de {args.arquivo} ===")
+        raw = _ler_raw(args.arquivo)
+        for nome, dfr in raw.items():
+            if dfr is None or len(dfr) == 0:
+                print(f"\n--- Aba '{nome}': VAZIA ---")
+                continue
+            print(f"\n--- Aba '{nome}': {dfr.shape[0]} linhas x {dfr.shape[1]} colunas ---")
+            for li in range(min(2, len(dfr))):
+                vals = [str(x) for x in dfr.iloc[li].tolist()]
+                print(f"  linha {li}:")
+                for ci, v in enumerate(vals):
+                    print(f"     [{ci}] {v[:45]}")
+        print("\n=== fim do diagnóstico (cole esta saída para eu mapear as colunas) ===")
+        sys.exit(0)
 
     print(f"\nLendo {args.arquivo} ...")
     xls = carregar_abas(args.arquivo)
