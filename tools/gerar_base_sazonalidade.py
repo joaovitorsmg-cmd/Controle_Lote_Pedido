@@ -63,6 +63,18 @@ CFOPS_EXCLUIR = {"5116", "5117", "6116", "6117"}
 PERIODO_INI = (2024, 1)
 PERIODO_FIM = (2026, 6)
 
+# LAYOUT POR POSIÇÃO (0-based). Este relatório (relatorioResumoMovimentacaoCfop) tem 51
+# colunas fixas e as abas de continuação vêm SEM cabeçalho — então lemos por posição.
+# Deixe COLUNAS_POR_POSICAO = None para voltar à detecção automática por nome de cabeçalho.
+COLUNAS_POR_POSICAO = {
+    "filial": 1,      # Filial (sigla)
+    "data": 24,       # Emissão (data da venda/faturamento)
+    "produto": 26,    # Cod.Produto
+    "nome": 27,       # Produto (nome)
+    "cfop": 30,       # CFOP
+    "quantidade": 35, # Qtde
+}
+
 # Ordem fixa das siglas usada pelo app (NÃO reordenar — os índices casam com a base embutida).
 # Siglas novas encontradas no arquivo são acrescentadas ao final automaticamente.
 BASE_SIGLAS = ["ALT","ARG","BAR","CAN","CON","CRI","FAG","FAP","FCB","FOR","GRA",
@@ -315,9 +327,18 @@ def main():
         print("\n=== fim do diagnóstico (cole esta saída para eu mapear as colunas) ===")
         sys.exit(0)
 
+    posicional = COLUNAS_POR_POSICAO is not None
     print(f"\nLendo {args.arquivo} ...")
-    xls = carregar_abas(args.arquivo)
+    if posicional:
+        xls = _ler_raw(args.arquivo)        # layout fixo: lemos por posição, sem promover cabeçalho
+    else:
+        xls = carregar_abas(args.arquivo)
     print(f"Abas/tabelas encontradas: {len(xls)} -> {', '.join(xls.keys())}\n")
+    if posicional:
+        print("  Modo POR POSIÇÃO (layout fixo). Colunas usadas:")
+        for k in ["produto", "filial", "data", "cfop", "quantidade", "nome"]:
+            print(f"      {k:11s}: coluna [{COLUNAS_POR_POSICAO[k]}]")
+        print()
 
     siglas = list(BASE_SIGLAS)            # ordem estável; novas siglas vão para o fim
     sig2idx = {s: i for i, s in enumerate(siglas)}
@@ -328,36 +349,47 @@ def main():
 
     tot_linhas = tot_venda = tot_excluidas = tot_fora_periodo = tot_sem_data = tot_sem_prod = 0
     cfops_ignorados = {}
+    primeira = True
 
     for nome_aba, df in xls.items():
         if df is None or df.empty:
             print(f"  Aba '{nome_aba}': vazia, pulando.")
             continue
         headers = list(df.columns)
-        col = {k: achar_coluna(headers, PISTAS[k], COLUNAS_MANUAIS[k]) for k in PISTAS}
 
-        print(f"  Aba '{nome_aba}' ({len(df)} linhas) — colunas detectadas:")
-        for k in ["produto", "filial", "data", "cfop", "quantidade", "nome"]:
-            print(f"      {k:11s}: {col[k]}")
-        faltando = [k for k in ("produto", "filial", "data", "cfop", "quantidade") if not col[k]]
-        if faltando:
-            print(f"  [ERRO] não consegui detectar: {faltando}.")
-            print(f"  Colunas existentes no arquivo: {list(headers)}")
-            print("  -> Copie o nome exato da coluna certa para o bloco COLUNAS_MANUAIS no topo do script e rode de novo.")
-            print("  -> Se este for um relatório RESUMO (sem produto/data por linha), preciso do relatório DETALHADO de vendas.\n")
-            sys.exit(2)
+        if posicional:
+            col = dict(COLUNAS_POR_POSICAO)
+            if max(col.values()) >= len(headers):
+                print(f"  [aviso] aba '{nome_aba}' tem {len(headers)} colunas (esperado ≥ {max(col.values())+1}) — pulando.")
+                continue
+        else:
+            col = {k: achar_coluna(headers, PISTAS[k], COLUNAS_MANUAIS[k]) for k in PISTAS}
+            print(f"  Aba '{nome_aba}' ({len(df)} linhas) — colunas detectadas:")
+            for k in ["produto", "filial", "data", "cfop", "quantidade", "nome"]:
+                print(f"      {k:11s}: {col[k]}")
+            faltando = [k for k in ("produto", "filial", "data", "cfop", "quantidade") if not col[k]]
+            if faltando:
+                print(f"  [ERRO] não consegui detectar: {faltando}.")
+                print(f"  Colunas existentes no arquivo: {list(headers)}")
+                print("  -> Copie o nome exato da coluna certa para o bloco COLUNAS_MANUAIS no topo do script e rode de novo.")
+                print("  -> Se este for um relatório RESUMO (sem produto/data por linha), preciso do relatório DETALHADO de vendas.\n")
+                sys.exit(2)
 
         # Confirmação só na primeira aba
-        if nome_aba == list(xls.keys())[0] and not args.sim:
-            amostra = df[[col['produto'], col['filial'], col['data'], col['cfop'], col['quantidade']]].head(3)
-            print("\n  Amostra (3 primeiras linhas):")
-            print(amostra.to_string(index=False))
+        if primeira and not args.sim:
+            try:
+                amostra = df[[col['produto'], col['filial'], col['data'], col['cfop'], col['quantidade']]].head(3)
+                print("  Amostra (3 primeiras linhas — produto, filial, data, cfop, qtde):")
+                print(amostra.to_string(index=False))
+            except Exception:
+                pass
             print("\n  IMPORTANTE: a coluna 'data' deve ser a de EMISSÃO/VENDA (não a de entrega).")
             resp = input("  As colunas estão corretas? [s/N] ").strip().lower()
             if resp not in ("s", "sim", "y", "yes"):
-                print("Cancelado. Ajuste COLUNAS_MANUAIS e rode novamente.")
+                print("Cancelado. Ajuste a configuração no topo do script e rode novamente.")
                 sys.exit(0)
-        print()
+            print()
+        primeira = False
 
         cprod, cfil, cdata, ccfop, cqtd = col['produto'], col['filial'], col['data'], col['cfop'], col['quantidade']
         cnome = col['nome']
