@@ -138,10 +138,16 @@ def parse_qtd(v):
         return 0.0
 
 def parse_cfop(v):
+    """Extrai o código CFOP (4 dígitos) que vem no INÍCIO do campo.
+    Aceita '5102', '5102.0', '5.102' e '5102 - 00 - VENDA MERC ADQ'."""
     if v is None: return ""
-    s = re.sub(r"\.0+$", "", str(v).strip())   # "5102.0" -> "5102" (quando lido como número)
-    d = re.sub(r"\D", "", s)
-    return d[-4:] if len(d) >= 4 else d
+    s = str(v).strip()
+    token = re.split(r"[\s\-–]+", s, maxsplit=1)[0]   # "5102" de "5102 - 00 - VENDA..."
+    d = re.sub(r"\D", "", token)
+    if len(d) >= 4:
+        return d[:4]
+    m = re.search(r"\d{4}", re.sub(r"(?<=\d)[.\s](?=\d)", "", s))  # fallback: 1º grupo de 4 dígitos
+    return m.group(0) if m else d
 
 def parse_ano_mes(v):
     """Retorna (ano, mes) 1-12, ou None. Aceita datetime, serial Excel e strings pt-BR."""
