@@ -1625,12 +1625,12 @@
         <i class="ti ti-info-circle met-icon"></i>
         <div class="met-texto">
           <strong>O que é esta tela.</strong> Lista o estoque <strong>ainda válido</strong> que <strong>não gira nesta filial</strong> — capital imobilizado que tende a virar prejuízo se nada for feito (diferente da aba <strong>Vencidos</strong>, que mostra o que já venceu, e de <strong>Análise de Risco</strong>, que projeta o que vai sobrar).
-          Há dois tipos: <strong>Parado aqui</strong> (vende em outras filiais → candidato a <strong>transferência</strong>) e <strong>Dead stock</strong> (nunca vendeu em filial alguma).
+          Há dois tipos: <strong>Parado aqui</strong> (vende em outras filiais — sinaliza problema de compra) e <strong>Dead stock</strong> (nunca vendeu em filial alguma). <em>Não há transferência entre filiais.</em>
           A coluna <strong>Recomendação</strong> aplica as regras de destinação da Agroquima:
-          <strong>Nutrição Animal</strong> (fábrica própria) não aceita devolução → venda a custo/bonificação ou descarte;
-          <strong>Semente de Pastagem</strong> (fábrica própria) admite devolução à fábrica;
-          <strong>Agrícola</strong> (semente) pode ter revalidação de análise;
-          demais fornecedores, sem previsão de devolução → venda/bonificação.
+          <strong>Nutrição Animal</strong> (fábricas FAP/FCB) não aceita devolução → venda a custo/bonificação ou descarte;
+          <strong>Semente de Pastagem</strong> (fábrica FAG) admite devolução à FAG, sobretudo sementes de alto giro (ex.: Ruziziensis);
+          <strong>Agrícola</strong> (semente, fornecedor terceiro) pode ter revalidação de análise;
+          demais fornecedores terceiros, sem previsão de devolução → venda/bonificação.
           <em>Valor Parado = Quantidade × Custo Unitário.</em> Passe o mouse na recomendação para ver a justificativa.
         </div>
       </div>
@@ -1969,7 +1969,7 @@ function vendeNestaFilial(cod, sigla) {
   return getSazonalArray(geral).reduce((s, v) => s + v, 0) > 0;   // só curva geral → assume que gira
 }
 
-// Filiais (siglas) onde o produto efetivamente vende — alvos de transferência
+// Filiais (siglas) onde o produto efetivamente vende — contexto (não há transferência entre filiais)
 function filiaisComGiro(cod, sigla) {
   const entry = SAZONAL_BASE[cod];
   if (!entry) return [];
@@ -1982,42 +1982,42 @@ function filiaisComGiro(cod, sigla) {
 }
 
 // Recomendação de destinação por linha/fornecedor (regras Agroquima)
-// Nutrição Animal (1): fábrica própria, devolução PROIBIDA → venda no estado/bonificação ou descarte.
-// Pastagem/Semente de Pastagem (2,18): fábrica própria, há casos de devolução à fábrica.
-// Agrícola (4,5): se semente, possível revalidação da análise; senão venda/bonificação.
-// Demais fornecedores: sem previsão de devolução/troca → venda/bonificação (ou descarte se vencido).
+// Recomendação de destinação por linha/fábrica (regras Agroquima — sem transferência entre filiais).
+// Semente de Pastagem (2,18): fabricada pela FAG → devolução à FAG (sementes de alto giro, ex. Ruziziensis, são aceitas).
+// Nutrição Animal (1): fabricada por FAP/FCB (fábricas próprias) → NÃO aceitam devolução → venda/bonificação ou descarte.
+// Agrícola (4,5): fornecedor terceiro; se semente, possível revalidação da análise; senão venda/bonificação.
+// Demais fornecedores terceiros: sem previsão de devolução/troca → venda/bonificação (ou descarte se vencido).
 function recomendacaoSemGiro(l) {
   const linha = String(l.linha);
   const dias = l.diasVencimento;
   const vencido = dias < 0;
   const vendeOutras = l._vendeOutras || [];
 
-  // 1) Transferência — não gira aqui mas vende em outra filial e ainda há prazo
-  if (!vencido && vendeOutras.length && dias > 90) {
-    const dest = vendeOutras.slice(0, 3).join(', ') + (vendeOutras.length > 3 ? ` +${vendeOutras.length - 3}` : '');
-    return { rota: 'TRANSFERIR', cls: 'rota-transferir',
-      detalhe: `Não gira nesta filial, mas vende em ${dest}. Transferir para filial com demanda recupera ~100% do capital.` };
+  // Semente de Pastagem — fábrica FAG. Não se transfere entre filiais; devolve-se à FAG.
+  if (linha === '2' || linha === '18') {
+    const dest = vendeOutras.slice(0, 3).join(', ') + (vendeOutras.length > 3 ? '…' : '');
+    return { rota: 'DEVOLUÇÃO', cls: 'rota-devolucao',
+      detalhe: vendeOutras.length
+        ? `Semente de Pastagem (fábrica FAG): tem giro em ${dest}. Sementes de alto giro (ex.: Ruziziensis) têm devolução à FAG aceita. Não se transfere entre filiais — devolver à FAG.`
+        : 'Semente de Pastagem (fábrica FAG): avaliar devolução à FAG (mais provável em sementes de alto giro, ex.: Ruziziensis); senão venda/bonificação. Não se transfere entre filiais.' };
   }
 
-  // 2) Destinação por linha
-  if (linha === '1') { // Nutrição Animal — devolução proibida
+  // Nutrição Animal — fábricas FAP/FCB não aceitam devolução de nenhum produto.
+  if (linha === '1') {
     return vencido
-      ? { rota: 'DESCARTE', cls: 'rota-descarte', detalhe: 'Nutrição Animal (fábrica Agroquima): devolução proibida. Vencido → descarte conforme norma. Perda total.' }
-      : { rota: 'VENDA/BONIFICAÇÃO', cls: 'rota-venda', detalhe: 'Nutrição Animal (fábrica Agroquima): devolução proibida. Escoar via venda a preço de custo ou bonificação antes do vencimento.' };
+      ? { rota: 'DESCARTE', cls: 'rota-descarte', detalhe: 'Nutrição Animal (fábricas FAP/FCB): não aceitam devolução. Produto vencido → descarte conforme norma. Perda total.' }
+      : { rota: 'VENDA/BONIFICAÇÃO', cls: 'rota-venda', detalhe: 'Nutrição Animal (fábricas FAP/FCB): não aceitam devolução. Escoar via venda a preço de custo ou bonificação antes do vencimento.' };
   }
-  if (linha === '2' || linha === '18') { // Pastagem / Semente de Pastagem — Agroquima
-    return { rota: 'DEVOLUÇÃO', cls: 'rota-devolucao',
-      detalhe: vencido
-        ? 'Semente de Pastagem (fábrica Agroquima): avaliar devolução à fábrica; se inviável, descarte.'
-        : 'Semente de Pastagem (fábrica Agroquima): devolução à fábrica possível, ou venda/bonificação.' };
-  }
-  if (linha === '4' || linha === '5') { // Agrícola — semente pode revalidar
+
+  // Agrícola — fornecedor terceiro; semente pode revalidar.
+  if (linha === '4' || linha === '5') {
     return { rota: 'REVALIDAR/VENDA', cls: 'rota-revalidar',
-      detalhe: 'Linha Agrícola: se semente, avaliar revalidação da análise (reteste); senão venda/bonificação. Devolução ao fornecedor é rara.' };
+      detalhe: 'Linha Agrícola (fornecedor terceiro): se semente, avaliar revalidação da análise (reteste); senão venda/bonificação. Devolução ao fornecedor é rara.' };
   }
-  // Demais fornecedores (3,6,7,8,15,0) — sem previsão de devolução
+
+  // Demais fornecedores terceiros — sem previsão de devolução/troca.
   return vencido
-    ? { rota: 'DESCARTE', cls: 'rota-descarte', detalhe: 'Fornecedor sem devolução: vencido → venda no estado a preço de custo ou descarte.' }
+    ? { rota: 'DESCARTE', cls: 'rota-descarte', detalhe: 'Fornecedor terceiro sem devolução: vencido → venda no estado a preço de custo ou descarte.' }
     : { rota: 'VENDA/BONIFICAÇÃO', cls: 'rota-venda', detalhe: 'Fornecedor terceiro sem previsão de devolução/troca: escoar via venda a preço de custo ou bonificação.' };
 }
 
@@ -2279,7 +2279,7 @@ function processarDados() {
       // Ordenados por valor parado (maior exposição financeira primeiro)
       // Sem Giro = estoque disponível (ainda válido) que NÃO gira nesta filial.
       // Dois tipos: 'dead' (nunca vendeu em lugar nenhum) e 'local' (vende em
-      // outras filiais, mas está parado aqui → candidato a transferência).
+      // outras filiais, mas está parado aqui → sinaliza compra indevida).
       APP.semGiro = APP.lotes
         .filter(l => l.situacao === 'Disponível' && !vendeNestaFilial(l.codProduto, APP.sigla))
         .map(l => {
@@ -2492,13 +2492,12 @@ function renderTabelaVencidos(page) {
 
 // Metadados das rotas de destinação (ordem, cor, rótulo executivo)
 const ROTA_META = {
-  'TRANSFERIR':        { label: 'Transferência p/ filial com giro', cor: '#34d399', icon: 'ti-truck-delivery', tipo: 'Recuperável' },
-  'DEVOLUÇÃO':         { label: 'Devolução à fábrica (Agroquima)',  cor: '#5fd4a0', icon: 'ti-arrow-back-up',  tipo: 'Recuperável' },
+  'DEVOLUÇÃO':         { label: 'Devolução à fábrica FAG',         cor: '#5fd4a0', icon: 'ti-arrow-back-up',  tipo: 'Recuperável' },
   'REVALIDAR/VENDA':   { label: 'Revalidação de análise / venda',   cor: '#60a5fa', icon: 'ti-refresh',        tipo: 'Parcial' },
   'VENDA/BONIFICAÇÃO': { label: 'Venda a custo / bonificação',      cor: '#f59e0b', icon: 'ti-discount-2',     tipo: 'Perda de margem' },
   'DESCARTE':          { label: 'Descarte (perda total)',           cor: '#ef4444', icon: 'ti-trash',          tipo: 'Perda total' },
 };
-const ROTAS_RECUPERAVEIS = ['TRANSFERIR', 'DEVOLUÇÃO'];
+const ROTAS_RECUPERAVEIS = ['DEVOLUÇÃO'];
 
 function renderSummarySemGiro() {
   const t = document.getElementById('semgiro-sigla-title');
@@ -2526,7 +2525,7 @@ function renderSummarySemGiro() {
     <div class="summary-card green">
       <div class="summary-label">Recuperável</div>
       <div class="summary-value" style="font-size:18px;">${formatValor(recuperavel)}</div>
-      <div class="summary-sub">${pctRec}% — transferência ou devolução à fábrica</div>
+      <div class="summary-sub">${pctRec}% — devolução à fábrica FAG (sementes de pastagem)</div>
       <i class="ti ti-arrow-back-up summary-icon"></i>
     </div>
     <div class="summary-card orange">
@@ -3613,7 +3612,7 @@ function renderPlanoAcao() {
       <div class="plano-item-num">3</div>
       <div class="plano-item-body">
         <div class="plano-item-acao">Destinar ${semVenda} produto${semVenda!==1?'s':''} de capital parado (sem giro nesta filial)</div>
-        <div class="plano-item-detalhe">Estoque ainda válido que não gira nesta filial soma <strong>${formatValor(semVendaValor)}</strong> em capital parado, sendo <strong style="color:var(--verde);">${formatValor(sgRecuperavel)}</strong> recuperável via transferência ou devolução à fábrica e ${sgDeadProd} produto${sgDeadProd!==1?'s':''} de dead stock (nunca venderam). A aba <strong style="color:var(--amber-dk);cursor:pointer;text-decoration:underline;" onclick="showTab('semgiro')">Sem Giro</strong> traz a recomendação de destinação por produto. Leve ao gestor comercial.</div>
+        <div class="plano-item-detalhe">Estoque ainda válido que não gira nesta filial soma <strong>${formatValor(semVendaValor)}</strong> em capital parado, sendo <strong style="color:var(--verde);">${formatValor(sgRecuperavel)}</strong> recuperável via devolução à fábrica FAG (sementes de pastagem) e ${sgDeadProd} produto${sgDeadProd!==1?'s':''} de dead stock (nunca venderam). A aba <strong style="color:var(--amber-dk);cursor:pointer;text-decoration:underline;" onclick="showTab('semgiro')">Sem Giro</strong> traz a recomendação de destinação por produto. Leve ao gestor comercial.</div>
       </div>
     </div>
     <div class="plano-item">
