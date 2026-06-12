@@ -1983,10 +1983,10 @@ function filiaisComGiro(cod, sigla) {
 
 // Recomendação de destinação por linha/fornecedor (regras Agroquima)
 // Recomendação de destinação por linha/fábrica (regras Agroquima — sem transferência entre filiais).
-// Semente de Pastagem (2,18): fabricada pela FAG → devolução à FAG (sementes de alto giro, ex. Ruziziensis, são aceitas).
+// Semente de Pastagem (18): fabricada pela FAG → devolução à FAG (sementes de alto giro, ex. Ruziziensis, são aceitas).
 // Nutrição Animal (1): fabricada por FAP/FCB (fábricas próprias) → NÃO aceitam devolução → venda/bonificação ou descarte.
 // Agrícola (4,5): fornecedor terceiro; se semente, possível revalidação da análise; senão venda/bonificação.
-// Demais fornecedores terceiros: sem previsão de devolução/troca → venda/bonificação (ou descarte se vencido).
+// Demais fornecedores terceiros (2-Pastagem, 3, 6, 7, 8, 15-Vetoquinol, 0): sem devolução → venda/bonificação (ou descarte se vencido).
 function recomendacaoSemGiro(l) {
   const linha = String(l.linha);
   const dias = l.diasVencimento;
@@ -1994,7 +1994,7 @@ function recomendacaoSemGiro(l) {
   const vendeOutras = l._vendeOutras || [];
 
   // Semente de Pastagem — fábrica FAG. Não se transfere entre filiais; devolve-se à FAG.
-  if (linha === '2' || linha === '18') {
+  if (linha === '18') {
     const dest = vendeOutras.slice(0, 3).join(', ') + (vendeOutras.length > 3 ? '…' : '');
     return { rota: 'DEVOLUÇÃO', cls: 'rota-devolucao',
       detalhe: vendeOutras.length
