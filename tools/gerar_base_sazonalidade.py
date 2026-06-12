@@ -30,11 +30,16 @@ Como usar (Windows / Mac / Linux)
 Se a detecção automática errar alguma coluna, edite o bloco COLUNAS_MANUAIS lá
 embaixo (logo após os imports) com o nome EXATO da coluna no seu arquivo.
 
-Regras de negócio (iguais às do app)
-------------------------------------
-- CFOP de venda contados:   5101 5102 5120 5405 6101 6102 5922 6922
-  (5922/6922 = faturamento p/ entrega futura -> é VENDA, conta no mês do faturamento)
-- CFOP excluídos (remessa de entrega futura, NÃO é venda): 5116 5117 6116 6117
+Regras de negócio (iguais às do app) — dois eixos: VENDA x MOVIMENTAÇÃO de estoque
+----------------------------------------------------------------------------------
+A sazonalidade mede o MÊS QUE VENDEU (faturamento), NÃO o mês que entregou.
+- CFOP contados como VENDA (entram na sazonalidade): 5101 5102 5120 5405 6101 6102 5922 6922
+    * 5101/5102/5120/5405/6101/6102 = venda normal (VENDE e MOVIMENTA estoque no ato).
+    * 5922/6922 = faturamento p/ entrega futura: É VENDA, mas NÃO movimenta o estoque
+      (a mercadoria sai depois, na remessa). Conta no MÊS DO FATURAMENTO.
+- CFOP excluídos = remessa de entrega futura, NÃO é venda: 5116 5117 6116 6117
+    * A mercadoria SAI do estoque (MOVIMENTA), mas a venda já foi contada no faturamento
+      (5922/6922). Excluídos para não contar "entrega" como "venda" nem duplicar a venda.
 - Período mantido: Jan/2024 a Jun/2026 (configurável abaixo).
 - Sazonalidade medida em UNIDADES (soma da quantidade), por mês (Jan=0 ... Dez=11).
 """
@@ -45,7 +50,11 @@ from datetime import datetime, date
 # ======================= CONFIGURAÇÃO =======================
 
 # CFOPs (apenas os 4 últimos dígitos importam)
+# VENDA (entra na sazonalidade = "mês que vendeu"): venda normal + 5922/6922 (venda que
+# NÃO movimenta estoque ainda — faturamento de entrega futura, conta no mês do faturamento).
 CFOPS_VENDA   = {"5101", "5102", "5120", "5405", "6101", "6102", "5922", "6922"}
+# REMESSA de entrega futura: MOVIMENTA estoque, mas NÃO é venda (a venda já foi no 5922/6922).
+# Excluída da sazonalidade para não contar "entrega" como "venda" nem duplicar.
 CFOPS_EXCLUIR = {"5116", "5117", "6116", "6117"}
 
 # Janela de histórico mantida (ano, mês) inclusive

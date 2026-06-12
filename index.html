@@ -2114,8 +2114,17 @@ const APP = {
   checklistObs: {},      // observações por item { 'codProduto|lote': 'texto' }
 };
 
-// CFOPs de venda real (excluindo 5116,5117,6116,6117 = remessa entrega futura)
+// ===== CFOP: dois eixos distintos — VENDA (sazonalidade) x MOVIMENTAÇÃO de estoque =====
+// A sazonalidade mede "o mês em que VENDEU" (faturamento), não "o mês em que entregou".
+// CFOPS_VENDA — entram na sazonalidade:
+//   5101/5102/5120/5405/6101/6102 = venda normal (VENDE e MOVIMENTA estoque no ato).
+//   5922/6922 = faturamento p/ entrega futura: É VENDA, mas NÃO movimenta estoque
+//               (a mercadoria sai depois, na remessa). Conta no MÊS DO FATURAMENTO.
 const CFOPS_VENDA = ['5101','5102','5120','5405','6101','6102','5922','6922'];
+// CFOPS_EXCLUIR — remessa de entrega futura: NÃO é venda (fora da sazonalidade).
+//   5116/5117/6116/6117 = a mercadoria SAI do estoque (MOVIMENTA), mas a venda já foi
+//               contada no faturamento (5922/6922). Excluídos para não contar "entrega"
+//               como se fosse "venda" e não duplicar a venda já faturada.
 const CFOPS_EXCLUIR = ['5116','5117','6116','6117'];
 
 // Nomes das linhas
