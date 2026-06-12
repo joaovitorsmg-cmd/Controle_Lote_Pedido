@@ -15,7 +15,9 @@ Como usar (Windows / Mac / Linux)
 1) Instale o Python 3.9+ (https://www.python.org/downloads/  — marque "Add to PATH").
 2) Instale as dependências (uma vez só), no Prompt/Terminal:
 
-       pip install pandas openpyxl
+       py -m pip install pandas openpyxl lxml xlrd
+
+   (lxml e xlrd cobrem exports de ERP em .xls — inclusive HTML disfarçado de .xls)
 
 3) Rode, apontando para o seu arquivo de vendas:
 
@@ -137,7 +139,8 @@ def parse_qtd(v):
 
 def parse_cfop(v):
     if v is None: return ""
-    d = re.sub(r"\D", "", str(v))
+    s = re.sub(r"\.0+$", "", str(v).strip())   # "5102.0" -> "5102" (quando lido como número)
+    d = re.sub(r"\D", "", s)
     return d[-4:] if len(d) >= 4 else d
 
 def parse_ano_mes(v):
@@ -193,6 +196,83 @@ def resolver_sigla(v, siglas_idx):
         return sig
     return sig or None
 
+# ======================= LEITURA (xlsx / xls binário / HTML disfarçado) =======================
+
+def _ler_raw(path):
+    """Carrega o arquivo (qualquer formato) como dict {nome_aba: DataFrame SEM cabeçalho, tudo str}."""
+    import pandas as pd
+    with open(path, "rb") as f:
+        head = f.read(4096)
+    low = head.lower()
+    ext = os.path.splitext(path)[1].lower()
+    eh_html = head[:1] == b"<" or b"<table" in low or b"<html" in low or b"<tr" in low or (b"<?xml" in low and b"<table" in low)
+
+    def excel(engine, pacote):
+        try:
+            d = pd.read_excel(path, sheet_name=None, header=None, dtype=str, engine=engine)
+            return {k: v.astype(str) for k, v in d.items()}
+        except ImportError:
+            print(f"ERRO: falta o pacote '{pacote}' para ler este arquivo. Rode:\n    py -m pip install {pacote}")
+            sys.exit(1)
+
+    def html():
+        try:
+            tabelas = pd.read_html(path, header=None)
+        except ImportError:
+            print("ERRO: este arquivo é um HTML disfarçado de .xls. Instale o leitor:\n    py -m pip install lxml")
+            sys.exit(1)
+        return {f"Tabela {i+1}": t.astype(str) for i, t in enumerate(tabelas)}
+
+    if head[:2] == b"PK":                       # zip -> xlsx
+        return excel("openpyxl", "openpyxl")
+    if head[:4] == b"\xD0\xCF\x11\xE0":         # OLE2 -> xls binário
+        return excel("xlrd", "xlrd")
+    if eh_html:                                 # HTML/XML disfarçado de .xls
+        return html()
+    # extensão sugere excel mas conteúdo não bateu -> tenta excel e cai para html
+    if ext in (".xlsx", ".xls"):
+        try:
+            return excel(None, "openpyxl")
+        except SystemExit:
+            raise
+        except Exception:
+            return html()
+    return html()
+
+_ALVOS_HEADER = ["cfop", "produto", "quant", "qtd", "filial", "loja", "data", "emiss", "cod"]
+
+def _score_keys(valores):
+    return sum(1 for x in valores if any(a in strip_acentos(str(x)) for a in _ALVOS_HEADER))
+
+def _linha_header(df_raw):
+    """Acha a linha que é o cabeçalho (a com mais palavras-chave de coluna)."""
+    melhor_i, melhor_score = 0, -1
+    for i in range(min(25, len(df_raw))):
+        score = _score_keys(df_raw.iloc[i].tolist())
+        if score > melhor_score:
+            melhor_score, melhor_i = score, i
+    return melhor_i, melhor_score
+
+def carregar_abas(path):
+    """Retorna dict {nome_aba: DataFrame com cabeçalho correto}.
+    Se as colunas já forem o cabeçalho (ex.: HTML com <th>), mantém; senão promove a melhor linha."""
+    raw = _ler_raw(path)
+    out = {}
+    for nome, dfr in raw.items():
+        if dfr is None or len(dfr) == 0:
+            out[nome] = dfr
+            continue
+        col_score = _score_keys(list(dfr.columns))
+        i, row_score = _linha_header(dfr)
+        if col_score >= 2 and col_score >= row_score:
+            out[nome] = dfr.reset_index(drop=True)          # cabeçalho já está nas colunas
+        else:
+            header = [str(x).strip() for x in dfr.iloc[i].tolist()]
+            df = dfr.iloc[i + 1:].copy()
+            df.columns = header
+            out[nome] = df.reset_index(drop=True)
+    return out
+
 # ======================= PROCESSAMENTO =======================
 
 def main():
@@ -213,8 +293,8 @@ def main():
         sys.exit(1)
 
     print(f"\nLendo {args.arquivo} ...")
-    xls = pd.read_excel(args.arquivo, sheet_name=None, dtype=str, engine="openpyxl")
-    print(f"Abas encontradas: {len(xls)} -> {', '.join(xls.keys())}\n")
+    xls = carregar_abas(args.arquivo)
+    print(f"Abas/tabelas encontradas: {len(xls)} -> {', '.join(xls.keys())}\n")
 
     siglas = list(BASE_SIGLAS)            # ordem estável; novas siglas vão para o fim
     sig2idx = {s: i for i, s in enumerate(siglas)}
@@ -238,7 +318,10 @@ def main():
             print(f"      {k:11s}: {col[k]}")
         faltando = [k for k in ("produto", "filial", "data", "cfop", "quantidade") if not col[k]]
         if faltando:
-            print(f"  [ERRO] não consegui detectar: {faltando}. Edite COLUNAS_MANUAIS e rode de novo.\n")
+            print(f"  [ERRO] não consegui detectar: {faltando}.")
+            print(f"  Colunas existentes no arquivo: {list(headers)}")
+            print("  -> Copie o nome exato da coluna certa para o bloco COLUNAS_MANUAIS no topo do script e rode de novo.")
+            print("  -> Se este for um relatório RESUMO (sem produto/data por linha), preciso do relatório DETALHADO de vendas.\n")
             sys.exit(2)
 
         # Confirmação só na primeira aba

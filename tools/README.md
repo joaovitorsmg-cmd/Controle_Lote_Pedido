@@ -13,8 +13,11 @@ só envia/commita o JSON pequeno gerado.
 2. Instale as dependências (uma vez só):
 
    ```
-   pip install pandas openpyxl
+   py -m pip install pandas openpyxl lxml xlrd
    ```
+
+   (`lxml`/`xlrd` cobrem exports de ERP em `.xls`, inclusive os que são **HTML
+   disfarçado de `.xls`** — o script detecta o formato automaticamente.)
 
 3. Rode apontando para o seu arquivo de vendas:
 
