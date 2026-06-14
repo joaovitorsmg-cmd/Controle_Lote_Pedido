@@ -1841,6 +1841,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <i class="ti ti-package-off nav-icon"></i> Sem Giro
       <span class="nav-badge orange hidden" id="badge-semgiro">0</span>
     </div>
+    <div class="nav-item" onclick="showTab('cacaerros')" id="nav-cacaerros">
+      <i class="ti ti-bug nav-icon"></i> Caça-Erros
+      <span class="nav-badge hidden" id="badge-cacaerros">0</span>
+    </div>
     <div class="nav-item" onclick="showTab('auditoria')" id="nav-auditoria">
       <i class="ti ti-clipboard-check nav-icon"></i> Checklist Auditoria
     </div>
@@ -2192,6 +2196,49 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           </table>
         </div>
         <div class="pagination" id="pag-semgiro"></div>
+      </div>
+    </div>
+
+    <!-- CAÇA-ERROS -->
+    <div id="tab-cacaerros" class="hidden">
+      <div style="margin-bottom:18px;">
+        <div class="section-title"><i class="ti ti-bug" style="color:var(--vermelho); margin-right:6px;"></i>Caça-Erros — Possíveis Inconsistências de Digitação</div>
+        <p style="font-size:12px; color:var(--texto-muted);">Cruza os dados de todas as filiais importadas e aponta divergências que sugerem erro de implantação/digitação. Ferramenta de melhoria: a filial confere, corrige na origem e reimporta.</p>
+      </div>
+      <div class="metodologia-bar">
+        <i class="ti ti-shield-check met-icon"></i>
+        <div class="met-texto">
+          Como <strong>lote, fabricação e vencimento</strong> são digitados manualmente por cada filial, podem conter erros. Esta aba cruza os dados automaticamente após a importação e aponta divergências para conferência antes de levar o relatório à diretoria.
+          <strong>O mesmo lote de um mesmo produto deve ter sempre as mesmas datas em todas as lojas</strong> — quando diverge, a loja minoritária é a provável fonte do erro.
+          <span id="cacaerros-multi-aviso" style="display:none; color:var(--amber-dk); font-weight:600;"></span>
+        </div>
+      </div>
+      <div class="summary-grid" id="summary-cacaerros"></div>
+      <div id="cacaerros-banner" style="margin-bottom:16px;"></div>
+      <div class="table-container" style="padding:0; background:transparent; border:none;">
+        <div class="table-header" style="background:var(--bg3); border:1px solid var(--border); border-radius:10px; margin-bottom:14px;">
+          <div class="table-title"><i class="ti ti-list-search" style="color:var(--amber)"></i> Inconsistências encontradas</div>
+          <div class="table-actions">
+            <select class="select-sm" id="filtro-filial-ce" onchange="filtrarCacaErros()">
+              <option value="">Todas as filiais</option>
+            </select>
+            <select class="select-sm" id="filtro-tipo-ce" onchange="filtrarCacaErros()">
+              <option value="">Todos os tipos</option>
+              <option value="grave">Só graves</option>
+              <option value="verificar">Só a verificar</option>
+            </select>
+            <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-cacaerros" oninput="filtrarCacaErros()">
+            <button class="btn-limpar" onclick="limparFiltros('cacaerros')"><i class="ti ti-x"></i> Limpar</button>
+            <div class="export-dropdown" id="dd-cacaerros">
+              <button class="btn-sm primary" onclick="toggleDropdown('dd-cacaerros')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
+              <div class="export-menu" id="menu-dd-cacaerros">
+                <div class="export-menu-item" onclick="exportarCacaErrosExcel();toggleDropdown('dd-cacaerros')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</div>
+                <div class="export-menu-item" onclick="exportarPNG('cacaerros-lista','caca_erros');toggleDropdown('dd-cacaerros')"><i class="ti ti-photo"></i> Imagem (.png)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="cacaerros-lista"></div>
       </div>
     </div>
 
@@ -2561,6 +2608,8 @@ const APP = {
   filteredSemGiro: [],
   alerta: [],
   filteredAlerta: [],
+  cacaErros: [],          // inconsistências detectadas (cruzando todas as filiais)
+  filteredCacaErros: [],
   checklistExtras: [],   // lotes adicionados manualmente ao checklist (além dos que o sistema traz)
   checklistObs: {},      // observações por item { 'codProduto|lote': 'texto' }
 };
@@ -2875,6 +2924,8 @@ function processarDados() {
       renderTabelaSemGiro();
       computarAlerta();
       renderAlerta();
+      computarCacaErros();
+      renderCacaErros();
       renderChecklist();
       renderSazonalidade();
       // Plano de ação pré-calculado silenciosamente
@@ -3228,6 +3279,210 @@ function exportarAlertaExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Alerta Vencimento');
   XLSX.writeFile(wb, `alerta_vencimento_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.xlsx`);
+}
+
+// ==================== CAÇA-ERROS (consistência dos dados entre filiais) ====================
+// Cruza APP.allLotes (todas as filiais importadas) e aponta possíveis erros de digitação:
+//  (1) mesmo lote+produto com datas diferentes entre lojas (a loja minoritária é a provável errada);
+//  (2) datas impossíveis (vencimento <= fabricação, data inexistente, fabricação no futuro, ano absurdo);
+//  (3) validade fora do padrão do próprio produto (pega data mistypada mesmo sem duplicar entre lojas).
+function parseDataBR(s) {
+  if (!s) return null;
+  const m = String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (!m) return null;
+  let d = +m[1], mo = +m[2], y = +m[3];
+  if (y < 100) y += 2000;
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null; // ex.: 31/02
+  return dt;
+}
+function lojaNome(sig) { return (BASE_FILIAIS[sig] && BASE_FILIAIS[sig].loja) || sig || '—'; }
+function mediana(a) { const s = [...a].sort((x, y) => x - y); const n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : 0; }
+
+function computarCacaErros() {
+  const lotes = APP.allLotes || [];
+  const findings = [];
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const ANO_MIN = 2015, ANO_MAX = 2100;
+  const flagged = new Set();
+  const keyRec = l => `${l.sigla}|${l.codProduto}|${l.lote}|${l.dtFabricacao}|${l.dtVencimento}`;
+
+  // (1) Lote divergente entre filiais
+  const grupos = {};
+  for (const l of lotes) {
+    const lote = String(l.lote || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (!lote) continue;
+    const k = l.codProduto + '|' + lote;
+    (grupos[k] = grupos[k] || []).push(l);
+  }
+  for (const k in grupos) {
+    const recs = grupos[k];
+    const siglas = [...new Set(recs.map(r => r.sigla))];
+    const vencs = [...new Set(recs.map(r => r.dtVencimento).filter(Boolean))];
+    const fabs = [...new Set(recs.map(r => r.dtFabricacao).filter(Boolean))];
+    const divVenc = vencs.length > 1, divFab = fabs.length > 1;
+    if (!(divVenc || divFab)) continue;
+    if (siglas.length < 2 && recs.length < 2) continue;
+    const seen = new Set(), rows = [];
+    for (const r of recs) {
+      const rk = r.sigla + '|' + r.dtFabricacao + '|' + r.dtVencimento;
+      if (seen.has(rk)) continue; seen.add(rk);
+      rows.push({ sigla: r.sigla, loja: lojaNome(r.sigla), fabricacao: r.dtFabricacao || '—', vencimento: r.dtVencimento || '—' });
+    }
+    const campo = divVenc ? 'vencimento' : 'fabricacao';
+    const cont = {}; rows.forEach(x => { cont[x[campo]] = (cont[x[campo]] || 0) + 1; });
+    const max = Math.max(...Object.values(cont));
+    const maioria = Object.keys(cont).filter(v => cont[v] === max);
+    rows.forEach(x => { x.flag = (maioria.length === 1 && x[campo] !== maioria[0]) ? 'erro' : ''; });
+    const prod = recs[0].nomeProduto || k;
+    const campos = [divVenc ? 'vencimentos' : null, divFab ? 'fabricações' : null].filter(Boolean).join(' e ');
+    findings.push({
+      tipo: 'grave', cat: 'divergencia', catLabel: 'Lote com datas divergentes',
+      codProduto: recs[0].codProduto, produto: prod, lote: String(recs[0].lote).trim(),
+      filiais: siglas,
+      titulo: `O lote ${String(recs[0].lote).trim()} do produto ${prod} aparece com ${campos} diferentes entre lojas. O mesmo lote deveria ter sempre as mesmas datas.`,
+      rows
+    });
+    recs.forEach(r => flagged.add(keyRec(r)));
+  }
+
+  // (2) Datas impossíveis (por registro)
+  for (const l of lotes) {
+    if (!l.dtFabricacao && !l.dtVencimento) continue;
+    const fab = parseDataBR(l.dtFabricacao), ven = parseDataBR(l.dtVencimento);
+    let motivo = null;
+    if (l.dtVencimento && !ven) motivo = 'Data de vencimento inválida (não é uma data real).';
+    else if (l.dtFabricacao && !fab) motivo = 'Data de fabricação inválida (não é uma data real).';
+    else if (fab && ven && ven <= fab) motivo = 'Vencimento anterior ou igual à fabricação — datas possivelmente trocadas.';
+    else if (fab && fab > hoje) motivo = 'Data de fabricação no futuro.';
+    else if (ven && (ven.getFullYear() < ANO_MIN || ven.getFullYear() > ANO_MAX)) motivo = `Ano de vencimento improvável (${ven.getFullYear()}).`;
+    if (!motivo) continue;
+    if (flagged.has(keyRec(l))) continue;
+    findings.push({
+      tipo: 'grave', cat: 'impossivel', catLabel: 'Data impossível',
+      codProduto: l.codProduto, produto: l.nomeProduto || l.codProduto, lote: String(l.lote || '').trim(),
+      filiais: [l.sigla],
+      titulo: `${l.nomeProduto || l.codProduto} (lote ${String(l.lote || '').trim() || '—'}) na loja ${lojaNome(l.sigla)}: ${motivo}`,
+      rows: [{ sigla: l.sigla, loja: lojaNome(l.sigla), fabricacao: l.dtFabricacao || '—', vencimento: l.dtVencimento || '—', flag: 'erro' }]
+    });
+    flagged.add(keyRec(l));
+  }
+
+  // (3) Validade fora do padrão do produto
+  const porProd = {};
+  for (const l of lotes) {
+    const fab = parseDataBR(l.dtFabricacao), ven = parseDataBR(l.dtVencimento);
+    if (!fab || !ven || ven <= fab) continue;
+    const dias = Math.round((ven - fab) / 86400000);
+    (porProd[l.codProduto] = porProd[l.codProduto] || []).push({ l, dias });
+  }
+  for (const cod in porProd) {
+    const arr = porProd[cod];
+    if (arr.length < 4) continue;
+    const med = mediana(arr.map(x => x.dias));
+    if (med <= 0) continue;
+    for (const { l, dias } of arr) {
+      if (flagged.has(keyRec(l))) continue;
+      if (Math.abs(dias - med) / med > 0.4 && Math.abs(dias - med) > 90) {
+        findings.push({
+          tipo: 'verificar', cat: 'padrao', catLabel: 'Validade fora do padrão',
+          codProduto: l.codProduto, produto: l.nomeProduto || l.codProduto, lote: String(l.lote || '').trim(),
+          filiais: [l.sigla],
+          titulo: `${l.nomeProduto || l.codProduto} (lote ${String(l.lote || '').trim() || '—'}) na loja ${lojaNome(l.sigla)}: validade de ~${Math.round(dias / 30)} meses, mas o padrão deste produto é ~${Math.round(med / 30)} meses. Conferir as datas.`,
+          rows: [{ sigla: l.sigla, loja: lojaNome(l.sigla), fabricacao: l.dtFabricacao || '—', vencimento: l.dtVencimento || '—', flag: 'erro' }]
+        });
+      }
+    }
+  }
+
+  findings.sort((a, b) => (a.tipo === b.tipo ? 0 : (a.tipo === 'grave' ? -1 : 1)));
+  APP.cacaErros = findings;
+  APP.filteredCacaErros = [...findings];
+}
+
+function renderCacaErros() {
+  const sel = document.getElementById('filtro-filial-ce');
+  if (sel) {
+    const siglas = [...new Set((APP.allLotes || []).map(l => l.sigla).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">Todas as filiais</option>' + siglas.map(s => `<option value="${s}">${s} — ${lojaNome(s)}</option>`).join('');
+  }
+  const nFil = new Set((APP.allLotes || []).map(l => l.sigla)).size;
+  const aviso = document.getElementById('cacaerros-multi-aviso');
+  if (aviso) {
+    if (nFil < 2) { aviso.style.display = ''; aviso.textContent = ' Apenas 1 filial importada — para cruzar o mesmo lote entre lojas, importe um relatório com várias filiais.'; }
+    else aviso.style.display = 'none';
+  }
+  const graves = APP.cacaErros.filter(f => f.tipo === 'grave').length;
+  const verificar = APP.cacaErros.filter(f => f.tipo === 'verificar').length;
+  const total = (APP.allLotes || []).length;
+  document.getElementById('summary-cacaerros').innerHTML = `
+    <div class="summary-card red"><div class="summary-label">Inconsistências Graves</div><div class="summary-value">${graves}</div><div class="summary-sub">Datas impossíveis ou lote divergente</div><i class="ti ti-alert-octagon summary-icon"></i></div>
+    <div class="summary-card ${verificar ? 'orange' : 'green'}"><div class="summary-label">A Verificar</div><div class="summary-value">${verificar}</div><div class="summary-sub">Validade fora do padrão</div><i class="ti ti-help-circle summary-icon"></i></div>
+    <div class="summary-card blue"><div class="summary-label">Registros Analisados</div><div class="summary-value">${total.toLocaleString('pt-BR')}</div><div class="summary-sub">Total da importação</div><i class="ti ti-database summary-icon"></i></div>`;
+  const banner = document.getElementById('cacaerros-banner');
+  const totalF = APP.cacaErros.length;
+  banner.innerHTML = totalF > 0
+    ? `<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:13px 16px;display:flex;gap:10px;align-items:center;"><i class="ti ti-alert-triangle" style="color:#ef4444;font-size:18px;"></i><div style="font-size:13px;">Foram encontradas <strong>${totalF} possíve${totalF !== 1 ? 'is inconsistências' : 'l inconsistência'}</strong>. Confira cada uma — pode ser erro de digitação nas filiais. Corrija na origem e reimporte se necessário.</div></div>`
+    : `<div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.25);border-radius:10px;padding:13px 16px;display:flex;gap:10px;align-items:center;"><i class="ti ti-circle-check" style="color:var(--verde);font-size:18px;"></i><div style="font-size:13px;">Nenhuma inconsistência detectada nos dados importados. Datas e lotes consistentes.</div></div>`;
+  renderListaCacaErros();
+}
+
+function renderListaCacaErros() {
+  const cont = document.getElementById('cacaerros-lista');
+  const data = APP.filteredCacaErros;
+  if (!data.length) {
+    cont.innerHTML = `<div class="empty" style="padding:40px;"><i class="ti ti-mood-smile" style="color:var(--verde)"></i><p>Nenhuma inconsistência nesta seleção.</p></div>`;
+    return;
+  }
+  cont.innerHTML = data.map(f => {
+    const badge = f.tipo === 'grave'
+      ? '<span style="background:rgba(239,68,68,.15);color:#f87171;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Grave</span>'
+      : '<span style="background:rgba(245,158,11,.15);color:#fbbf24;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">A verificar</span>';
+    const rows = f.rows.map(r => `<tr>
+        <td style="padding:9px 12px;font-weight:600;${r.flag === 'erro' ? 'color:#f87171;' : ''}">${r.loja}${r.flag === 'erro' ? ' <i class="ti ti-alert-triangle" style="font-size:11px;" title="Provável origem do erro"></i>' : ''}</td>
+        <td style="padding:9px 12px;">${r.fabricacao}</td>
+        <td style="padding:9px 12px;">${r.vencimento}</td>
+      </tr>`).join('');
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid ${f.tipo === 'grave' ? '#ef4444' : '#f59e0b'};border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+        ${badge}<span style="font-size:11px;color:var(--texto-muted);">${f.catLabel}</span>
+        <span style="font-weight:700;">${f.produto}</span>
+        ${f.lote ? `<span style="background:var(--brand-lt);color:var(--brand-dk);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;font-family:monospace;">Lote ${f.lote}</span>` : ''}
+      </div>
+      <div style="font-size:12.5px;color:var(--texto);line-height:1.6;margin-bottom:10px;">${f.titulo}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="color:var(--texto-muted);text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:7px 12px;font-weight:600;">LOJA</th><th style="padding:7px 12px;font-weight:600;">FABRICAÇÃO</th><th style="padding:7px 12px;font-weight:600;">VENCIMENTO</th>
+        </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }).join('');
+}
+
+function filtrarCacaErros() {
+  const fil = document.getElementById('filtro-filial-ce').value;
+  const tipo = document.getElementById('filtro-tipo-ce').value;
+  const busca = (document.getElementById('busca-cacaerros').value || '').toLowerCase();
+  APP.filteredCacaErros = APP.cacaErros.filter(f => {
+    const mFil = !fil || f.filiais.includes(fil);
+    const mTipo = !tipo || f.tipo === tipo;
+    const mB = !busca || (f.produto || '').toLowerCase().includes(busca) || String(f.lote).toLowerCase().includes(busca) || String(f.codProduto).includes(busca);
+    return mFil && mTipo && mB;
+  });
+  renderListaCacaErros();
+}
+
+function exportarCacaErrosExcel() {
+  const rows = [];
+  APP.filteredCacaErros.forEach((f, i) => {
+    f.rows.forEach(r => {
+      rows.push({ '#': i + 1, 'Tipo': f.tipo === 'grave' ? 'Grave' : 'A verificar', 'Categoria': f.catLabel, 'Cód Produto': f.codProduto, 'Produto': f.produto, 'Lote': f.lote, 'Loja': r.loja, 'Fabricação': r.fabricacao, 'Vencimento': r.vencimento, 'Provável erro': r.flag === 'erro' ? 'Sim' : '', 'Descrição': f.titulo });
+    });
+  });
+  const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ 'Resultado': 'Nenhuma inconsistência' }]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Caça-Erros');
+  XLSX.writeFile(wb, `caca_erros_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.xlsx`);
 }
 
 // Metadados das rotas de destinação (ordem, cor, rótulo executivo)
@@ -3634,6 +3889,11 @@ function limparFiltros(tipo) {
     document.getElementById('filtro-janela-a').value = '';
     document.getElementById('busca-alerta').value = '';
     filtrarAlerta();
+  } else if (tipo === 'cacaerros') {
+    document.getElementById('filtro-filial-ce').value = '';
+    document.getElementById('filtro-tipo-ce').value = '';
+    document.getElementById('busca-cacaerros').value = '';
+    filtrarCacaErros();
   }
 }
 
@@ -4596,7 +4856,14 @@ function atualizarSidebar() {
     if (alertaAcao > 0) { badgeA.textContent = alertaAcao; badgeA.classList.remove('hidden'); }
     else badgeA.classList.add('hidden');
   }
-  
+  // Badge do caça-erros = nº de inconsistências graves
+  const badgeCE = document.getElementById('badge-cacaerros');
+  const graves = (APP.cacaErros || []).filter(f => f.tipo === 'grave').length;
+  if (badgeCE) {
+    if (graves > 0) { badgeCE.textContent = graves; badgeCE.classList.remove('hidden'); }
+    else badgeCE.classList.add('hidden');
+  }
+
   document.getElementById('filial-nome').textContent = `${APP.sigla} — ${APP.lotes[0]?.descricao?.split('(')[0]?.trim() || ''}`;
   document.getElementById('info-filial').textContent = `Filial ${APP.filial} — ${APP.sigla}`;
   document.getElementById('info-data').textContent = `Auditoria: ${APP.dataAuditoria.toLocaleDateString('pt-BR')}`;
@@ -4608,7 +4875,7 @@ function atualizarSidebar() {
 
 // ==================== NAVEGAÇÃO ====================
 function showTab(tab) {
-  ['upload','risco','vencidos','alerta','semgiro','auditoria','sazonalidade','plano','historico'].forEach(t => {
+  ['upload','risco','vencidos','alerta','semgiro','cacaerros','auditoria','sazonalidade','plano','historico'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
     document.getElementById(`nav-${t}`)?.classList.toggle('active', t === tab);
   });
