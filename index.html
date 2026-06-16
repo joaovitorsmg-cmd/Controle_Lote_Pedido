@@ -6301,14 +6301,18 @@ function PED_switchModule(mod) {
   var pDiv = document.getElementById('mod-pedidos');
   var bL = document.getElementById('btn-mod-lotes');
   var bP = document.getElementById('btn-mod-pedidos');
-  if (!lDiv || !pDiv) return;
+  console.log('[SWITCH]', mod, 'lDiv=', !!lDiv, 'pDiv=', !!pDiv);
+  if (!lDiv || !pDiv) { console.error('[SWITCH] div não encontrada!'); return; }
   if (mod === 'lotes') {
-    lDiv.style.display = ''; pDiv.style.display = 'none';
+    lDiv.style.cssText = 'display:block!important';
+    pDiv.style.cssText = 'display:none!important';
     if(bL) bL.classList.add('ativo'); if(bP) bP.classList.remove('ativo');
   } else {
-    lDiv.style.display = 'none'; pDiv.style.display = '';
+    lDiv.style.cssText = 'display:none!important';
+    pDiv.style.cssText = 'display:block!important';
     if(bL) bL.classList.remove('ativo'); if(bP) bP.classList.add('ativo');
   }
+  console.log('[SWITCH] done. pDiv display=', pDiv.style.display, 'computed=', window.getComputedStyle(pDiv).display);
 }
 
 // ===== MÓDULO PEDIDOS/CANHOTO =====
