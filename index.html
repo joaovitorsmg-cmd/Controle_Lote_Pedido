@@ -2377,19 +2377,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     ⚠ Importe o relatório de lotes, processe os dados e clique em "Registrar esta Auditoria".
   </div>
 
-  <!-- Modal de faturamento para calcular score -->
-  <div id="modal-fat" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;">
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:400px;max-width:95vw;">
-      <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px;">💰 Faturamento para Score de Vencidos</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:18px;">Informe o faturamento acumulado da filial <strong id="fat-sigla"></strong> até a data da auditoria (usado para calcular o % de vencidos no faturamento).</div>
-      <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;">Faturamento (R$)</label>
-      <input id="inp-fat" type="number" min="0" step="0.01" placeholder="Ex: 1500000" style="width:100%;margin-top:6px;margin-bottom:18px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none;">
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button onclick="document.getElementById('modal-fat').classList.add('hidden')" style="padding:8px 16px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:13px;">Cancelar</button>
-        <button id="btn-fat-ok" style="padding:8px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,#2b7fd4,#4d96e0);color:#fff;cursor:pointer;font-size:13px;font-weight:700;">Registrar</button>
-      </div>
-    </div>
-  </div>
+
 
   <!-- KPIs do histórico -->
   <div id="hist-venc-kpis" style="display:none;flex-wrap:wrap;gap:12px;margin-bottom:20px;"></div>
@@ -2412,8 +2400,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);">Mês/Período</th>
           <th style="padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);">Venc. Conf.</th>
           <th style="padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);">Vlr Vencidos</th>
-          <th style="padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);">Faturamento</th>
-          <th style="padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);">% Venc/Fat</th>
+
           <th style="padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);">Sem Giro</th>
           <th style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--border);">Score</th>
           <th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);">Registrado</th>
@@ -2425,9 +2412,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
 
   <div style="margin-top:20px;font-size:11px;color:var(--text3);padding:12px 16px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);">
-    <strong>Score de Vencidos (máx 100 pts):</strong> Quanto menor o % de Valor Vencidos sobre o Faturamento, maior a pontuação.
-    0% = 100 pts · até 0,1% = 80 pts · até 0,5% = 60 pts · até 1% = 40 pts · até 2% = 20 pts · acima de 2% = 0 pts.
-    Este score alimenta a coluna <em>Score Vencidos</em> no Painel de Ranking Geral.
+    <strong>Score de Vencidos:</strong> O score é calculado no <em>Ranking Geral</em> após importar o faturamento das filiais via relatório de Resumo CFOP. Aqui são registrados apenas os dados de vencidos (quantidade, valor, sem giro).
   </div>
 </div>
 <!-- /ABA HISTÓRICO -->
@@ -5208,7 +5193,7 @@ function normalizarFilialArq(sigla, loja) {
   return nome || 'FILIAL';
 }
 
-// Botão Registrar: abre modal de faturamento → após confirmação, registra
+// Botão Registrar: vai direto ao registro (faturamento é gerenciado no Ranking Geral)
 function registrarAuditoriaVencidos() {
   if (!APP.lotes.length) {
     const av = document.getElementById('hist-venc-aviso');
@@ -5216,31 +5201,18 @@ function registrarAuditoriaVencidos() {
     setTimeout(() => av.style.display = 'none', 3000);
     return;
   }
-  // Preenche o modal com a sigla da filial
-  document.getElementById('fat-sigla').textContent = APP.sigla || '';
-  // Recupera faturamento já usado para esta filial (se houver)
-  const existente = VENC_HIST.find(d => d.filial === APP.sigla);
-  document.getElementById('inp-fat').value = existente ? existente.faturamento || '' : '';
-  document.getElementById('modal-fat').classList.remove('hidden');
-  document.getElementById('inp-fat').focus();
-  // Handler do botão OK
-  document.getElementById('btn-fat-ok').onclick = _confirmarRegistroVencidos;
+  _gravarRegistroVencidos();
 }
 
-function _confirmarRegistroVencidos() {
-  document.getElementById('modal-fat').classList.add('hidden');
-  const fat = parseFloat(document.getElementById('inp-fat').value) || 0;
-  _gravarRegistroVencidos(fat);
-}
-
-function _gravarRegistroVencidos(faturamento) {
+function _gravarRegistroVencidos() {
   const filialNome = (APP.lotes[0]?.descricao?.split('(')[0]?.trim() || APP.sigla || '—');
   const gerente = APP.lotes[0]?.gerente || '—';
   const totalVencidos = APP.vencidos.length;
   const valorVencidos = APP.vencidos.reduce((s, l) => s + l.vlrCustoTotal, 0);
   const semGiroProd = new Set(APP.semGiro.map(l => l.codProduto)).size;
-  const pctVencFat = faturamento > 0 ? (valorVencidos / faturamento) * 100 : null;
-  const scoreVenc = calcScoreVenc(valorVencidos, faturamento);
+  const faturamento = null; // Faturamento gerenciado no Ranking Geral
+  const pctVencFat = null;
+  const scoreVenc = null; // Calculado no Ranking após importar faturamento
 
   // Determinar mês/período: usa a data da auditoria
   const d = APP.dataAuditoria || new Date();
@@ -5320,13 +5292,13 @@ function renderHistoricoVenc() {
 
   // KPIs
   const total = VENC_HIST.length;
-  const mediaScore = (VENC_HIST.reduce((s,d) => s + d.scoreVenc, 0) / total).toFixed(1);
   const semVencidos = VENC_HIST.filter(d => d.totalVencidos === 0).length;
   const totalValorVenc = VENC_HIST.reduce((s,d) => s + d.valorVencidos, 0);
+  const totalLotesAud = VENC_HIST.reduce((s,d) => s + (d.totalLotes||0), 0);
   kpis.innerHTML = [
     ['Auditorias Registradas', total, 'var(--brand)'],
-    ['Score Médio Vencidos', mediaScore + ' pts', '#14693a'],
     ['Filiais Sem Vencidos', `${semVencidos}/${total}`, '#14693a'],
+    ['Total Lotes Auditados', totalLotesAud.toLocaleString('pt-BR'), 'var(--brand)'],
     ['Valor Total Vencidos', formatValor(totalValorVenc), 'var(--red)'],
   ].map(([l,v,c]) => `
     <div class="hist-kpi-card" style="border-top-color:${c}">
@@ -5338,10 +5310,7 @@ function renderHistoricoVenc() {
   // Tabela
   const sorted = [...VENC_HIST].sort((a,b) => b.id - a.id);
   document.getElementById('body-hist-venc').innerHTML = sorted.map((d, i) => {
-    const sc = d.scoreVenc;
-    const scCls = scoreClassVenc(sc);
-    const pctStr = d.pctVencFat != null ? d.pctVencFat.toFixed(3) + '%' : '—';
-    const pctCor = d.pctVencFat == null ? '' : d.pctVencFat === 0 ? 'color:#5fd4a0;font-weight:700' : d.pctVencFat <= 0.5 ? 'color:var(--amber-dk);font-weight:700' : 'color:var(--red-dk);font-weight:700';
+
     return `<tr>
       <td style="padding:9px 12px;color:var(--text3);font-size:11px;">${i+1}</td>
       <td style="padding:9px 12px;"><b>${d.filial}</b><br><span style="font-size:10px;color:var(--text3);">${d.filialNome}</span></td>
@@ -5349,10 +5318,9 @@ function renderHistoricoVenc() {
       <td style="padding:9px 12px;">${d.periodo}<br><span style="font-size:10px;color:var(--text3);">${d.dataAuditoria}</span></td>
       <td style="padding:9px 12px;text-align:right;">${d.totalVencidos}</td>
       <td style="padding:9px 12px;text-align:right;${d.valorVencidos>0?'color:var(--red-dk);font-weight:700':''}">${formatValor(d.valorVencidos)}</td>
-      <td style="padding:9px 12px;text-align:right;">${d.faturamento > 0 ? formatValor(d.faturamento) : '<span style="color:var(--text3)">—</span>'}</td>
-      <td style="padding:9px 12px;text-align:right;${pctCor}">${pctStr}</td>
+
       <td style="padding:9px 12px;text-align:right;">${d.semGiroProd}</td>
-      <td style="padding:9px 12px;text-align:center;"><span class="hist-score ${scCls}">${sc}</span></td>
+      <td style="padding:9px 12px;text-align:center;"><span style="color:var(--text3);font-size:11px;">—</span></td>
       <td style="padding:9px 12px;font-size:10px;color:var(--text3);">${d.dataReg}</td>
       <td style="padding:9px 12px;text-align:center;"><button class="btn-del-hist" onclick="removerRegistroVenc(${d.id})" title="Remover">✕</button></td>
     </tr>`;
@@ -5382,39 +5350,38 @@ function expHistoricoVencXLS() {
   // Aba 1: Lançamentos — formato compatível com o painel de Ranking
   const header = [
     'Filial','Nome da Filial','Gerente','Período','Data Auditoria',
-    'Lotes Auditados','Lotes Vencidos','Valor Vencidos (R$)','Faturamento (R$)','% Venc/Fat',
-    'Produtos Sem Giro','Score Vencidos','Registrado em'
+    'Lotes Auditados','Lotes Vencidos','Valor Vencidos (R$)',
+    'Produtos Sem Giro','Registrado em'
   ];
   const rows = [header];
   VENC_HIST.forEach(d => rows.push([
     d.filial, d.filialNome, d.gerente, d.periodo, d.dataAuditoria,
     d.totalLotes, d.totalVencidos,
-    d.valorVencidos, d.faturamento > 0 ? d.faturamento : '',
-    d.pctVencFat != null ? parseFloat(d.pctVencFat.toFixed(4)) : '',
-    d.semGiroProd, d.scoreVenc, d.dataReg
+    d.valorVencidos,
+    d.semGiroProd, d.dataReg
   ]));
 
   const ws1 = XLSX.utils.aoa_to_sheet(rows);
-  ws1['!cols'] = [{wch:8},{wch:20},{wch:18},{wch:10},{wch:14},{wch:14},{wch:14},{wch:18},{wch:18},{wch:12},{wch:16},{wch:14},{wch:18}];
+  ws1['!cols'] = [{wch:8},{wch:20},{wch:18},{wch:10},{wch:14},{wch:14},{wch:14},{wch:18},{wch:16},{wch:18}];
   XLSX.utils.book_append_sheet(wb, ws1, 'Lançamentos');
 
   // Aba 2: Ranking por filial
   const porFilial = {};
   VENC_HIST.forEach(d => {
-    if (!porFilial[d.filial]) porFilial[d.filial] = {filial:d.filial,nome:d.filialNome,regs:[],scores:[]};
+    if (!porFilial[d.filial]) porFilial[d.filial] = {filial:d.filial,nome:d.filialNome,regs:[]};
     porFilial[d.filial].regs.push(d);
-    porFilial[d.filial].scores.push(d.scoreVenc);
   });
   const rank = Object.values(porFilial).map(f => ({
     ...f,
-    mediaScore: parseFloat((f.scores.reduce((a,b)=>a+b,0)/f.scores.length).toFixed(1)),
     auditorias: f.regs.length,
+    totalVencidos: f.regs.reduce((s,r)=>s+r.totalVencidos,0),
+    valorVencidos: f.regs.reduce((s,r)=>s+r.valorVencidos,0),
     semVencidos: f.regs.filter(r=>r.totalVencidos===0).length,
-  })).sort((a,b) => b.mediaScore - a.mediaScore);
+  })).sort((a,b) => a.valorVencidos - b.valorVencidos); // menor valor = melhor
 
   const ws2 = XLSX.utils.aoa_to_sheet([
-    ['#','Filial','Nome','Auditorias','Score Médio','% Sem Vencidos'],
-    ...rank.map((f,i) => [i+1, f.filial, f.nome, f.auditorias, f.mediaScore, Math.round(f.semVencidos/f.auditorias*100)+'%'])
+    ['#','Filial','Nome','Auditorias','Vlr Vencidos Total','Qtd Vencidos Total','% Sem Vencidos'],
+    ...rank.map((f,i) => [i+1, f.filial, f.nome, f.auditorias, f.valorVencidos, f.totalVencidos, Math.round(f.semVencidos/f.auditorias*100)+'%'])
   ]);
   ws2['!cols'] = [{wch:4},{wch:8},{wch:20},{wch:12},{wch:12},{wch:16}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Ranking por Filial');
@@ -5506,9 +5473,9 @@ function lerArquivoHistVenc(input) {
               id: Date.now()+i, filial:String(r[0]||''), filialNome:String(r[1]||''),
               gerente:String(r[2]||''), periodo:String(r[3]||''), dataAuditoria:String(r[4]||''),
               totalLotes:parseInt(r[5])||0, totalVencidos:parseInt(r[6])||0,
-              valorVencidos:parseFloat(r[7])||0, faturamento:parseFloat(r[8])||0,
-              pctVencFat:parseFloat(r[9])||null, semGiroProd:parseInt(r[10])||0,
-              scoreVenc:parseFloat(r[11])||0, dataReg:String(r[12]||''),
+              valorVencidos:parseFloat(r[7])||0, faturamento:null,
+              pctVencFat:null, semGiroProd:parseInt(r[8])||0,
+              scoreVenc:null, dataReg:String(r[9]||''),
             });
           }
           if (dados.length) { _processarHistVencImportado(dados); return; }
