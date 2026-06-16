@@ -4447,7 +4447,7 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
     <div id="ped-topo-sub">Nenhum arquivo importado</div>
   </div>
   <div class="topo-btns">
-    <button class="btn-topo primary" onclick="document.getElementById('fi').click()">⬆ Importar Arquivos</button>
+    <button class="btn-topo primary" onclick="document.getElementById('ped-fi').click()">⬆ Importar Arquivos</button>
     <button class="btn-topo" onclick="PED_resetarFiltros()" title="Zera ordenações e filtros, mantém os dados">↺ Resetar</button>
     <button class="btn-topo danger" onclick="PED_descarregarDados()" title="Remove os dados e volta à tela de importação">✕ Descarregar</button>
     <input type="file" id="ped-fi" multiple accept=".xls,.xlsx" onchange="PED_handleFiles(this.files)" style="display:none"/>
@@ -4473,7 +4473,7 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
   <!-- TELA IMPORT -->
   <div id="ped-tela-import">
     <div id="ped-drop-zone" ondragover="PED_evDrag(event)" ondragleave="PED_dlDrag()" ondrop="PED_dropArq(event)"
-         onclick="document.getElementById('fi').click()">
+         onclick="document.getElementById('ped-fi').click()">
       <div class="drop-icon">📂</div>
       <h2>Importar arquivos do sistema</h2>
       <p>Arraste ou clique para selecionar os 4 arquivos de uma vez.<br>
@@ -4485,7 +4485,7 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
         <div>📄 <b>…Sementes.xls</b> — identificação de pedidos semente</div>
       </div>
       <br/>
-      <button class="btn-az" onclick="event.stopPropagation();document.getElementById('fi').click()">Selecionar arquivos</button>
+      <button class="btn-az" onclick="event.stopPropagation();document.getElementById('ped-fi').click()">Selecionar arquivos</button>
       <div class="arq-status" id="ped-arq-status"></div>
     </div>
   </div>
