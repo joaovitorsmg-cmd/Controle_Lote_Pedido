@@ -4520,8 +4520,8 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
             <button class="btn-exp small" onclick="PED_expandirTodos('tb-ped')">Expandir todos</button>
             <button class="btn-exp small" onclick="PED_recolherTodos('tb-ped')">Recolher todos</button>
             <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor — resumo + pendências">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="PED_expPNG('wrap-ped')">PNG</button>
-            <button class="btn-exp" onclick="PED_expPDF('wrap-ped','pedidos')">PDF</button>
+            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-ped')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-ped','pedidos')">PDF</button>
             <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
@@ -4529,12 +4529,12 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
           <table id="ped-tb-ped">
             <thead><tr>
               <th style="width:36px"></th>
-              <th class="sortable" onclick="PED_sortTab('tb-ped',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-ped',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-ped',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-ped',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-ped',5,this)">% Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-ped',6,this)">Sem. Pend.<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',5,this)">% Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',6,this)">Sem. Pend.<span class="si"></span></th>
               <th>Período</th>
             </tr></thead>
             <tbody id="ped-body-ped"></tbody>
@@ -4554,8 +4554,8 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
             <button class="btn-exp small" onclick="PED_expandirTodos('tb-sem')">Expandir todos</button>
             <button class="btn-exp small" onclick="PED_recolherTodos('tb-sem')">Recolher todos</button>
             <button class="btn-exp primary" onclick="PED_expConferencia('sementes')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="PED_expPNG('wrap-sem')">PNG</button>
-            <button class="btn-exp" onclick="PED_expPDF('wrap-sem','sementes')">PDF</button>
+            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-sem')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-sem','sementes')">PDF</button>
             <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
@@ -4563,11 +4563,11 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
           <table id="ped-tb-sem">
             <thead><tr>
               <th style="width:36px"></th>
-              <th class="sortable" onclick="PED_sortTab('tb-sem',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-sem',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-sem',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-sem',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-sem',5,this)">% Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',5,this)">% Assinados<span class="si"></span></th>
               <th>Período</th>
             </tr></thead>
             <tbody id="ped-body-sem"></tbody>
@@ -4586,8 +4586,8 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
             <button class="btn-exp small" onclick="PED_expandirTodos('tb-cm')">Expandir todos</button>
             <button class="btn-exp small" onclick="PED_recolherTodos('tb-cm')">Recolher todos</button>
             <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="PED_expPNG('wrap-cm')">PNG</button>
-            <button class="btn-exp" onclick="PED_expPDF('wrap-cm','canhotos')">PDF</button>
+            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cm')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cm','canhotos')">PDF</button>
             <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
@@ -4595,11 +4595,11 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
           <table id="ped-tb-cm">
             <thead><tr>
               <th style="width:36px"></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cm',1,this)">Mês<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cm',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cm',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cm',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cm',5,this)">% Inconsistente<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',1,this)">Mês<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',5,this)">% Inconsistente<span class="si"></span></th>
             </tr></thead>
             <tbody id="ped-body-cm"></tbody>
           </table>
@@ -4617,8 +4617,8 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
             <button class="btn-exp small" onclick="PED_expandirTodos('tb-cv')">Expandir todos</button>
             <button class="btn-exp small" onclick="PED_recolherTodos('tb-cv')">Recolher todos</button>
             <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="PED_expPNG('wrap-cv')">PNG</button>
-            <button class="btn-exp" onclick="PED_expPDF('wrap-cv','canhotos')">PDF</button>
+            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cv')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cv','canhotos')">PDF</button>
             <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
@@ -4626,11 +4626,11 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
           <table id="ped-tb-cv">
             <thead><tr>
               <th style="width:36px"></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cv',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cv',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cv',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cv',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-cv',5,this)">% Inconsistente<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',5,this)">% Inconsistente<span class="si"></span></th>
             </tr></thead>
             <tbody id="ped-body-cv"></tbody>
           </table>
@@ -4643,7 +4643,7 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
     <div id="ped-aba-5" class="hidden">
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;">
         <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-        <button class="btn-exp" onclick="PED_expPNG('diag-wrap')">PNG (com gráficos)</button>
+        <button class="btn-exp" onclick="PED_expPNG('ped-diag-wrap')">PNG (com gráficos)</button>
         <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
       </div>
       <div id="ped-diag-wrap">
@@ -4671,8 +4671,8 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
         <div class="tab-wrap">
           <table id="ped-tb-clientes">
             <thead><tr>
-              <th class="sortable" onclick="PED_sortTab('tb-clientes',0,this)">Cliente<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-clientes',1,this)">Pendências<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',0,this)">Cliente<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',1,this)">Pendências<span class="si"></span></th>
             </tr></thead>
             <tbody id="ped-body-clientes"></tbody>
           </table>
@@ -4684,10 +4684,10 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
           <table id="ped-tb-plano">
             <thead><tr>
               <th>Prior.</th>
-              <th class="sortable" onclick="PED_sortTab('tb-plano',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-plano',2,this)">% Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-plano',3,this)">Pendentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('tb-plano',4,this)">Sem. Pend.<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',2,this)">% Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',3,this)">Pendentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',4,this)">Sem. Pend.<span class="si"></span></th>
               <th>Ação Recomendada</th>
             </tr></thead>
             <tbody id="ped-body-plano"></tbody>
@@ -4699,8 +4699,8 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
     <!-- ABA 6: APRESENTAÇÃO -->
     <div id="ped-aba-6" class="hidden">
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
-        <button class="btn-exp" onclick="PED_expPNG('apres-wrap')">PNG</button>
-        <button class="btn-exp" onclick="PED_expPDF('apres-wrap','pedidos')">PDF</button>
+        <button class="btn-exp" onclick="PED_expPNG('ped-apres-wrap')">PNG</button>
+        <button class="btn-exp" onclick="PED_expPDF('ped-apres-wrap','pedidos')">PDF</button>
         <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
       </div>
       <div id="ped-apres-wrap" class="apres">
@@ -7012,7 +7012,7 @@ function PED_renderPedidos(dados,tC,tA,tP,tSP){
   else{al.className='alerta-box verde';al.innerHTML=`<span class="alerta-icon">✔</span>Nenhum pedido semente pendente.`;al.classList.remove('hidden');}
 
   const sorted=[...dados].sort((a,b)=>PED_pct(a.ass,a.ass+a.pend)-PED_pct(b.ass,b.ass+b.pend));
-  PED_renderTabela('body-ped',sorted,'ped',8,
+  PED_renderTabela('ped-body-ped',sorted,'ped',8,
     (v,i,rid)=>{
       const t=v.ass+v.pend; const p=PED_pct(v.ass,t); const c=PED_corP(p);
       return `<tr>
@@ -7027,7 +7027,7 @@ function PED_renderPedidos(dados,tC,tA,tP,tSP){
     },
     (dados)=>{const tT=dados.reduce((s,v)=>s+v.ass+v.pend,0);const tA=dados.reduce((s,v)=>s+v.ass,0);const tP=dados.reduce((s,v)=>s+v.pend,0);
       return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tA,tT))}</td><td></td><td></td></tr>`;},
-    'cxs-ped',['Nº Pedido','Tipo','NT Fiscal','CFOP','Semente']
+    'ped-cxs-ped',['Nº Pedido','Tipo','NT Fiscal','CFOP','Semente']
   );
 }
 
@@ -7037,7 +7037,7 @@ function PED_renderSementes(dados,tC,tA,tP){
   else{al.className='alerta-box verde';al.innerHTML=`<span class="alerta-icon">✔</span>Nenhum pedido semente pendente.`;al.classList.remove('hidden');}
 
   const sorted=[...dados].sort((a,b)=>b.pend-a.pend);
-  PED_renderTabela('body-sem',sorted,'sem',7,
+  PED_renderTabela('ped-body-sem',sorted,'sem',7,
     (v,i,rid)=>{
       const t=v.ass+v.pend; const p=PED_pct(v.ass,t); const c=PED_corP(p);
       return `<tr>
@@ -7049,12 +7049,12 @@ function PED_renderSementes(dados,tC,tA,tP){
     },
     (dados)=>{const tT=dados.reduce((s,v)=>s+v.ass+v.pend,0);const tA=dados.reduce((s,v)=>s+v.ass,0);const tP=dados.reduce((s,v)=>s+v.pend,0);
       return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tA,tT))}</td><td></td></tr>`;},
-    'cxs-sem',['Nº Pedido','Tipo','NT Fiscal','CFOP']
+    'ped-cxs-sem',['Nº Pedido','Tipo','NT Fiscal','CFOP']
   );
 }
 
 function PED_renderCanMes(dados,tC,tA,tP){
-  PED_renderTabela('body-cm',dados,'cm',6,
+  PED_renderTabela('ped-body-cm',dados,'cm',6,
     (v,i,rid)=>{
       const t=v.ass+v.pend; const pInc=PED_pct(v.pend,t); const c=PED_corPInv(pInc); const cCss=PED_corPInvCss(pInc);
       return `<tr>
@@ -7065,13 +7065,13 @@ function PED_renderCanMes(dados,tC,tA,tP){
     },
     (dados)=>{const tT=dados.reduce((s,v)=>s+v.ass+v.pend,0);const tA=dados.reduce((s,v)=>s+v.ass,0);const tP=dados.reduce((s,v)=>s+v.pend,0);
       return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tP,tT))}</td></tr>`;},
-    'cxs-cm',['Nº Pedido','Tipo','NT Fiscal','CFOP']
+    'ped-cxs-cm',['Nº Pedido','Tipo','NT Fiscal','CFOP']
   );
 }
 
 function PED_renderCanVend(dados,tC,tA,tP){
   const sorted=[...dados].sort((a,b)=>b.pend-a.pend);
-  PED_renderTabela('body-cv',sorted,'cv',6,
+  PED_renderTabela('ped-body-cv',sorted,'cv',6,
     (v,i,rid)=>{
       const t=v.ass+v.pend; const pInc=PED_pct(v.pend,t); const c=PED_corPInv(pInc); const cCss=PED_corPInvCss(pInc);
       return `<tr>
@@ -7082,7 +7082,7 @@ function PED_renderCanVend(dados,tC,tA,tP){
     },
     (dados)=>{const tT=dados.reduce((s,v)=>s+v.ass+v.pend,0);const tA=dados.reduce((s,v)=>s+v.ass,0);const tP=dados.reduce((s,v)=>s+v.pend,0);
       return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tP,tT))}</td></tr>`;},
-    'cxs-cv',['Nº Pedido','Tipo','NT Fiscal','CFOP']
+    'ped-cxs-cv',['Nº Pedido','Tipo','NT Fiscal','CFOP']
   );
 }
 
@@ -7471,7 +7471,7 @@ function PED_expPDF(wrId,tipo){
     const cv=PED_agCanVend().sort((a,b)=>PED_pct(b.pend,b.ass+b.pend)-PED_pct(a.pend,a.ass+a.pend));
     const cm=PED_agCanMes();
     let tC=0,tA=0,tP=0;cv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;});
-    corpo+=`<h2>Indicadores — Canhotos</h2><div class="kpis">
+    corpo+=`<h2>Indicadores — Canhotos</h2><div class="ped-kpis">
       <div class="kpi"><div class="kl">Conferidos</div><div class="kv">${tC}</div></div>
       <div class="kpi g"><div class="kl">Assinados</div><div class="kv">${tA}</div></div>
       <div class="kpi r"><div class="kl">Pendentes</div><div class="kv">${tP}</div></div>
@@ -7486,7 +7486,7 @@ function PED_expPDF(wrId,tipo){
     const sv=PED_agSementesVend().sort((a,b)=>PED_pct(a.ass,a.ass+a.pend)-PED_pct(b.ass,b.ass+b.pend));
     const risco=PED_agRiscoSementes();
     let tC=0,tA=0,tP=0;sv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;});
-    corpo+=`<h2>Indicadores — Sementes (Zero Tolerância)</h2><div class="kpis">
+    corpo+=`<h2>Indicadores — Sementes (Zero Tolerância)</h2><div class="ped-kpis">
       <div class="kpi"><div class="kl">Conferidos</div><div class="kv">${tC}</div></div>
       <div class="kpi g"><div class="kl">Assinados</div><div class="kv">${tA}</div></div>
       <div class="kpi r"><div class="kl">Pendentes</div><div class="kv">${tP}</div></div>
@@ -7502,7 +7502,7 @@ function PED_expPDF(wrId,tipo){
   }else{ // pedidos (padrão)
     const pv=PED_agPedidosVend().sort((a,b)=>PED_pct(a.ass,a.ass+a.pend)-PED_pct(b.ass,b.ass+b.pend));
     let tC=0,tA=0,tP=0,tSP=0;pv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;tSP+=v.semPend;});
-    corpo+=`<h2>Indicadores — Pedidos de Venda</h2><div class="kpis">
+    corpo+=`<h2>Indicadores — Pedidos de Venda</h2><div class="ped-kpis">
       <div class="kpi"><div class="kl">Conferidos</div><div class="kv">${tC}</div></div>
       <div class="kpi g"><div class="kl">Assinados</div><div class="kv">${tA}</div></div>
       <div class="kpi r"><div class="kl">Pendentes</div><div class="kv">${tP}</div></div>
@@ -7564,8 +7564,8 @@ function PED_descarregarDados(){
 let _aba=0;
 function PED_mudarAba(i){
   _aba=i;
-  document.querySelectorAll('.aba').forEach((a,j)=>a.classList.toggle('ativa',j===i));
-  for(let j=0;j<9;j++) document.getElementById('aba-'+j)?.classList.toggle('hidden',j!==i);
+  document.querySelectorAll('#ped-abas .aba').forEach((a,j)=>a.classList.toggle('ativa',j===i));
+  for(let j=0;j<9;j++) document.getElementById('ped-aba-'+j)?.classList.toggle('hidden',j!==i);
   if(i===7) PED_renderHistorico();
 }
 
