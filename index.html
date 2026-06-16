@@ -2328,7 +2328,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
         <span class="checklist-busca-hint"><i class="ti ti-info-circle"></i> Lotes adicionados aqui entram no checklist e na folha de contagem.</span>
       </div>
-      <div id="checklist-correcoes-wrap"></div>
+      <div id="checklist-correcoes-wrap" style="margin-bottom:8px;"></div>
       <div class="checklist-grid" id="checklist-container"></div>
     </div>
 
@@ -3620,27 +3620,12 @@ function renderChecklistCorrecoes() {
     fabricante: 'Fabricante diferente do padrão deste produto',
     loteformato: 'Formato de lote fora do padrão',
   };
-  const item = f => {
-    const r = f.rows.find(x => x.sigla === sig) || f.rows[0];
-    const cor = f.tipo === 'grave' ? '#ef4444' : '#f59e0b';
-    const detalhe = [r.fabricacao ? 'Fab: ' + r.fabricacao : '', r.vencimento ? 'Venc: ' + r.vencimento : '', r.fab ? 'Fabricante: ' + r.fab : '', r.qtd != null ? 'Qtd: ' + r.qtd : '', r.loteval ? 'Lote: ' + r.loteval : ''].filter(Boolean).join(' · ');
-    return `<div class="checklist-item" style="align-items:flex-start;">
-      <div class="check-num" style="background:${cor};">!</div>
-      <div class="check-info">
-        <div class="check-detail"><strong style="color:var(--branco);">${f.produto}</strong>${f.lote ? ` · Lote <strong>${f.lote}</strong>` : ''} <span style="font-size:10px;color:${cor};font-weight:700;">${f.tipo === 'grave' ? 'GRAVE' : 'VERIFICAR'}</span></div>
-        <div style="font-size:11.5px;color:var(--texto-muted);margin-top:3px;line-height:1.5;">${probs[f.cat] || f.catLabel}${detalhe ? ' — ' + detalhe : ''}. <span style="color:${cor};">Conferir físico e corrigir no sistema.</span></div>
-      </div>
-    </div>`;
-  };
-  return `<div class="checklist-card" style="border:1px solid rgba(239,68,68,.35);margin-bottom:18px;">
-    <div class="checklist-header" style="background:rgba(239,68,68,.08);">
-      <div class="checklist-linha"><i class="ti ti-bug" style="margin-right:6px;color:#ef4444;"></i>Correções de dados no sistema — ${sig}</div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="checklist-count">${itens.length} item${itens.length > 1 ? 's' : ''} · ${graves} grave${graves !== 1 ? 's' : ''} (Caça-Erros)</div>
-        <button class="btn-sm primary" onclick="exportarCacaErrosExcel()" title="Exportar Excel (.xlsx)" style="padding:3px 8px;font-size:11px;"><i class="ti ti-file-spreadsheet"></i></button>
-      </div>
-    </div>
-    <div class="checklist-produto">${itens.map(item).join('')}</div>
+  return `<div style="display:flex;align-items:center;gap:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;">
+    <i class="ti ti-bug" style="color:#ef4444;font-size:16px;flex-shrink:0;"></i>
+    <span style="font-size:12px;color:#fca5a5;flex:1;"><strong>${itens.length} inconsistência${itens.length>1?'s':''}</strong> de dados encontrada${itens.length>1?'s':''} para esta filial — ${graves} grave${graves!==1?'s':''}.</span>
+    <button class="btn-sm" onclick="showTab('cacaerros')" style="background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.4);color:#fca5a5;white-space:nowrap;flex-shrink:0;">
+      <i class="ti ti-arrow-right"></i> Ver Caça-Erros
+    </button>
   </div>`;
 }
 
