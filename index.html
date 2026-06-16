@@ -2328,6 +2328,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
         <span class="checklist-busca-hint"><i class="ti ti-info-circle"></i> Lotes adicionados aqui entram no checklist e na folha de contagem.</span>
       </div>
+      <div id="checklist-correcoes-wrap"></div>
       <div class="checklist-grid" id="checklist-container"></div>
     </div>
 
@@ -2482,31 +2483,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     </div>
     <div class="modal-body">
       <div id="print-sheet-content"></div>
-    </div>
-    <div class="modal-tab-bar">
-      <div class="modal-tab active" onclick="switchModalTab('pdf')">PDF / Impressão</div>
-      <div class="modal-tab" onclick="switchModalTab('mobile')">Versão Celular</div>
-    </div>
-    <div class="modal-body">
-      <div class="modal-tab-content active" id="modal-tab-pdf">
-        <div id="print-sheet-content"></div>
-      </div>
-      <div class="modal-tab-content" id="modal-tab-mobile" style="padding:16px;">
-        <div class="metodologia-bar">
-          <i class="ti ti-device-mobile met-icon"></i>
-          <div class="met-texto">
-            <strong>Versão interativa para celular</strong> — baixe um HTML que pode ser aberto em qualquer dispositivo.
-            O conferente preenche as quantidades encontradas, marca os itens conferidos e assina digitalmente na tela.
-            O arquivo é completamente offline — não precisa de internet.
-          </div>
-        </div>
-        <div style="text-align:center; padding:24px 0;">
-          <button class="btn-sm primary" onclick="baixarHTMLMobile()" style="margin:0 auto; padding:12px 24px; font-size:14px;">
-            <i class="ti ti-device-mobile"></i> Baixar Versão Celular (.html)
-          </button>
-          <p style="font-size:11px; color:var(--texto-muted); margin-top:12px;">Envie por WhatsApp, e-mail ou salve no celular</p>
-        </div>
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-sm" onclick="fecharModal()"><i class="ti ti-x"></i> Fechar</button>
@@ -3656,10 +3632,13 @@ function renderChecklistCorrecoes() {
       </div>
     </div>`;
   };
-  return `<div class="checklist-card" style="border:1px solid rgba(239,68,68,.35);">
+  return `<div class="checklist-card" style="border:1px solid rgba(239,68,68,.35);margin-bottom:18px;">
     <div class="checklist-header" style="background:rgba(239,68,68,.08);">
       <div class="checklist-linha"><i class="ti ti-bug" style="margin-right:6px;color:#ef4444;"></i>Correções de dados no sistema — ${sig}</div>
-      <div class="checklist-count">${itens.length} item${itens.length > 1 ? 's' : ''} · ${graves} grave${graves !== 1 ? 's' : ''} (Caça-Erros)</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="checklist-count">${itens.length} item${itens.length > 1 ? 's' : ''} · ${graves} grave${graves !== 1 ? 's' : ''} (Caça-Erros)</div>
+        <button class="btn-sm primary" onclick="exportarCacaErrosExcel()" title="Exportar Excel (.xlsx)" style="padding:3px 8px;font-size:11px;"><i class="ti ti-file-spreadsheet"></i></button>
+      </div>
     </div>
     <div class="checklist-produto">${itens.map(item).join('')}</div>
   </div>`;
@@ -3796,10 +3775,11 @@ function renderTabelaSemGiro(page) {
 function renderChecklist() {
   const sel = getChecklistSelecao();
   const container = document.getElementById('checklist-container');
-  const correcoesHTML = renderChecklistCorrecoes();
+  const correcoesWrap = document.getElementById('checklist-correcoes-wrap');
+  if (correcoesWrap) correcoesWrap.innerHTML = renderChecklistCorrecoes();
 
   if (Object.keys(sel).length === 0) {
-    container.innerHTML = correcoesHTML + '<div class="empty"><i class="ti ti-circle-check"></i><p>Nenhum lote de risco encontrado para gerar checklist</p><p style="font-size:11px;margin-top:4px;">Use a busca acima para adicionar lotes manualmente.</p></div>';
+    container.innerHTML = '<div class="empty"><i class="ti ti-circle-check"></i><p>Nenhum lote de risco encontrado para gerar checklist</p><p style="font-size:11px;margin-top:4px;">Use a busca acima para adicionar lotes manualmente.</p></div>';
     return;
   }
 
@@ -3810,7 +3790,7 @@ function renderChecklist() {
     return mb - ma;
   });
 
-  container.innerHTML = correcoesHTML + linhasOrdenadas.map(([linha, produtos]) => {
+  container.innerHTML = linhasOrdenadas.map(([linha, produtos]) => {
     const totalLotes = produtos.reduce((s, p) => s + p.lotes.length, 0);
     let n = 0;
     return `
@@ -4086,9 +4066,12 @@ function limparFiltros(tipo) {
 }
 
 // ==================== EXPORT PNG ====================
-function exportarPNG(elementId, nome) {
+function exportarPNG(elementId, nome, hideActions = true) {
   const el = document.getElementById(elementId);
   if (!el) return;
+  // Esconde botões/filtros para imagem limpa
+  const hiddenEls = hideActions ? [...el.querySelectorAll('.table-actions, .btn-limpar, .export-dropdown, .export-menu')] : [];
+  hiddenEls.forEach(e => { e._prevDisplay = e.style.display; e.style.display = 'none'; });
   mostrarLoading('Gerando imagem...', 'Aguarde');
   html2canvas(el, {
     backgroundColor: '#0d1b2a',
@@ -4096,12 +4079,14 @@ function exportarPNG(elementId, nome) {
     useCORS: true,
     logging: false,
   }).then(canvas => {
+    hiddenEls.forEach(e => { e.style.display = e._prevDisplay ?? ''; });
     esconderLoading();
     const link = document.createElement('a');
     link.download = `${nome}_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   }).catch(err => {
+    hiddenEls.forEach(e => { e.style.display = e._prevDisplay ?? ''; });
     esconderLoading();
     alert('Erro ao gerar imagem: ' + err.message);
   });
@@ -5053,7 +5038,7 @@ function atualizarSidebar() {
     else badgeCE.classList.add('hidden');
   }
 
-  document.getElementById('filial-nome').textContent = `${APP.sigla} — ${APP.lotes[0]?.descricao?.split('(')[0]?.trim() || ''}`;
+  document.getElementById('filial-nome').textContent = `${APP.sigla} — ${BASE_FILIAIS[APP.sigla]?.loja || APP.filial || ''}`.trimEnd().replace(/—\s*$/, '').trim();
   document.getElementById('info-filial').textContent = `Filial ${APP.filial} — ${APP.sigla}`;
   document.getElementById('info-data').textContent = `Auditoria: ${APP.dataAuditoria.toLocaleDateString('pt-BR')}`;
   document.querySelector('.filial-badge .dot').style.background = 'var(--verde)';
@@ -5132,54 +5117,90 @@ function exportarContagemExcel() {
 
 function exportarPlanoAcaoExcel() {
   const criticos = APP.emRisco.filter(l => l.nivel === 'CRÍTICO');
-  const alertas = APP.emRisco.filter(l => l.nivel === 'ALERTA');
-  const atencao = APP.emRisco.filter(l => l.nivel === 'ATENÇÃO');
-  const wb = XLSX.utils.book_new();
-  const mapLote = (l, acao, prazo) => ({
-    'Linha': getNomeLinha(l.linha),
-    'Código': l.codProduto,
-    'Produto': l.nomeProduto,
-    'Lote': String(l.lote).trim(),
-    'Dt Vencimento': l.dtVencimento,
-    'Dias p/ Venc.': l.diasVencimento,
-    'Qtd Estoque': l.quantidade,
-    'Venda Proj.': l.projecao,
-    'Saldo em Risco': l.saldoRisco,
-    'Vlr em Risco': l.valorRisco,
-    'Score': l.score,
-    'Nível': l.nivel,
-    'Ação Sugerida': acao,
-    'Prazo': prazo,
-  });
+  const alertas  = APP.emRisco.filter(l => l.nivel === 'ALERTA');
+  const atencao  = APP.emRisco.filter(l => l.nivel === 'ATENÇÃO');
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const formatR = v => v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '';
+
+  const sectionHeader = (cor, titulo, subtitulo) =>
+    `<tr><td colspan="12" style="background:${cor};color:#fff;font-size:13px;font-weight:700;padding:8px 12px;border:none;">${titulo} &nbsp;<span style="font-weight:400;font-size:11px;">${subtitulo}</span></td></tr>`;
+
+  const thStyle = 'background:#1e3a5f;color:#e2e8f0;font-size:11px;padding:6px 10px;text-align:left;white-space:nowrap;';
+  const headers = (cols) => `<tr>${cols.map(c=>`<th style="${thStyle}">${c}</th>`).join('')}</tr>`;
+
+  const tdS = (v, extra='') => `<td style="font-size:11px;padding:5px 10px;border-bottom:1px solid #1e2d40;${extra}">${v ?? ''}</td>`;
+  const badge = (t,cor) => `<span style="background:${cor};color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;">${t}</span>`;
+
+  let rows = '';
+
   if (APP.vencidos.length) {
-    const wsV = XLSX.utils.json_to_sheet(APP.vencidos.map(l => ({
-      'Linha': getNomeLinha(l.linha),
-      'Código': l.codProduto,
-      'Produto': l.nomeProduto,
-      'Lote': String(l.lote).trim(),
-      'Dt Vencimento': l.dtVencimento,
-      'Dias Vencido': Math.abs(l.diasVencimento),
-      'Quantidade': l.quantidade,
-      'Vlr Total': l.vlrCustoTotal,
-      'Ação': 'Baixa contábil e descarte conforme MAPA/ANVISA',
-      'Prazo': 'Hoje',
-    })));
-    XLSX.utils.book_append_sheet(wb, wsV, 'Imediatas — Vencidos');
+    rows += sectionHeader('#b91c1c','⚡ AÇÕES IMEDIATAS — VENCIDOS',`${APP.vencidos.length} lotes · Agir hoje`);
+    rows += headers(['Linha','Código','Produto','Lote','Dt Vencimento','Dias Vencido','Qtd','Vlr Total','Ação','Prazo']);
+    rows += APP.vencidos.map(l => `<tr>
+      ${tdS(getNomeLinha(l.linha))}${tdS(l.codProduto,'font-weight:700;')}${tdS(l.nomeProduto)}${tdS(String(l.lote).trim(),'font-family:monospace;')}
+      ${tdS(l.dtVencimento,'color:#ef4444;')}${tdS(Math.abs(l.diasVencimento)+'d','color:#ef4444;font-weight:700;')}${tdS(l.quantidade)}
+      ${tdS(formatR(l.vlrCustoTotal),'color:#ef4444;font-weight:700;')}
+      ${tdS('Baixa contábil e descarte conforme MAPA/ANVISA')}${tdS(badge('HOJE','#b91c1c'))}
+    </tr>`).join('');
   }
+
   if (criticos.length) {
-    const wsC = XLSX.utils.json_to_sheet(criticos.map(l => mapLote(l, 'Desconto / Transferência / Contato fornecedor', '7 dias')));
-    XLSX.utils.book_append_sheet(wb, wsC, 'Urgentes — Críticos');
+    rows += sectionHeader('#c2410c','🔥 AÇÕES URGENTES — CRÍTICOS',`${criticos.length} lotes · Prazo: 7 dias`);
+    rows += headers(['Linha','Código','Produto','Lote','Vencimento','Dias','Estoque','Venda Proj.','Saldo Risco','Vlr Risco','Score','Ação']);
+    rows += criticos.map(l => `<tr>
+      ${tdS(getNomeLinha(l.linha))}${tdS(l.codProduto,'font-weight:700;')}${tdS(l.nomeProduto)}${tdS(String(l.lote).trim(),'font-family:monospace;')}
+      ${tdS(l.dtVencimento,'color:#f97316;')}${tdS(l.diasVencimento+'d','color:#f97316;font-weight:700;')}${tdS(l.quantidade)}${tdS(l.projecao)}
+      ${tdS('+'+l.saldoRisco,'color:#ef4444;')}${tdS(formatR(l.valorRisco),'color:#ef4444;font-weight:700;')}
+      ${tdS(l.score,'font-weight:700;')}${tdS('Desconto / Transferência / Contato fornecedor')}
+    </tr>`).join('');
   }
+
   if (alertas.length) {
-    const wsA = XLSX.utils.json_to_sheet(alertas.map(l => mapLote(l, 'Monitorar e ajustar pedidos', '30 dias')));
-    XLSX.utils.book_append_sheet(wb, wsA, 'Preventivas — Alertas');
+    rows += sectionHeader('#92400e','⚠ AÇÕES PREVENTIVAS — ALERTAS',`${alertas.length} lotes · Prazo: 30 dias`);
+    rows += headers(['Linha','Código','Produto','Lote','Vencimento','Dias','Estoque','Venda Proj.','Saldo Risco','Vlr Risco','Score','Ação']);
+    rows += alertas.map(l => `<tr>
+      ${tdS(getNomeLinha(l.linha))}${tdS(l.codProduto,'font-weight:700;')}${tdS(l.nomeProduto)}${tdS(String(l.lote).trim(),'font-family:monospace;')}
+      ${tdS(l.dtVencimento,'color:#d97706;')}${tdS(l.diasVencimento+'d','color:#d97706;font-weight:700;')}${tdS(l.quantidade)}${tdS(l.projecao)}
+      ${tdS('+'+l.saldoRisco,'color:#f59e0b;')}${tdS(formatR(l.valorRisco),'color:#f59e0b;font-weight:700;')}
+      ${tdS(l.score)}${tdS('Monitorar semanalmente e ajustar pedidos futuros')}
+    </tr>`).join('');
   }
+
   if (atencao.length) {
-    const wsAt = XLSX.utils.json_to_sheet(atencao.map(l => mapLote(l, 'Acompanhamento mensal', '90 dias')));
-    XLSX.utils.book_append_sheet(wb, wsAt, 'Atenção');
+    rows += sectionHeader('#1e4066','👁 ATENÇÃO — MONITORAMENTO',`${atencao.length} lotes · Próximos meses`);
+    rows += headers(['Linha','Código','Produto','Lote','Vencimento','Dias','Estoque','Venda Proj.','Saldo Risco','Vlr Risco','Score','Ação']);
+    rows += atencao.map(l => `<tr>
+      ${tdS(getNomeLinha(l.linha))}${tdS(l.codProduto,'font-weight:700;')}${tdS(l.nomeProduto)}${tdS(String(l.lote).trim(),'font-family:monospace;')}
+      ${tdS(l.dtVencimento)}${tdS(l.diasVencimento+'d')}${tdS(l.quantidade)}${tdS(l.projecao)}
+      ${tdS('+'+l.saldoRisco)}${tdS(formatR(l.valorRisco),'color:#60a5fa;')}
+      ${tdS(l.score)}${tdS('Acompanhamento mensal — revisar estoque mínimo/máximo')}
+    </tr>`).join('');
   }
-  if (!wb.SheetNames.length) { alert('Nenhum dado no plano de ação para exportar.'); return; }
-  XLSX.writeFile(wb, `plano_acao_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.xlsx`);
+
+  if (!rows) { alert('Nenhum dado no plano de ação para exportar.'); return; }
+
+  const totalRisco = formatR(APP.emRisco.reduce((s,l)=>s+l.valorRisco,0));
+  const totalVenc  = formatR(APP.vencidos.reduce((s,l)=>s+l.vlrCustoTotal,0));
+
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><style>
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11px; background: #0d1b2a; color: #e2e8f0; }
+  table { border-collapse: collapse; width: 100%; }
+  tr:hover td { background: rgba(255,255,255,.04); }
+</style></head><body>
+<table>
+  <tr><td colspan="12" style="background:#0a1628;color:#60a5fa;font-size:16px;font-weight:800;padding:14px 12px;border-bottom:2px solid #1e3a5f;">
+    📋 PLANO DE AÇÃO — FILIAL ${APP.sigla} &nbsp;
+    <span style="font-size:11px;font-weight:400;color:#94a3b8;">Gerado em ${hoje} · Exposição: ${totalRisco} em risco + ${totalVenc} vencidos</span>
+  </td></tr>
+  ${rows}
+</table></body></html>`;
+
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `plano_acao_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.xls`;
+  a.click(); URL.revokeObjectURL(url);
 }
 
 // ==================== PDF DE ALTA QUALIDADE ====================
