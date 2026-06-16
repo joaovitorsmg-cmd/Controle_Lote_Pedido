@@ -2466,6 +2466,539 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
   <div class="loading-sub" id="loading-sub"></div>
 </div>
 
+</div><!-- /mod-lotes -->
+<div id="mod-pedidos" style="display:none">
+
+
+<!-- TOPO -->
+<div id="ped-topo">
+  <div class="logo">
+    <div class="logo-box">
+      <svg viewBox="0 0 42 42" width="22" height="22" aria-hidden="true">
+        <rect x="2"  y="2"  width="17" height="17" rx="3.5" fill="#fff" opacity=".95"/>
+        <rect x="23" y="2"  width="17" height="17" rx="3.5" fill="#bcd6f5"/>
+        <rect x="2"  y="23" width="17" height="17" rx="3.5" fill="#bcd6f5"/>
+        <rect x="23" y="23" width="17" height="17" rx="3.5" fill="#fff" opacity=".95"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-txt">AGROQUIMA</div>
+      <div class="logo-sub">CONFERÊNCIA DE PEDIDOS E CANHOTOS</div>
+    </div>
+  </div>
+  <div id="ped-topo-mid">
+    <div id="ped-topo-titulo">—</div>
+    <div id="ped-topo-sub">Nenhum arquivo importado</div>
+  </div>
+  <div class="topo-btns">
+    <button class="btn-topo primary" onclick="document.getElementById('ped-fi').click()">⬆ Importar Arquivos</button>
+    <button class="btn-topo" onclick="PED_resetarFiltros()" title="Zera ordenações e filtros, mantém os dados">↺ Resetar</button>
+    <button class="btn-topo danger" onclick="PED_descarregarDados()" title="Remove os dados e volta à tela de importação">✕ Descarregar</button>
+    <input type="file" id="ped-fi" multiple accept=".xls,.xlsx" onchange="PED_handleFiles(this.files)" style="display:none"/>
+  </div>
+</div>
+
+<!-- ABAS -->
+<div id="ped-abas">
+  <div class="aba ativa" onclick="PED_mudarAba(0)">📊 Resumo</div>
+  <div class="aba" onclick="PED_mudarAba(1)">📋 Pedidos de Venda</div>
+  <div class="aba" onclick="PED_mudarAba(2)">🌱 Sementes</div>
+  <div class="aba" onclick="PED_mudarAba(3)">📄 Canhotos / Mês</div>
+  <div class="aba" onclick="PED_mudarAba(4)">👤 Canhotos / Vendedor</div>
+  <div class="aba" onclick="PED_mudarAba(5)">🎯 Diagnóstico & Ação</div>
+  <div class="aba" onclick="PED_mudarAba(6)">📌 Apresentação</div>
+  <div class="aba aba-historico" onclick="PED_mudarAba(7)" title="Acumulador de auditorias — uso exclusivo da Auditoria Interna">🗂 Histórico</div>
+  <div class="aba aba-guia" onclick="PED_mudarAba(8)" title="Passo a passo de uso do painel">📖 Guia</div>
+</div>
+
+<!-- CONTEÚDO -->
+<div id="ped-conteudo">
+
+  <!-- TELA IMPORT -->
+  <div id="ped-tela-import">
+    <div id="ped-drop-zone" ondragover="PED_evDrag(event)" ondragleave="PED_dlDrag()" ondrop="PED_dropArq(event)"
+         onclick="document.getElementById('ped-fi').click()">
+      <div class="drop-icon">📂</div>
+      <h2>Importar arquivos do sistema</h2>
+      <p>Arraste ou clique para selecionar os 4 arquivos de uma vez.<br>
+         O painel detecta cada um automaticamente pelo nome do arquivo.</p>
+      <div class="tipos-arquivo">
+        <div>📄 <b>…Pedido.xls</b> — base geral de pedidos</div>
+        <div>📄 <b>…Canhoto.xls</b> — base de notas fiscais</div>
+        <div>📄 <b>…Pedido_Cópia.xls</b> — pedidos sempre pendentes</div>
+        <div>📄 <b>…Sementes.xls</b> — identificação de pedidos semente</div>
+      </div>
+      <br/>
+      <button class="btn-az" onclick="event.stopPropagation();document.getElementById('ped-fi').click()">Selecionar arquivos</button>
+      <div class="arq-status" id="ped-arq-status"></div>
+    </div>
+  </div>
+
+  <!-- PAINEL -->
+  <div id="ped-painel" class="hidden">
+
+    <!-- ABA 0: RESUMO -->
+    <div id="ped-aba-0">
+      <div id="ped-import-diag" class="import-diag"></div>
+      <div class="info-filial" id="ped-info-filial"></div>
+      <div class="kpi-grid" id="ped-kpis" style="margin-bottom:18px;"></div>
+      <div class="resumo-grid">
+        <div>
+          <div class="secao-titulo">Ranking — Pedidos por Vendedor</div>
+          <div class="ranking-wrap" id="ped-rank-pedidos"></div>
+        </div>
+        <div>
+          <div class="secao-titulo">Canhotos por Mês</div>
+          <div class="ranking-wrap" id="ped-rank-canhotos"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 1: PEDIDOS -->
+    <div id="ped-aba-1" class="hidden">
+      <div id="ped-alerta-ped" class="hidden"></div>
+      <div class="tab-wrap">
+        <div class="tab-top">
+          <span class="tab-titulo">Conferência de Pedidos de Venda — por Vendedor</span>
+          <div class="tab-acoes">
+            <button class="btn-exp small" onclick="PED_expandirTodos('tb-ped')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('tb-ped')">Recolher todos</button>
+            <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor — resumo + pendências">📋 Conferência (Supervisor)</button>
+            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-ped')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-ped','pedidos')">PDF</button>
+            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
+          </div>
+        </div>
+        <div id="ped-wrap-ped">
+          <table id="ped-tb-ped">
+            <thead><tr>
+              <th style="width:36px"></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',5,this)">% Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',6,this)">Sem. Pend.<span class="si"></span></th>
+              <th>Período</th>
+            </tr></thead>
+            <tbody id="ped-body-ped"></tbody>
+          </table>
+          <div class="caixas" id="ped-cxs-ped"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 2: SEMENTES -->
+    <div id="ped-aba-2" class="hidden">
+      <div id="ped-alerta-sem" class="hidden"></div>
+      <div class="tab-wrap">
+        <div class="tab-top">
+          <span class="tab-titulo">Conferência de Pedidos — Sementes — por Vendedor</span>
+          <div class="tab-acoes">
+            <button class="btn-exp small" onclick="PED_expandirTodos('tb-sem')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('tb-sem')">Recolher todos</button>
+            <button class="btn-exp primary" onclick="PED_expConferencia('sementes')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
+            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-sem')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-sem','sementes')">PDF</button>
+            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
+          </div>
+        </div>
+        <div id="ped-wrap-sem">
+          <table id="ped-tb-sem">
+            <thead><tr>
+              <th style="width:36px"></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',5,this)">% Assinados<span class="si"></span></th>
+              <th>Período</th>
+            </tr></thead>
+            <tbody id="ped-body-sem"></tbody>
+          </table>
+          <div class="caixas" id="ped-cxs-sem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 3: CANHOTO MÊS -->
+    <div id="ped-aba-3" class="hidden">
+      <div class="tab-wrap">
+        <div class="tab-top">
+          <span class="tab-titulo">Conferência de Canhotos — por Mês</span>
+          <div class="tab-acoes">
+            <button class="btn-exp small" onclick="PED_expandirTodos('tb-cm')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('tb-cm')">Recolher todos</button>
+            <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
+            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cm')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cm','canhotos')">PDF</button>
+            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
+          </div>
+        </div>
+        <div id="ped-wrap-cm">
+          <table id="ped-tb-cm">
+            <thead><tr>
+              <th style="width:36px"></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',1,this)">Mês<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',5,this)">% Inconsistente<span class="si"></span></th>
+            </tr></thead>
+            <tbody id="ped-body-cm"></tbody>
+          </table>
+          <div class="caixas" id="ped-cxs-cm"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 4: CANHOTO VENDEDOR -->
+    <div id="ped-aba-4" class="hidden">
+      <div class="tab-wrap">
+        <div class="tab-top">
+          <span class="tab-titulo">Conferência de Canhotos — por Vendedor</span>
+          <div class="tab-acoes">
+            <button class="btn-exp small" onclick="PED_expandirTodos('tb-cv')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('tb-cv')">Recolher todos</button>
+            <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
+            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cv')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cv','canhotos')">PDF</button>
+            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
+          </div>
+        </div>
+        <div id="ped-wrap-cv">
+          <table id="ped-tb-cv">
+            <thead><tr>
+              <th style="width:36px"></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',5,this)">% Inconsistente<span class="si"></span></th>
+            </tr></thead>
+            <tbody id="ped-body-cv"></tbody>
+          </table>
+          <div class="caixas" id="ped-cxs-cv"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 5: DIAGNÓSTICO & AÇÃO -->
+    <div id="ped-aba-5" class="hidden">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;">
+        <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
+        <button class="btn-exp" onclick="PED_expPNG('ped-diag-wrap')">PNG (com gráficos)</button>
+        <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
+      </div>
+      <div id="ped-diag-wrap">
+        <!-- Narrativa automática -->
+        <div id="ped-narrativa" class="narrativa"></div>
+
+        <!-- Gráficos -->
+        <div class="graf-grid">
+          <div class="graf-card">
+            <div class="graf-titulo">Tendência mensal — % Assinados (Pedidos)</div>
+            <canvas id="ped-chart-tend"></canvas>
+          </div>
+          <div class="graf-card">
+            <div class="graf-titulo">Desempenho por vendedor — % Assinados</div>
+            <canvas id="ped-chart-vend"></canvas>
+          </div>
+        </div>
+
+        <!-- Risco financeiro -->
+        <div class="secao-titulo">Risco Financeiro — Sementes Pendentes</div>
+        <div id="ped-risco-box"></div>
+
+        <!-- Ranking de clientes -->
+        <div class="secao-titulo">Clientes com Mais Pendências</div>
+        <div class="tab-wrap">
+          <table id="ped-tb-clientes">
+            <thead><tr>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',0,this)">Cliente<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',1,this)">Pendências<span class="si"></span></th>
+            </tr></thead>
+            <tbody id="ped-body-clientes"></tbody>
+          </table>
+        </div>
+
+        <!-- Plano de ação -->
+        <div class="secao-titulo">Plano de Ação Priorizado</div>
+        <div class="tab-wrap">
+          <table id="ped-tb-plano">
+            <thead><tr>
+              <th>Prior.</th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',2,this)">% Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',3,this)">Pendentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',4,this)">Sem. Pend.<span class="si"></span></th>
+              <th>Ação Recomendada</th>
+            </tr></thead>
+            <tbody id="ped-body-plano"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 6: APRESENTAÇÃO -->
+    <div id="ped-aba-6" class="hidden">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
+        <button class="btn-exp" onclick="PED_expPNG('ped-apres-wrap')">PNG</button>
+        <button class="btn-exp" onclick="PED_expPDF('ped-apres-wrap','pedidos')">PDF</button>
+        <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
+      </div>
+      <div id="ped-apres-wrap" class="apres">
+        <div class="apres-filial" id="ped-ap-filial">—</div>
+        <div class="apres-periodo" id="ped-ap-periodo">—</div>
+        <div class="apres-resp" id="ped-ap-resp"></div>
+        <div id="ped-ap-narrativa" class="narrativa" style="margin:18px 0;"></div>
+        <div class="apres-blocos" id="ped-ap-blocos"></div>
+      </div>
+    </div>
+
+  </div><!-- /painel -->
+
+  <!-- ABA 7: HISTÓRICO — USO EXCLUSIVO AUDITORIA INTERNA -->
+  <div id="ped-aba-7" class="hidden">
+    <div class="tab-wrap">
+      <div class="tab-top" style="align-items:flex-start;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+          <div>
+            <span class="tab-titulo">🗂 Histórico de Auditorias — Acumulador</span>
+            <span style="font-size:11px;color:var(--text3);margin-left:10px;">Uso exclusivo da Auditoria Interna</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-exp primary" onclick="PED_registrarAuditoria()" id="ped-btn-registrar" title="Registra os resultados da auditoria atual no histórico">
+              ✚ Registrar esta Auditoria
+            </button>
+            <button class="btn-exp" onclick="PED_expHistoricoXLS()" title="Exporta todo o histórico para o Acumulador Excel (.xlsx)">📥 Exportar Acumulador (.xlsx)</button>
+            <button class="btn-exp" onclick="PED_expHistoricoJSON()" title="Exporta o histórico como arquivo .json para reimportar no painel">💾 Salvar Histórico (.json)</button>
+            <button class="btn-exp" onclick="PED_importarHistoricoJSON()" title="Carrega histórico do arquivo .xlsx ou .json gerado por 'Exportar Acumulador'">📂 Carregar Histórico (.xlsx/.json)</button>
+            <button class="btn-exp small" onclick="if(confirm('Limpar TODO o histórico salvo?')){localStorage.removeItem('aqHistorico');H_DADOS=[];PED_renderHistorico();}">🗑 Limpar</button>
+            <input type="file" id="ped-inp-hist-json" accept=".json,.xlsx,.xls" style="display:none" onchange="PED_lerArquivoHistorico(this)">
+          </div>
+        </div>
+        <div id="ped-hist-aviso" style="font-size:12px;color:var(--verm);display:none;padding:4px 8px;background:var(--verm-bg);border-radius:6px;border-left:3px solid var(--verm);">
+          ⚠ Nenhuma auditoria carregada. Importe os arquivos e clique em "Registrar esta Auditoria".
+        </div>
+      </div>
+
+      <!-- KPIs do histórico -->
+      <div id="ped-hist-kpis" class="kpis-row" style="display:none;margin:12px 0;gap:10px;flex-wrap:wrap;"></div>
+
+      <!-- Tabela de auditorias registradas -->
+      <div id="ped-hist-wrap" style="overflow-x:auto;">
+        <div id="ped-hist-vazio" style="padding:40px;text-align:center;color:var(--text3);">
+          <div style="font-size:40px;margin-bottom:8px;">🗂</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Nenhuma auditoria registrada ainda</div>
+          <div style="font-size:12px;">Importe os arquivos, revise os pedidos e canhotos, depois clique em<br><b>✚ Registrar esta Auditoria</b></div>
+        </div>
+        <table id="ped-tb-hist" style="display:none;width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr>
+              <th style="width:30px">#</th>
+              <th>Filial</th>
+              <th>Período</th>
+              <th>% Ped.</th>
+              <th>Ped. Conf.</th>
+              <th>Ped. Ass.</th>
+              <th>Ped. Pend.</th>
+              <th style="color:var(--verm-text,#b01c1c)">Sem. Pend.</th>
+              <th>% Can.</th>
+              <th>Can. Conf.</th>
+              <th>Can. Ass.</th>
+              <th>Can. Pend.</th>
+              <th>Score</th>
+              <th>Registrado em</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ped-body-hist"></tbody>
+        </table>
+      </div>
+
+      <!-- Legenda do score -->
+      <div style="margin-top:14px;padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:11px;color:var(--text3);border:1px solid var(--border);">
+        <b>Como o Score é calculado (máx 100 pts):</b> &nbsp;
+        <span style="color:#b01c1c">🔴 Semente 40pts</span> (0 se qualquer pendência) &nbsp;|&nbsp;
+        <span style="color:#0d2b6e">🔵 Pedido 30pts</span> (proporcional à meta ≥95%) &nbsp;|&nbsp;
+        <span style="color:#b86c00">🟡 Vencidos 20pts</span> (assume 100% se não disponível) &nbsp;|&nbsp;
+        <span style="color:#14693a">🟢 Canhoto 10pts</span> (proporcional à meta ≥95%)
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA 8: GUIA DE USO -->
+  <div id="ped-aba-8" class="hidden">
+    <div class="tab-wrap">
+      <div class="tab-top">
+        <span class="tab-titulo">📖 Guia de Uso — Painel de Conferência Agroquima</span>
+      </div>
+
+      <!-- PARA LEIGOS -->
+      <div class="guia-secao">
+        <div class="guia-titulo">Para quem usa o dia a dia <span class="tag-leigo">Gerente / Supervisor / Auxiliar</span></div>
+
+        <div class="guia-info">
+          <b>O que é esse painel?</b> Uma ferramenta que lê os arquivos do sistema e mostra quais pedidos e canhotos (notas fiscais) ainda não foram assinados — sem precisar fazer nada manualmente. Você importa os arquivos, o painel faz todo o trabalho.
+        </div>
+
+        <div class="guia-cards">
+          <div class="guia-card">
+            <div class="gc-num">1</div>
+            <div class="gc-titulo">Baixar os 4 arquivos do sistema</div>
+            <div class="gc-desc">No sistema da Agroquima, exporte 4 relatórios do período auditado:<br><br>
+              📄 <b>Pedido.xls</b> — todos os pedidos<br>
+              📄 <b>Canhoto.xls</b> — todas as notas fiscais<br>
+              📄 <b>Pedido_Copia.xls</b> — pedidos cópia<br>
+              📄 <b>...Sementes...xls</b> — pedidos de semente
+            </div>
+            <div class="gc-nota">Salve os 4 arquivos na mesma pasta antes de importar.</div>
+          </div>
+          <div class="guia-card">
+            <div class="gc-num">2</div>
+            <div class="gc-titulo">Abrir o painel e importar</div>
+            <div class="gc-desc">Abra o arquivo <b>relatorio_canhoto_v2.html</b> no Chrome.<br><br>
+              Clique em <b>↑ Importar Arquivos</b> no topo e selecione os 4 arquivos de uma vez.<br><br>
+              A faixa colorida no topo mostra se todos foram reconhecidos:<br>
+              ✅ Verde = OK | ❌ Vermelho = falta arquivo
+            </div>
+            <div class="gc-nota">Funciona sem internet. Não precisa instalar nada.</div>
+          </div>
+          <div class="guia-card verm">
+            <div class="gc-num">3</div>
+            <div class="gc-titulo">Verificar SEMENTES primeiro — PRIORIDADE</div>
+            <div class="gc-desc">Vá na aba <b>🌱 Sementes</b>.<br><br>
+              A meta é <b>ZERO</b> pendências. Se houver qualquer pedido de semente sem assinatura, acione o Representante Comercial imediatamente — antes do fechamento do período.
+            </div>
+            <div class="gc-nota">⚠ Sementes têm tolerância zero — risco financeiro direto.</div>
+          </div>
+          <div class="guia-card">
+            <div class="gc-num">4</div>
+            <div class="gc-titulo">Analisar pedidos por Representante</div>
+            <div class="gc-desc">Na aba <b>📋 Pedidos de Venda</b>, clique em <b>▶ Detalhar</b> nos representantes com pendências.<br><br>
+              Itens em <span style="color:var(--text3)">cinza</span> com "Não conta" são informativos — <b>não afetam o indicador</b> (ex.: VENDA A VISTA).
+            </div>
+            <div class="gc-nota">Meta: ≥ 95% dos pedidos assinados.</div>
+          </div>
+          <div class="guia-card">
+            <div class="gc-num">5</div>
+            <div class="gc-titulo">Verificar canhotos</div>
+            <div class="gc-desc">Nas abas <b>📄 Canhotos / Mês</b> e <b>👤 Canhotos / Vendedor</b>, identifique as notas sem assinatura e encaminhe para cobrança.</div>
+            <div class="gc-nota">Meta: ≥ 95% dos canhotos assinados.</div>
+          </div>
+          <div class="guia-card verde">
+            <div class="gc-num">6</div>
+            <div class="gc-titulo">Exportar o relatório</div>
+            <div class="gc-desc">Na aba <b>📋 Pedidos de Venda</b>, clique em <b>📋 Conferência (Supervisor)</b>.<br><br>
+              Será gerada uma planilha Excel com:<br>
+              • Aba <b>Resumo</b>: indicadores + desempenho por representante<br>
+              • Aba <b>Pendências</b>: lista detalhada para cobrar
+            </div>
+            <div class="gc-nota">Enviar ao Supervisor Regional e Gerente Administrativo.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARA O AUDITOR -->
+      <div class="guia-secao">
+        <div class="guia-titulo">Para o Auditor Interno <span class="tag-dev">Histórico & Acumulador</span></div>
+
+        <div class="guia-info">
+          A aba <b>🗂 Histórico</b> é exclusiva da Auditoria Interna. Ela acumula os resultados de todas as auditorias realizadas e calcula automaticamente o score de cada filial — sem precisar abrir o Acumulador Excel.
+        </div>
+
+        <div class="guia-cards">
+          <div class="guia-card amar">
+            <div class="gc-num">1</div>
+            <div class="gc-titulo">Registrar a auditoria</div>
+            <div class="gc-desc">Após revisar todos os pedidos e canhotos, vá em <b>🗂 Histórico</b> e clique em <b>✚ Registrar esta Auditoria</b>.<br><br>
+              O painel captura automaticamente: filial, período, % pedidos, sementes, % canhotos e calcula o score.
+            </div>
+            <div class="gc-nota">Se a mesma filial+período já existir, pergunta se quer substituir.</div>
+          </div>
+          <div class="guia-card">
+            <div class="gc-num">2</div>
+            <div class="gc-titulo">Histórico persiste entre sessões</div>
+            <div class="gc-desc">Os registros ficam salvos no browser (localStorage). Ao fechar e reabrir o arquivo, o histórico é restaurado automaticamente.</div>
+            <div class="gc-nota">Atenção: se usar outro computador ou outro browser, use "📂 Carregar Histórico" para importar o JSON.</div>
+          </div>
+          <div class="guia-card verde">
+            <div class="gc-num">3</div>
+            <div class="gc-titulo">Exportar para o Acumulador Excel</div>
+            <div class="gc-desc">Quando quiser consolidar, clique em <b>📥 Exportar Acumulador</b>.<br><br>
+              Será gerado um Excel com:<br>
+              • <b>Lançamentos</b>: todos os registros no formato do Acumulador<br>
+              • <b>Ranking</b>: score médio por filial<br>
+              • <b>Backup JSON</b>: para reimportar depois
+            </div>
+            <div class="gc-nota">O Excel gerado é compatível com o Acumulador_Conferencia_Agroquima.xlsx.</div>
+          </div>
+          <div class="guia-card">
+            <div class="gc-num">4</div>
+            <div class="gc-titulo">Remover ou corrigir um registro</div>
+            <div class="gc-desc">Na tabela do Histórico, clique no <b>✕</b> à direita da linha para remover. Para corrigir, remova e registre novamente com os arquivos corretos importados.</div>
+            <div class="gc-nota">O botão 🗑 Limpar apaga TODO o histórico — use com cuidado.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REGRAS DE NEGÓCIO -->
+      <div class="guia-secao">
+        <div class="guia-titulo">Regras principais do painel</div>
+        <table class="guia-tabela">
+          <thead><tr><th>Situação</th><th>Como o painel trata</th><th>Impacto no indicador</th></tr></thead>
+          <tbody>
+            <tr><td><b>VENDA A VISTA</b> (não-semente)</td><td>Exibido em cinza como "Não conta"</td><td>❌ Não conta</td></tr>
+            <tr><td><b>VENDA A VISTA semente</b></td><td>Cobrado normalmente — zero tolerância</td><td>✅ Conta</td></tr>
+            <tr><td><b>CFOP 5116/5117/6116/6117</b> (remessa)</td><td>Ignorado em pedidos — cobrado no canhoto</td><td>✅ Conta no canhoto</td></tr>
+            <tr><td><b>CFOP 5922/6922</b> (faturamento futuro)</td><td>Pedido cobrado; canhoto assinado automático</td><td>✅ Conta no pedido</td></tr>
+            <tr><td><b>Pedido com múltiplas linhas</b></td><td>Agrupado — conta 1 vez só</td><td>✅ 1 pedido = 1 voto</td></tr>
+            <tr><td><b>Pedido Cópia</b></td><td>Sempre pendente (exceto se tipo não cobrável)</td><td>⚠ Sempre pendente</td></tr>
+            <tr><td><b>Representante "ESC.XXXXX"</b></td><td>Escritório externo — ignorado completamente</td><td>❌ Não conta</td></tr>
+            <tr><td><b>Semente pendente</b></td><td>Exibido com valor R$ em risco + prioridade máxima</td><td>🔴 Crítico</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SCORE -->
+      <div class="guia-secao">
+        <div class="guia-titulo">Sistema de score — como é calculado</div>
+        <div class="guia-alerta">⚠ Semente pendente = score semente = 0 pts. Independente do restante, a filial não pode atingir o score máximo.</div>
+        <table class="guia-tabela">
+          <thead><tr><th>Item</th><th>Peso</th><th>Critério</th><th>Fórmula</th></tr></thead>
+          <tbody>
+            <tr><td>🔴 <b>Pedido de Semente</b></td><td><b>40 pts</b></td><td>Zero tolerância</td><td>40 se sem pendências / 0 se qualquer pendência</td></tr>
+            <tr><td>🔵 <b>Pedido de Venda</b></td><td><b>30 pts</b></td><td>Meta ≥ 95%</td><td>MIN(% atingido / 95, 1) × 30</td></tr>
+            <tr><td>🟡 <b>Produtos Vencidos</b></td><td><b>20 pts</b></td><td>Painel Vencidos</td><td>Score informado / 100 × 20 (assume 100% se não disponível)</td></tr>
+            <tr><td>🟢 <b>Canhoto</b></td><td><b>10 pts</b></td><td>Meta ≥ 95%</td><td>MIN(% atingido / 95, 1) × 10</td></tr>
+            <tr style="font-weight:700;background:var(--az-cl)"><td colspan="2"><b>TOTAL MÁXIMO: 100 pts</b></td><td colspan="2">🥇 ≥90 pts | 🟢 ≥75 | 🟡 ≥60 | 🔴 &lt;60</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ARQUIVOS -->
+      <div class="guia-secao">
+        <div class="guia-titulo">Arquivos do sistema e onde extrair</div>
+        <table class="guia-tabela">
+          <thead><tr><th>Arquivo</th><th>Onde extrair no sistema</th><th>Obrigatório?</th></tr></thead>
+          <tbody>
+            <tr><td><b>Pedido.xls</b></td><td>Relatório de Baixa de Canhoto → opção Pedido</td><td>✅ Sim</td></tr>
+            <tr><td><b>Canhoto.xls</b></td><td>Relatório de Baixa de Canhoto → opção Canhoto</td><td>✅ Sim</td></tr>
+            <tr><td><b>Pedido_Copia.xls</b></td><td>Relatório de Pedido Cópia</td><td>✅ Sim</td></tr>
+            <tr><td><b>...Sementes...xls</b></td><td>Relatório Resumo Movimentação CFOP (nome gerado pelo sistema)</td><td>✅ Recomendado</td></tr>
+          </tbody>
+        </table>
+        <div class="gc-nota" style="margin-top:8px;display:block">O painel detecta o tipo de cada arquivo automaticamente pelo nome e pelo conteúdo. Se um arquivo não for reconhecido, verifique se o nome contém a palavra-chave (pedido, canhoto, copia, sementes).</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /conteudo -->
+
+
+</div><!-- /mod-pedidos -->
 <script>
 
 // ==================== BASE DE SAZONALIDADE EMBUTIDA ====================
@@ -4422,540 +4955,6 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
 </div>
 <div class="toast" id="toast"></div>
 
-</div><!-- /mod-lotes -->
-<div id="mod-pedidos" style="display:none">
-
-
-<!-- TOPO -->
-<div id="ped-topo">
-  <div class="logo">
-    <div class="logo-box">
-      <svg viewBox="0 0 42 42" width="22" height="22" aria-hidden="true">
-        <rect x="2"  y="2"  width="17" height="17" rx="3.5" fill="#fff" opacity=".95"/>
-        <rect x="23" y="2"  width="17" height="17" rx="3.5" fill="#bcd6f5"/>
-        <rect x="2"  y="23" width="17" height="17" rx="3.5" fill="#bcd6f5"/>
-        <rect x="23" y="23" width="17" height="17" rx="3.5" fill="#fff" opacity=".95"/>
-      </svg>
-    </div>
-    <div>
-      <div class="logo-txt">AGROQUIMA</div>
-      <div class="logo-sub">CONFERÊNCIA DE PEDIDOS E CANHOTOS</div>
-    </div>
-  </div>
-  <div id="ped-topo-mid">
-    <div id="ped-topo-titulo">—</div>
-    <div id="ped-topo-sub">Nenhum arquivo importado</div>
-  </div>
-  <div class="topo-btns">
-    <button class="btn-topo primary" onclick="document.getElementById('ped-fi').click()">⬆ Importar Arquivos</button>
-    <button class="btn-topo" onclick="PED_resetarFiltros()" title="Zera ordenações e filtros, mantém os dados">↺ Resetar</button>
-    <button class="btn-topo danger" onclick="PED_descarregarDados()" title="Remove os dados e volta à tela de importação">✕ Descarregar</button>
-    <input type="file" id="ped-fi" multiple accept=".xls,.xlsx" onchange="PED_handleFiles(this.files)" style="display:none"/>
-  </div>
-</div>
-
-<!-- ABAS -->
-<div id="ped-abas">
-  <div class="aba ativa" onclick="PED_mudarAba(0)">📊 Resumo</div>
-  <div class="aba" onclick="PED_mudarAba(1)">📋 Pedidos de Venda</div>
-  <div class="aba" onclick="PED_mudarAba(2)">🌱 Sementes</div>
-  <div class="aba" onclick="PED_mudarAba(3)">📄 Canhotos / Mês</div>
-  <div class="aba" onclick="PED_mudarAba(4)">👤 Canhotos / Vendedor</div>
-  <div class="aba" onclick="PED_mudarAba(5)">🎯 Diagnóstico & Ação</div>
-  <div class="aba" onclick="PED_mudarAba(6)">📌 Apresentação</div>
-  <div class="aba aba-historico" onclick="PED_mudarAba(7)" title="Acumulador de auditorias — uso exclusivo da Auditoria Interna">🗂 Histórico</div>
-  <div class="aba aba-guia" onclick="PED_mudarAba(8)" title="Passo a passo de uso do painel">📖 Guia</div>
-</div>
-
-<!-- CONTEÚDO -->
-<div id="ped-conteudo">
-
-  <!-- TELA IMPORT -->
-  <div id="ped-tela-import">
-    <div id="ped-drop-zone" ondragover="PED_evDrag(event)" ondragleave="PED_dlDrag()" ondrop="PED_dropArq(event)"
-         onclick="document.getElementById('ped-fi').click()">
-      <div class="drop-icon">📂</div>
-      <h2>Importar arquivos do sistema</h2>
-      <p>Arraste ou clique para selecionar os 4 arquivos de uma vez.<br>
-         O painel detecta cada um automaticamente pelo nome do arquivo.</p>
-      <div class="tipos-arquivo">
-        <div>📄 <b>…Pedido.xls</b> — base geral de pedidos</div>
-        <div>📄 <b>…Canhoto.xls</b> — base de notas fiscais</div>
-        <div>📄 <b>…Pedido_Cópia.xls</b> — pedidos sempre pendentes</div>
-        <div>📄 <b>…Sementes.xls</b> — identificação de pedidos semente</div>
-      </div>
-      <br/>
-      <button class="btn-az" onclick="event.stopPropagation();document.getElementById('ped-fi').click()">Selecionar arquivos</button>
-      <div class="arq-status" id="ped-arq-status"></div>
-    </div>
-  </div>
-
-  <!-- PAINEL -->
-  <div id="ped-painel" class="hidden">
-
-    <!-- ABA 0: RESUMO -->
-    <div id="ped-aba-0">
-      <div id="ped-import-diag" class="import-diag"></div>
-      <div class="info-filial" id="ped-info-filial"></div>
-      <div class="kpi-grid" id="ped-kpis" style="margin-bottom:18px;"></div>
-      <div class="resumo-grid">
-        <div>
-          <div class="secao-titulo">Ranking — Pedidos por Vendedor</div>
-          <div class="ranking-wrap" id="ped-rank-pedidos"></div>
-        </div>
-        <div>
-          <div class="secao-titulo">Canhotos por Mês</div>
-          <div class="ranking-wrap" id="ped-rank-canhotos"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABA 1: PEDIDOS -->
-    <div id="ped-aba-1" class="hidden">
-      <div id="ped-alerta-ped" class="hidden"></div>
-      <div class="tab-wrap">
-        <div class="tab-top">
-          <span class="tab-titulo">Conferência de Pedidos de Venda — por Vendedor</span>
-          <div class="tab-acoes">
-            <button class="btn-exp small" onclick="PED_expandirTodos('tb-ped')">Expandir todos</button>
-            <button class="btn-exp small" onclick="PED_recolherTodos('tb-ped')">Recolher todos</button>
-            <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor — resumo + pendências">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-ped')">PNG</button>
-            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-ped','pedidos')">PDF</button>
-            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
-          </div>
-        </div>
-        <div id="ped-wrap-ped">
-          <table id="ped-tb-ped">
-            <thead><tr>
-              <th style="width:36px"></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',5,this)">% Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-ped',6,this)">Sem. Pend.<span class="si"></span></th>
-              <th>Período</th>
-            </tr></thead>
-            <tbody id="ped-body-ped"></tbody>
-          </table>
-          <div class="caixas" id="ped-cxs-ped"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABA 2: SEMENTES -->
-    <div id="ped-aba-2" class="hidden">
-      <div id="ped-alerta-sem" class="hidden"></div>
-      <div class="tab-wrap">
-        <div class="tab-top">
-          <span class="tab-titulo">Conferência de Pedidos — Sementes — por Vendedor</span>
-          <div class="tab-acoes">
-            <button class="btn-exp small" onclick="PED_expandirTodos('tb-sem')">Expandir todos</button>
-            <button class="btn-exp small" onclick="PED_recolherTodos('tb-sem')">Recolher todos</button>
-            <button class="btn-exp primary" onclick="PED_expConferencia('sementes')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-sem')">PNG</button>
-            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-sem','sementes')">PDF</button>
-            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
-          </div>
-        </div>
-        <div id="ped-wrap-sem">
-          <table id="ped-tb-sem">
-            <thead><tr>
-              <th style="width:36px"></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-sem',5,this)">% Assinados<span class="si"></span></th>
-              <th>Período</th>
-            </tr></thead>
-            <tbody id="ped-body-sem"></tbody>
-          </table>
-          <div class="caixas" id="ped-cxs-sem"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABA 3: CANHOTO MÊS -->
-    <div id="ped-aba-3" class="hidden">
-      <div class="tab-wrap">
-        <div class="tab-top">
-          <span class="tab-titulo">Conferência de Canhotos — por Mês</span>
-          <div class="tab-acoes">
-            <button class="btn-exp small" onclick="PED_expandirTodos('tb-cm')">Expandir todos</button>
-            <button class="btn-exp small" onclick="PED_recolherTodos('tb-cm')">Recolher todos</button>
-            <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cm')">PNG</button>
-            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cm','canhotos')">PDF</button>
-            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
-          </div>
-        </div>
-        <div id="ped-wrap-cm">
-          <table id="ped-tb-cm">
-            <thead><tr>
-              <th style="width:36px"></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',1,this)">Mês<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cm',5,this)">% Inconsistente<span class="si"></span></th>
-            </tr></thead>
-            <tbody id="ped-body-cm"></tbody>
-          </table>
-          <div class="caixas" id="ped-cxs-cm"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABA 4: CANHOTO VENDEDOR -->
-    <div id="ped-aba-4" class="hidden">
-      <div class="tab-wrap">
-        <div class="tab-top">
-          <span class="tab-titulo">Conferência de Canhotos — por Vendedor</span>
-          <div class="tab-acoes">
-            <button class="btn-exp small" onclick="PED_expandirTodos('tb-cv')">Expandir todos</button>
-            <button class="btn-exp small" onclick="PED_recolherTodos('tb-cv')">Recolher todos</button>
-            <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cv')">PNG</button>
-            <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cv','canhotos')">PDF</button>
-            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
-          </div>
-        </div>
-        <div id="ped-wrap-cv">
-          <table id="ped-tb-cv">
-            <thead><tr>
-              <th style="width:36px"></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-cv',5,this)">% Inconsistente<span class="si"></span></th>
-            </tr></thead>
-            <tbody id="ped-body-cv"></tbody>
-          </table>
-          <div class="caixas" id="ped-cxs-cv"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABA 5: DIAGNÓSTICO & AÇÃO -->
-    <div id="ped-aba-5" class="hidden">
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;">
-        <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-        <button class="btn-exp" onclick="PED_expPNG('ped-diag-wrap')">PNG (com gráficos)</button>
-        <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
-      </div>
-      <div id="ped-diag-wrap">
-        <!-- Narrativa automática -->
-        <div id="ped-narrativa" class="narrativa"></div>
-
-        <!-- Gráficos -->
-        <div class="graf-grid">
-          <div class="graf-card">
-            <div class="graf-titulo">Tendência mensal — % Assinados (Pedidos)</div>
-            <canvas id="ped-chart-tend"></canvas>
-          </div>
-          <div class="graf-card">
-            <div class="graf-titulo">Desempenho por vendedor — % Assinados</div>
-            <canvas id="ped-chart-vend"></canvas>
-          </div>
-        </div>
-
-        <!-- Risco financeiro -->
-        <div class="secao-titulo">Risco Financeiro — Sementes Pendentes</div>
-        <div id="ped-risco-box"></div>
-
-        <!-- Ranking de clientes -->
-        <div class="secao-titulo">Clientes com Mais Pendências</div>
-        <div class="tab-wrap">
-          <table id="ped-tb-clientes">
-            <thead><tr>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',0,this)">Cliente<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',1,this)">Pendências<span class="si"></span></th>
-            </tr></thead>
-            <tbody id="ped-body-clientes"></tbody>
-          </table>
-        </div>
-
-        <!-- Plano de ação -->
-        <div class="secao-titulo">Plano de Ação Priorizado</div>
-        <div class="tab-wrap">
-          <table id="ped-tb-plano">
-            <thead><tr>
-              <th>Prior.</th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',2,this)">% Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',3,this)">Pendentes<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-plano',4,this)">Sem. Pend.<span class="si"></span></th>
-              <th>Ação Recomendada</th>
-            </tr></thead>
-            <tbody id="ped-body-plano"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABA 6: APRESENTAÇÃO -->
-    <div id="ped-aba-6" class="hidden">
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
-        <button class="btn-exp" onclick="PED_expPNG('ped-apres-wrap')">PNG</button>
-        <button class="btn-exp" onclick="PED_expPDF('ped-apres-wrap','pedidos')">PDF</button>
-        <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
-      </div>
-      <div id="ped-apres-wrap" class="apres">
-        <div class="apres-filial" id="ped-ap-filial">—</div>
-        <div class="apres-periodo" id="ped-ap-periodo">—</div>
-        <div class="apres-resp" id="ped-ap-resp"></div>
-        <div id="ped-ap-narrativa" class="narrativa" style="margin:18px 0;"></div>
-        <div class="apres-blocos" id="ped-ap-blocos"></div>
-      </div>
-    </div>
-
-  </div><!-- /painel -->
-
-  <!-- ABA 7: HISTÓRICO — USO EXCLUSIVO AUDITORIA INTERNA -->
-  <div id="ped-aba-7" class="hidden">
-    <div class="tab-wrap">
-      <div class="tab-top" style="align-items:flex-start;flex-direction:column;gap:6px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-          <div>
-            <span class="tab-titulo">🗂 Histórico de Auditorias — Acumulador</span>
-            <span style="font-size:11px;color:var(--text3);margin-left:10px;">Uso exclusivo da Auditoria Interna</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn-exp primary" onclick="PED_registrarAuditoria()" id="ped-btn-registrar" title="Registra os resultados da auditoria atual no histórico">
-              ✚ Registrar esta Auditoria
-            </button>
-            <button class="btn-exp" onclick="PED_expHistoricoXLS()" title="Exporta todo o histórico para o Acumulador Excel (.xlsx)">📥 Exportar Acumulador (.xlsx)</button>
-            <button class="btn-exp" onclick="PED_expHistoricoJSON()" title="Exporta o histórico como arquivo .json para reimportar no painel">💾 Salvar Histórico (.json)</button>
-            <button class="btn-exp" onclick="PED_importarHistoricoJSON()" title="Carrega histórico do arquivo .xlsx ou .json gerado por 'Exportar Acumulador'">📂 Carregar Histórico (.xlsx/.json)</button>
-            <button class="btn-exp small" onclick="if(confirm('Limpar TODO o histórico salvo?')){localStorage.removeItem('aqHistorico');H_DADOS=[];PED_renderHistorico();}">🗑 Limpar</button>
-            <input type="file" id="ped-inp-hist-json" accept=".json,.xlsx,.xls" style="display:none" onchange="PED_lerArquivoHistorico(this)">
-          </div>
-        </div>
-        <div id="ped-hist-aviso" style="font-size:12px;color:var(--verm);display:none;padding:4px 8px;background:var(--verm-bg);border-radius:6px;border-left:3px solid var(--verm);">
-          ⚠ Nenhuma auditoria carregada. Importe os arquivos e clique em "Registrar esta Auditoria".
-        </div>
-      </div>
-
-      <!-- KPIs do histórico -->
-      <div id="ped-hist-kpis" class="kpis-row" style="display:none;margin:12px 0;gap:10px;flex-wrap:wrap;"></div>
-
-      <!-- Tabela de auditorias registradas -->
-      <div id="ped-hist-wrap" style="overflow-x:auto;">
-        <div id="ped-hist-vazio" style="padding:40px;text-align:center;color:var(--text3);">
-          <div style="font-size:40px;margin-bottom:8px;">🗂</div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Nenhuma auditoria registrada ainda</div>
-          <div style="font-size:12px;">Importe os arquivos, revise os pedidos e canhotos, depois clique em<br><b>✚ Registrar esta Auditoria</b></div>
-        </div>
-        <table id="ped-tb-hist" style="display:none;width:100%;border-collapse:collapse;font-size:12px;">
-          <thead>
-            <tr>
-              <th style="width:30px">#</th>
-              <th>Filial</th>
-              <th>Período</th>
-              <th>% Ped.</th>
-              <th>Ped. Conf.</th>
-              <th>Ped. Ass.</th>
-              <th>Ped. Pend.</th>
-              <th style="color:var(--verm-text,#b01c1c)">Sem. Pend.</th>
-              <th>% Can.</th>
-              <th>Can. Conf.</th>
-              <th>Can. Ass.</th>
-              <th>Can. Pend.</th>
-              <th>Score</th>
-              <th>Registrado em</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="ped-body-hist"></tbody>
-        </table>
-      </div>
-
-      <!-- Legenda do score -->
-      <div style="margin-top:14px;padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:11px;color:var(--text3);border:1px solid var(--border);">
-        <b>Como o Score é calculado (máx 100 pts):</b> &nbsp;
-        <span style="color:#b01c1c">🔴 Semente 40pts</span> (0 se qualquer pendência) &nbsp;|&nbsp;
-        <span style="color:#0d2b6e">🔵 Pedido 30pts</span> (proporcional à meta ≥95%) &nbsp;|&nbsp;
-        <span style="color:#b86c00">🟡 Vencidos 20pts</span> (assume 100% se não disponível) &nbsp;|&nbsp;
-        <span style="color:#14693a">🟢 Canhoto 10pts</span> (proporcional à meta ≥95%)
-      </div>
-    </div>
-  </div>
-
-  <!-- ABA 8: GUIA DE USO -->
-  <div id="ped-aba-8" class="hidden">
-    <div class="tab-wrap">
-      <div class="tab-top">
-        <span class="tab-titulo">📖 Guia de Uso — Painel de Conferência Agroquima</span>
-      </div>
-
-      <!-- PARA LEIGOS -->
-      <div class="guia-secao">
-        <div class="guia-titulo">Para quem usa o dia a dia <span class="tag-leigo">Gerente / Supervisor / Auxiliar</span></div>
-
-        <div class="guia-info">
-          <b>O que é esse painel?</b> Uma ferramenta que lê os arquivos do sistema e mostra quais pedidos e canhotos (notas fiscais) ainda não foram assinados — sem precisar fazer nada manualmente. Você importa os arquivos, o painel faz todo o trabalho.
-        </div>
-
-        <div class="guia-cards">
-          <div class="guia-card">
-            <div class="gc-num">1</div>
-            <div class="gc-titulo">Baixar os 4 arquivos do sistema</div>
-            <div class="gc-desc">No sistema da Agroquima, exporte 4 relatórios do período auditado:<br><br>
-              📄 <b>Pedido.xls</b> — todos os pedidos<br>
-              📄 <b>Canhoto.xls</b> — todas as notas fiscais<br>
-              📄 <b>Pedido_Copia.xls</b> — pedidos cópia<br>
-              📄 <b>...Sementes...xls</b> — pedidos de semente
-            </div>
-            <div class="gc-nota">Salve os 4 arquivos na mesma pasta antes de importar.</div>
-          </div>
-          <div class="guia-card">
-            <div class="gc-num">2</div>
-            <div class="gc-titulo">Abrir o painel e importar</div>
-            <div class="gc-desc">Abra o arquivo <b>relatorio_canhoto_v2.html</b> no Chrome.<br><br>
-              Clique em <b>↑ Importar Arquivos</b> no topo e selecione os 4 arquivos de uma vez.<br><br>
-              A faixa colorida no topo mostra se todos foram reconhecidos:<br>
-              ✅ Verde = OK | ❌ Vermelho = falta arquivo
-            </div>
-            <div class="gc-nota">Funciona sem internet. Não precisa instalar nada.</div>
-          </div>
-          <div class="guia-card verm">
-            <div class="gc-num">3</div>
-            <div class="gc-titulo">Verificar SEMENTES primeiro — PRIORIDADE</div>
-            <div class="gc-desc">Vá na aba <b>🌱 Sementes</b>.<br><br>
-              A meta é <b>ZERO</b> pendências. Se houver qualquer pedido de semente sem assinatura, acione o Representante Comercial imediatamente — antes do fechamento do período.
-            </div>
-            <div class="gc-nota">⚠ Sementes têm tolerância zero — risco financeiro direto.</div>
-          </div>
-          <div class="guia-card">
-            <div class="gc-num">4</div>
-            <div class="gc-titulo">Analisar pedidos por Representante</div>
-            <div class="gc-desc">Na aba <b>📋 Pedidos de Venda</b>, clique em <b>▶ Detalhar</b> nos representantes com pendências.<br><br>
-              Itens em <span style="color:var(--text3)">cinza</span> com "Não conta" são informativos — <b>não afetam o indicador</b> (ex.: VENDA A VISTA).
-            </div>
-            <div class="gc-nota">Meta: ≥ 95% dos pedidos assinados.</div>
-          </div>
-          <div class="guia-card">
-            <div class="gc-num">5</div>
-            <div class="gc-titulo">Verificar canhotos</div>
-            <div class="gc-desc">Nas abas <b>📄 Canhotos / Mês</b> e <b>👤 Canhotos / Vendedor</b>, identifique as notas sem assinatura e encaminhe para cobrança.</div>
-            <div class="gc-nota">Meta: ≥ 95% dos canhotos assinados.</div>
-          </div>
-          <div class="guia-card verde">
-            <div class="gc-num">6</div>
-            <div class="gc-titulo">Exportar o relatório</div>
-            <div class="gc-desc">Na aba <b>📋 Pedidos de Venda</b>, clique em <b>📋 Conferência (Supervisor)</b>.<br><br>
-              Será gerada uma planilha Excel com:<br>
-              • Aba <b>Resumo</b>: indicadores + desempenho por representante<br>
-              • Aba <b>Pendências</b>: lista detalhada para cobrar
-            </div>
-            <div class="gc-nota">Enviar ao Supervisor Regional e Gerente Administrativo.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PARA O AUDITOR -->
-      <div class="guia-secao">
-        <div class="guia-titulo">Para o Auditor Interno <span class="tag-dev">Histórico & Acumulador</span></div>
-
-        <div class="guia-info">
-          A aba <b>🗂 Histórico</b> é exclusiva da Auditoria Interna. Ela acumula os resultados de todas as auditorias realizadas e calcula automaticamente o score de cada filial — sem precisar abrir o Acumulador Excel.
-        </div>
-
-        <div class="guia-cards">
-          <div class="guia-card amar">
-            <div class="gc-num">1</div>
-            <div class="gc-titulo">Registrar a auditoria</div>
-            <div class="gc-desc">Após revisar todos os pedidos e canhotos, vá em <b>🗂 Histórico</b> e clique em <b>✚ Registrar esta Auditoria</b>.<br><br>
-              O painel captura automaticamente: filial, período, % pedidos, sementes, % canhotos e calcula o score.
-            </div>
-            <div class="gc-nota">Se a mesma filial+período já existir, pergunta se quer substituir.</div>
-          </div>
-          <div class="guia-card">
-            <div class="gc-num">2</div>
-            <div class="gc-titulo">Histórico persiste entre sessões</div>
-            <div class="gc-desc">Os registros ficam salvos no browser (localStorage). Ao fechar e reabrir o arquivo, o histórico é restaurado automaticamente.</div>
-            <div class="gc-nota">Atenção: se usar outro computador ou outro browser, use "📂 Carregar Histórico" para importar o JSON.</div>
-          </div>
-          <div class="guia-card verde">
-            <div class="gc-num">3</div>
-            <div class="gc-titulo">Exportar para o Acumulador Excel</div>
-            <div class="gc-desc">Quando quiser consolidar, clique em <b>📥 Exportar Acumulador</b>.<br><br>
-              Será gerado um Excel com:<br>
-              • <b>Lançamentos</b>: todos os registros no formato do Acumulador<br>
-              • <b>Ranking</b>: score médio por filial<br>
-              • <b>Backup JSON</b>: para reimportar depois
-            </div>
-            <div class="gc-nota">O Excel gerado é compatível com o Acumulador_Conferencia_Agroquima.xlsx.</div>
-          </div>
-          <div class="guia-card">
-            <div class="gc-num">4</div>
-            <div class="gc-titulo">Remover ou corrigir um registro</div>
-            <div class="gc-desc">Na tabela do Histórico, clique no <b>✕</b> à direita da linha para remover. Para corrigir, remova e registre novamente com os arquivos corretos importados.</div>
-            <div class="gc-nota">O botão 🗑 Limpar apaga TODO o histórico — use com cuidado.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- REGRAS DE NEGÓCIO -->
-      <div class="guia-secao">
-        <div class="guia-titulo">Regras principais do painel</div>
-        <table class="guia-tabela">
-          <thead><tr><th>Situação</th><th>Como o painel trata</th><th>Impacto no indicador</th></tr></thead>
-          <tbody>
-            <tr><td><b>VENDA A VISTA</b> (não-semente)</td><td>Exibido em cinza como "Não conta"</td><td>❌ Não conta</td></tr>
-            <tr><td><b>VENDA A VISTA semente</b></td><td>Cobrado normalmente — zero tolerância</td><td>✅ Conta</td></tr>
-            <tr><td><b>CFOP 5116/5117/6116/6117</b> (remessa)</td><td>Ignorado em pedidos — cobrado no canhoto</td><td>✅ Conta no canhoto</td></tr>
-            <tr><td><b>CFOP 5922/6922</b> (faturamento futuro)</td><td>Pedido cobrado; canhoto assinado automático</td><td>✅ Conta no pedido</td></tr>
-            <tr><td><b>Pedido com múltiplas linhas</b></td><td>Agrupado — conta 1 vez só</td><td>✅ 1 pedido = 1 voto</td></tr>
-            <tr><td><b>Pedido Cópia</b></td><td>Sempre pendente (exceto se tipo não cobrável)</td><td>⚠ Sempre pendente</td></tr>
-            <tr><td><b>Representante "ESC.XXXXX"</b></td><td>Escritório externo — ignorado completamente</td><td>❌ Não conta</td></tr>
-            <tr><td><b>Semente pendente</b></td><td>Exibido com valor R$ em risco + prioridade máxima</td><td>🔴 Crítico</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- SCORE -->
-      <div class="guia-secao">
-        <div class="guia-titulo">Sistema de score — como é calculado</div>
-        <div class="guia-alerta">⚠ Semente pendente = score semente = 0 pts. Independente do restante, a filial não pode atingir o score máximo.</div>
-        <table class="guia-tabela">
-          <thead><tr><th>Item</th><th>Peso</th><th>Critério</th><th>Fórmula</th></tr></thead>
-          <tbody>
-            <tr><td>🔴 <b>Pedido de Semente</b></td><td><b>40 pts</b></td><td>Zero tolerância</td><td>40 se sem pendências / 0 se qualquer pendência</td></tr>
-            <tr><td>🔵 <b>Pedido de Venda</b></td><td><b>30 pts</b></td><td>Meta ≥ 95%</td><td>MIN(% atingido / 95, 1) × 30</td></tr>
-            <tr><td>🟡 <b>Produtos Vencidos</b></td><td><b>20 pts</b></td><td>Painel Vencidos</td><td>Score informado / 100 × 20 (assume 100% se não disponível)</td></tr>
-            <tr><td>🟢 <b>Canhoto</b></td><td><b>10 pts</b></td><td>Meta ≥ 95%</td><td>MIN(% atingido / 95, 1) × 10</td></tr>
-            <tr style="font-weight:700;background:var(--az-cl)"><td colspan="2"><b>TOTAL MÁXIMO: 100 pts</b></td><td colspan="2">🥇 ≥90 pts | 🟢 ≥75 | 🟡 ≥60 | 🔴 &lt;60</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- ARQUIVOS -->
-      <div class="guia-secao">
-        <div class="guia-titulo">Arquivos do sistema e onde extrair</div>
-        <table class="guia-tabela">
-          <thead><tr><th>Arquivo</th><th>Onde extrair no sistema</th><th>Obrigatório?</th></tr></thead>
-          <tbody>
-            <tr><td><b>Pedido.xls</b></td><td>Relatório de Baixa de Canhoto → opção Pedido</td><td>✅ Sim</td></tr>
-            <tr><td><b>Canhoto.xls</b></td><td>Relatório de Baixa de Canhoto → opção Canhoto</td><td>✅ Sim</td></tr>
-            <tr><td><b>Pedido_Copia.xls</b></td><td>Relatório de Pedido Cópia</td><td>✅ Sim</td></tr>
-            <tr><td><b>...Sementes...xls</b></td><td>Relatório Resumo Movimentação CFOP (nome gerado pelo sistema)</td><td>✅ Recomendado</td></tr>
-          </tbody>
-        </table>
-        <div class="gc-nota" style="margin-top:8px;display:block">O painel detecta o tipo de cada arquivo automaticamente pelo nome e pelo conteúdo. Se um arquivo não for reconhecido, verifique se o nome contém a palavra-chave (pedido, canhoto, copia, sementes).</div>
-      </div>
-
-    </div>
-  </div>
-
-</div><!-- /conteudo -->
-
-
-</div><!-- /mod-pedidos -->
-<script>
 
   const TOTAL = ${itemIdx};
   let conferidos = 0;
