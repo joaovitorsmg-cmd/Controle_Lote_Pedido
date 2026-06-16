@@ -2031,7 +2031,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
       </div>
       <div class="summary-grid" id="summary-risco"></div>
-      <div class="table-container">
+      <div class="table-container" id="tc-risco">
         <div class="table-header">
           <div class="table-title"><i class="ti ti-alert-triangle" style="color:var(--laranja)"></i> Lotes em Risco de Vencimento</div>
           <div class="table-actions">
@@ -2050,7 +2050,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
               <button class="btn-sm primary" onclick="toggleDropdown('dd-risco')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
               <div class="export-menu" id="menu-dd-risco">
                 <div class="export-menu-item" onclick="exportarExcel('risco');toggleDropdown('dd-risco')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</div>
-                <div class="export-menu-item" onclick="exportarPNG('tabela-risco-wrap','risco');toggleDropdown('dd-risco')"><i class="ti ti-photo"></i> Imagem (.png)</div>
+                <div class="export-menu-item" onclick="exportarPNG('tc-risco','risco');toggleDropdown('dd-risco')"><i class="ti ti-photo"></i> Imagem (.png)</div>
               </div>
             </div>
           </div>
@@ -2094,7 +2094,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
       </div>
       <div class="summary-grid" id="summary-vencidos"></div>
-      <div class="table-container">
+      <div class="table-container" id="tc-vencidos">
         <div class="table-header">
           <div class="table-title"><i class="ti ti-skull" style="color:var(--vermelho)"></i> Produtos Vencidos em Estoque</div>
           <div class="table-actions">
@@ -2107,7 +2107,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
               <button class="btn-sm primary" onclick="toggleDropdown('dd-vencidos')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
               <div class="export-menu" id="menu-dd-vencidos">
                 <div class="export-menu-item" onclick="exportarExcel('vencidos');toggleDropdown('dd-vencidos')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</div>
-                <div class="export-menu-item" onclick="exportarPNG('tabela-vencidos-wrap','vencidos');toggleDropdown('dd-vencidos')"><i class="ti ti-photo"></i> Imagem (.png)</div>
+                <div class="export-menu-item" onclick="exportarPNG('tc-vencidos','vencidos');toggleDropdown('dd-vencidos')"><i class="ti ti-photo"></i> Imagem (.png)</div>
               </div>
             </div>
           </div>
@@ -2152,7 +2152,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div id="alerta-responsavel" style="margin-bottom:14px;"></div>
       <div class="summary-grid" id="summary-alerta"></div>
       <div id="alerta-cobranca" style="margin-bottom:16px;"></div>
-      <div class="table-container">
+      <div class="table-container" id="tc-alerta">
         <div class="table-header">
           <div class="table-title"><i class="ti ti-bell-ringing" style="color:var(--laranja)"></i> Estoque a Vencer em 90 dias</div>
           <div class="table-actions">
@@ -2169,7 +2169,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
               <button class="btn-sm primary" onclick="toggleDropdown('dd-alerta')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
               <div class="export-menu" id="menu-dd-alerta">
                 <div class="export-menu-item" onclick="exportarAlertaExcel();toggleDropdown('dd-alerta')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</div>
-                <div class="export-menu-item" onclick="exportarPNG('tabela-alerta-wrap','alerta');toggleDropdown('dd-alerta')"><i class="ti ti-photo"></i> Imagem (.png)</div>
+                <div class="export-menu-item" onclick="exportarPNG('tc-alerta','alerta');toggleDropdown('dd-alerta')"><i class="ti ti-photo"></i> Imagem (.png)</div>
               </div>
             </div>
           </div>
@@ -2219,7 +2219,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       </div>
       <div class="summary-grid" id="summary-semgiro"></div>
       <div id="semgiro-rotas"></div>
-      <div class="table-container">
+      <div class="table-container" id="tc-semgiro">
         <div class="table-header">
           <div class="table-title"><i class="ti ti-package-off" style="color:var(--amber)"></i> Produtos Parados — Detalhamento por Lote</div>
           <div class="table-actions">
@@ -2232,7 +2232,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
               <button class="btn-sm primary" onclick="toggleDropdown('dd-semgiro')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
               <div class="export-menu" id="menu-dd-semgiro">
                 <div class="export-menu-item" onclick="exportarExcel('semgiro');toggleDropdown('dd-semgiro')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</div>
-                <div class="export-menu-item" onclick="exportarPNG('tabela-semgiro-wrap','sem_giro');toggleDropdown('dd-semgiro')"><i class="ti ti-photo"></i> Imagem (.png)</div>
+                <div class="export-menu-item" onclick="exportarPNG('tc-semgiro','sem_giro');toggleDropdown('dd-semgiro')"><i class="ti ti-photo"></i> Imagem (.png)</div>
               </div>
             </div>
           </div>
@@ -2290,13 +2290,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             </select>
             <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-cacaerros" oninput="filtrarCacaErros()">
             <button class="btn-limpar" onclick="limparFiltros('cacaerros')"><i class="ti ti-x"></i> Limpar</button>
-            <div class="export-dropdown" id="dd-cacaerros">
-              <button class="btn-sm primary" onclick="toggleDropdown('dd-cacaerros')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
-              <div class="export-menu" id="menu-dd-cacaerros">
-                <div class="export-menu-item" onclick="exportarCacaErrosExcel();toggleDropdown('dd-cacaerros')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</div>
-                <div class="export-menu-item" onclick="exportarPNG('cacaerros-lista','caca_erros');toggleDropdown('dd-cacaerros')"><i class="ti ti-photo"></i> Imagem (.png)</div>
-              </div>
-            </div>
+            <button class="btn-sm primary" onclick="exportarCacaErrosExcel()" title="Exportar Excel (.xlsx)"><i class="ti ti-file-spreadsheet"></i></button>
           </div>
         </div>
         <div id="cacaerros-lista"></div>
@@ -2390,6 +2384,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <div class="export-dropdown" id="dd-plano">
             <button class="btn-sm primary" onclick="toggleDropdown('dd-plano')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
             <div class="export-menu" id="menu-dd-plano">
+              <div class="export-menu-item" onclick="exportarPlanoAcaoExcel();toggleDropdown('dd-plano')" style="color:#4ade80;font-weight:600;"><i class="ti ti-file-spreadsheet" style="color:#22c55e;"></i> Excel (.xlsx)</div>
               <div class="export-menu-item" onclick="gerarPDFSecao('plano-wrap','plano_acao');toggleDropdown('dd-plano')"><i class="ti ti-file-pdf"></i> PDF alta qualidade</div>
               <div class="export-menu-item" onclick="exportarPNGHQ('plano-wrap','plano_acao');toggleDropdown('dd-plano')"><i class="ti ti-photo"></i> Imagem PNG 4K</div>
               <div class="export-menu-item" onclick="exportarArquivoVencidosPadrao();toggleDropdown('dd-plano')" style="color:var(--amber-dk);"><i class="ti ti-package-export"></i> Exportar p/ Ranking (JSON padrão)</div>
@@ -2490,19 +2485,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     </div>
     <div class="modal-tab-bar">
       <div class="modal-tab active" onclick="switchModalTab('pdf')">PDF / Impressão</div>
-      <div class="modal-tab" onclick="switchModalTab('png')">Imagem PNG</div>
       <div class="modal-tab" onclick="switchModalTab('mobile')">Versão Celular</div>
     </div>
     <div class="modal-body">
       <div class="modal-tab-content active" id="modal-tab-pdf">
         <div id="print-sheet-content"></div>
-      </div>
-      <div class="modal-tab-content" id="modal-tab-png" style="padding:16px; text-align:center; color:var(--texto-muted);">
-        <i class="ti ti-photo" style="font-size:32px; margin-bottom:12px; opacity:0.4;"></i>
-        <p style="font-size:13px; margin-bottom:16px;">Clique para gerar a imagem PNG da folha de contagem</p>
-        <button class="btn-sm primary" onclick="exportarPNG('print-sheet-content','relatorio_contagem_lotes')" style="margin:0 auto;">
-          <i class="ti ti-download"></i> Baixar PNG
-        </button>
       </div>
       <div class="modal-tab-content" id="modal-tab-mobile" style="padding:16px;">
         <div class="metodologia-bar">
@@ -2524,7 +2511,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <div class="modal-footer">
       <button class="btn-sm" onclick="fecharModal()"><i class="ti ti-x"></i> Fechar</button>
       <button class="btn-sm" onclick="baixarHTMLMobile()"><i class="ti ti-device-mobile"></i> Versão Celular</button>
-      <button class="btn-sm" onclick="exportarPNG('print-sheet-content','relatorio_contagem_lotes')"><i class="ti ti-photo"></i> PNG</button>
+      <button class="btn-sm" onclick="exportarContagemExcel()"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</button>
       <button class="btn-sm primary" onclick="gerarPDFContagem()"><i class="ti ti-file-pdf"></i> Baixar PDF</button>
     </div>
   </div>
@@ -2657,6 +2644,7 @@ const APP = {
   cacaErros: [],          // inconsistências detectadas (cruzando todas as filiais)
   filteredCacaErros: [],
   checklistExtras: [],   // lotes adicionados manualmente ao checklist (além dos que o sistema traz)
+  checklistExcluidos: [], // lotes auto-adicionados que o auditor optou por remover
   checklistObs: {},      // observações por item { 'codProduto|lote': 'texto' }
 };
 
@@ -2876,6 +2864,7 @@ function processarDados() {
       APP.vencidos = [];
       APP.emRisco = [];
       APP.checklistExtras = [];
+      APP.checklistExcluidos = [];
       APP.checklistObs = {};
 
       // Meses futuros contados a partir de hoje
@@ -3849,7 +3838,7 @@ function renderChecklist() {
                 <div class="check-badge">
                   <span class="badge ${l.nivel === 'CRÍTICO' ? 'critico' : l.nivel === 'ALERTA' ? 'alerta' : l.nivel === 'ATENÇÃO' ? 'atencao' : 'atencao'}">${l.nivel || 'MANUAL'}</span>
                   <span style="font-size:11px; color:var(--texto-muted); margin-left:8px;">Score: ${l.score ?? '—'}${l.valorRisco != null ? ' · Risco: ' + formatValor(l.valorRisco) : ''}</span>
-                  ${l.extra ? `<button class="btn-remover-lote" title="Remover do checklist" onclick="removerLoteChecklist('${l.codProduto}','${String(l.lote).trim().replace(/'/g,"\\'")}')"><i class="ti ti-x"></i></button>` : ''}
+                  <button class="btn-remover-lote" title="Remover do checklist" onclick="removerLoteChecklist('${l.codProduto}','${String(l.lote).trim().replace(/'/g,"\\'")}',${l.extra ? 'true' : 'false'})"><i class="ti ti-x"></i></button>
                 </div>
                 <textarea class="check-obs" rows="1" placeholder="Observação (divergências, condição, localização...)" oninput="setChecklistObs('${key.replace(/'/g,"\\'")}', this.value)">${obs}</textarea>
               </div>
@@ -3866,10 +3855,17 @@ function setChecklistObs(key, val) {
   else delete APP.checklistObs[key];
 }
 
-function removerLoteChecklist(cod, lote) {
-  APP.checklistExtras = (APP.checklistExtras || []).filter(
-    e => !(String(e.codProduto) === String(cod) && String(e.lote).trim() === String(lote).trim())
-  );
+function removerLoteChecklist(cod, lote, isExtra) {
+  if (isExtra) {
+    APP.checklistExtras = (APP.checklistExtras || []).filter(
+      e => !(String(e.codProduto) === String(cod) && String(e.lote).trim() === String(lote).trim())
+    );
+  } else {
+    if (!(APP.checklistExcluidos || []).some(e => String(e.codProduto) === String(cod) && String(e.lote).trim() === String(lote).trim())) {
+      APP.checklistExcluidos = APP.checklistExcluidos || [];
+      APP.checklistExcluidos.push({ codProduto: cod, lote });
+    }
+  }
   renderChecklist();
   renderTabelaRisco(APP.pages.risco);
 }
@@ -4868,6 +4864,7 @@ function getChecklistSelecao() {
     porLinha[l.linha][l.codProduto].push(l);
   }
 
+  const excluidos = new Set((APP.checklistExcluidos || []).map(e => e.codProduto + '|' + String(e.lote).trim()));
   const resultado = {};
   for (const [linha, produtos] of Object.entries(porLinha)) {
     const arr = Object.entries(produtos).map(([cod, lotes]) => ({
@@ -4875,8 +4872,8 @@ function getChecklistSelecao() {
       nome: lotes[0].nomeProduto,
       maxScore: Math.max(...lotes.map(x => x.score)),
       extra: false,
-      lotes: lotes.slice().sort((a, b) => b.score - a.score),
-    }));
+      lotes: lotes.filter(l => !excluidos.has(l.codProduto + '|' + String(l.lote).trim())).sort((a, b) => b.score - a.score),
+    })).filter(p => p.lotes.length > 0);
     // Os 5 produtos de maior risco da linha
     arr.sort((a, b) => b.maxScore - a.maxScore);
     resultado[linha] = arr.slice(0, 5);
@@ -5108,6 +5105,81 @@ function exportarExcel(tipo) {
   const nomeAba = tipo === 'risco' ? 'Risco' : tipo === 'vencidos' ? 'Vencidos' : 'Sem Giro';
   XLSX.utils.book_append_sheet(wb, ws, nomeAba);
   XLSX.writeFile(wb, `auditoria_${tipo}_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.xlsx`);
+}
+
+function exportarContagemExcel() {
+  const lotes = getTop5PorLinha();
+  if (!lotes.length) { alert('Nenhum lote no checklist para exportar.'); return; }
+  const ws = XLSX.utils.json_to_sheet(lotes.map((l, i) => ({
+    '#': i + 1,
+    'Linha': getNomeLinha(l.linha),
+    'Código': l.codProduto,
+    'Produto': l.nomeProduto,
+    'Lote': String(l.lote).trim(),
+    'Dt Vencimento': l.dtVencimento,
+    'Dias p/ Venc.': l.diasVencimento,
+    'Quantidade': l.quantidade,
+    'Nível': l.nivel || 'MANUAL',
+    'Score': l.score ?? '',
+    'Observação': (APP.checklistObs[l.codProduto + '|' + String(l.lote).trim()] || ''),
+    'Qtd Encontrada': '',
+    'Conferido': '',
+  })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Checklist');
+  XLSX.writeFile(wb, `checklist_contagem_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.xlsx`);
+}
+
+function exportarPlanoAcaoExcel() {
+  const criticos = APP.emRisco.filter(l => l.nivel === 'CRÍTICO');
+  const alertas = APP.emRisco.filter(l => l.nivel === 'ALERTA');
+  const atencao = APP.emRisco.filter(l => l.nivel === 'ATENÇÃO');
+  const wb = XLSX.utils.book_new();
+  const mapLote = (l, acao, prazo) => ({
+    'Linha': getNomeLinha(l.linha),
+    'Código': l.codProduto,
+    'Produto': l.nomeProduto,
+    'Lote': String(l.lote).trim(),
+    'Dt Vencimento': l.dtVencimento,
+    'Dias p/ Venc.': l.diasVencimento,
+    'Qtd Estoque': l.quantidade,
+    'Venda Proj.': l.projecao,
+    'Saldo em Risco': l.saldoRisco,
+    'Vlr em Risco': l.valorRisco,
+    'Score': l.score,
+    'Nível': l.nivel,
+    'Ação Sugerida': acao,
+    'Prazo': prazo,
+  });
+  if (APP.vencidos.length) {
+    const wsV = XLSX.utils.json_to_sheet(APP.vencidos.map(l => ({
+      'Linha': getNomeLinha(l.linha),
+      'Código': l.codProduto,
+      'Produto': l.nomeProduto,
+      'Lote': String(l.lote).trim(),
+      'Dt Vencimento': l.dtVencimento,
+      'Dias Vencido': Math.abs(l.diasVencimento),
+      'Quantidade': l.quantidade,
+      'Vlr Total': l.vlrCustoTotal,
+      'Ação': 'Baixa contábil e descarte conforme MAPA/ANVISA',
+      'Prazo': 'Hoje',
+    })));
+    XLSX.utils.book_append_sheet(wb, wsV, 'Imediatas — Vencidos');
+  }
+  if (criticos.length) {
+    const wsC = XLSX.utils.json_to_sheet(criticos.map(l => mapLote(l, 'Desconto / Transferência / Contato fornecedor', '7 dias')));
+    XLSX.utils.book_append_sheet(wb, wsC, 'Urgentes — Críticos');
+  }
+  if (alertas.length) {
+    const wsA = XLSX.utils.json_to_sheet(alertas.map(l => mapLote(l, 'Monitorar e ajustar pedidos', '30 dias')));
+    XLSX.utils.book_append_sheet(wb, wsA, 'Preventivas — Alertas');
+  }
+  if (atencao.length) {
+    const wsAt = XLSX.utils.json_to_sheet(atencao.map(l => mapLote(l, 'Acompanhamento mensal', '90 dias')));
+    XLSX.utils.book_append_sheet(wb, wsAt, 'Atenção');
+  }
+  if (!wb.SheetNames.length) { alert('Nenhum dado no plano de ação para exportar.'); return; }
+  XLSX.writeFile(wb, `plano_acao_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.xlsx`);
 }
 
 // ==================== PDF DE ALTA QUALIDADE ====================
