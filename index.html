@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Auditoria de Lotes — Agroquima</title>
+<title>Auditoria — Agroquima</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1420,7 +1420,8 @@
   tr.vencido-row { background: rgba(63,0,0,0.15); }
   tr.vencido-row:hover { background: rgba(63,0,0,0.25); }
 
-/* ===== PEDIDOS/CANHOTO MODULE ===== */
+
+/* ===== PEDIDOS MODULE CSS ===== */
 
 :root{
   /* Paleta dark — alinhada ao painel de Vencidos Agroquima */
@@ -1452,7 +1453,7 @@ body{font-family:var(--fonte);background:var(--bg);color:var(--text);font-size:1
 ::-webkit-scrollbar-thumb:hover{background:var(--brand)}
 
 /* ===== TOPO ===== */
-#topo{background:var(--bg);border-bottom:1px solid var(--border);
+#ped-topo{background:var(--bg);border-bottom:1px solid var(--border);
   padding:0 24px;display:flex;align-items:center;height:60px;gap:16px;
   position:sticky;top:0;z-index:200;box-shadow:var(--sh-md);}
 .logo{display:flex;align-items:center;gap:12px;flex-shrink:0;}
@@ -1463,9 +1464,9 @@ body{font-family:var(--fonte);background:var(--bg);color:var(--text);font-size:1
 .logo-box svg{display:block;}
 .logo-txt{font-size:16px;font-weight:800;letter-spacing:.8px;color:var(--text);}
 .logo-sub{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.4px;}
-#topo-mid{flex:1;}
-#topo-titulo{color:var(--text);font-size:13px;font-weight:700;letter-spacing:.4px;}
-#topo-sub{color:var(--text2);font-size:11px;margin-top:1px;}
+#ped-topo-mid{flex:1;}
+#ped-topo-titulo{color:var(--text);font-size:13px;font-weight:700;letter-spacing:.4px;}
+#ped-topo-sub{color:var(--text2);font-size:11px;margin-top:1px;}
 .topo-btns{display:flex;gap:7px;align-items:center;}
 .btn-topo{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;
   border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;
@@ -1479,7 +1480,7 @@ body{font-family:var(--fonte);background:var(--bg);color:var(--text);font-size:1
 .btn-topo.danger:hover{background:var(--red-lt);border-color:var(--red);color:var(--red-dk);}
 
 /* ===== ABAS ===== */
-#abas{background:var(--bg);border-bottom:1px solid var(--border);
+#ped-abas{background:var(--bg);border-bottom:1px solid var(--border);
   display:flex;padding:0 20px;overflow-x:auto;gap:0;}
 .aba{padding:0 18px;height:46px;display:inline-flex;align-items:center;
   color:var(--text2);cursor:pointer;font-size:13px;font-weight:600;
@@ -1489,16 +1490,16 @@ body{font-family:var(--fonte);background:var(--bg);color:var(--text);font-size:1
 .aba.ativa{color:var(--brand);border-bottom-color:var(--brand);background:var(--brand-lt);}
 
 /* ===== CONTEÚDO ===== */
-#conteudo{padding:22px 24px;max-width:1400px;margin:0 auto;}
+#ped-conteudo{padding:22px 24px;max-width:1400px;margin:0 auto;}
 
 /* ===== DROP ZONE ===== */
-#tela-import{text-align:center;padding:60px 20px;}
-#drop-zone{border:2px dashed var(--border2);border-radius:var(--r-lg);padding:48px 40px;
+#ped-tela-import{text-align:center;padding:60px 20px;}
+#ped-drop-zone{border:2px dashed var(--border2);border-radius:var(--r-lg);padding:48px 40px;
   background:var(--bg2);cursor:pointer;transition:all .2s;max-width:580px;margin:0 auto;
   box-shadow:var(--sh-md);}
-#drop-zone.over{border-color:var(--brand);background:var(--brand-lt);}
-#drop-zone h2{color:var(--text);font-size:18px;margin-bottom:8px;}
-#drop-zone p{color:var(--text2);font-size:13px;line-height:1.7;}
+#ped-drop-zone.over{border-color:var(--brand);background:var(--brand-lt);}
+#ped-drop-zone h2{color:var(--text);font-size:18px;margin-bottom:8px;}
+#ped-drop-zone p{color:var(--text2);font-size:13px;line-height:1.7;}
 .drop-icon{font-size:44px;margin-bottom:12px;}
 .tipos-arquivo{margin-top:14px;font-size:12px;color:var(--text2);text-align:left;display:inline-block;line-height:2;}
 .btn-az{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--brand),var(--brand2));
@@ -1636,13 +1637,13 @@ body{font-family:var(--fonte);background:var(--bg);color:var(--text);font-size:1
   padding:2px 7px;border-radius:10px;margin-left:6px;}
 .tag-dev{background:#e8f0fb;color:#0d2b6e;font-size:10px;font-weight:700;
   padding:2px 7px;border-radius:10px;margin-left:6px;}
-#tb-hist th{background:var(--az-esc,#0a1322);color:#fff;padding:8px 10px;
+#ped-tb-hist th{background:var(--az-esc,#0a1322);color:#fff;padding:8px 10px;
   text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;
   letter-spacing:.3px;position:sticky;top:0;white-space:nowrap;}
-#tb-hist td{padding:7px 10px;border-bottom:1px solid var(--border);
+#ped-tb-hist td{padding:7px 10px;border-bottom:1px solid var(--border);
   font-size:12px;white-space:nowrap;}
-#tb-hist tr:nth-child(even) td{background:var(--bg2);}
-#tb-hist tr:hover td{background:var(--az-cl,#e8f0fb);}
+#ped-tb-hist tr:nth-child(even) td{background:var(--bg2);}
+#ped-tb-hist tr:hover td{background:var(--az-cl,#e8f0fb);}
 .hist-score{font-weight:900;font-size:14px;border-radius:6px;
   padding:3px 10px;display:inline-block;}
 .hist-score.s-ouro{background:#fff3cd;color:#856404;}
@@ -1804,18 +1805,19 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
   display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
 .prior-num.baixa{background:var(--text3);}
 
-/* Module switcher */
-#mod-switcher{position:fixed;top:8px;right:60px;z-index:9999;display:flex;gap:6px;}
-#mod-switcher button{padding:5px 14px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;transition:.2s;}
-#mod-switcher button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
-#mod-lotes,#mod-pedidos{width:100%;}
-#mod-pedidos{display:none;}
+
+/* ===== MODULE SWITCHER ===== */
+#mod-switcher{position:fixed;top:10px;right:16px;z-index:9999;display:flex;gap:6px;}
+#mod-switcher button{padding:5px 14px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text2);font-size:11px;font-weight:700;letter-spacing:.4px;cursor:pointer;transition:.15s;}
+#mod-switcher button.ativo{background:var(--accent);color:#fff;border-color:var(--accent);}
+#mod-lotes,#mod-pedidos{min-height:100vh;}
+
 </style>
-</head>
 <body>
+
 <div id="mod-switcher">
-  <button id="btn-mod-lotes" class="active" onclick="switchModule('lotes')">🗂 Lotes</button>
-  <button id="btn-mod-pedidos" onclick="switchModule('pedidos')">📋 Pedidos</button>
+  <button id="btn-mod-lotes" class="ativo" onclick="PED_switchModule('lotes')">🗂 Lotes</button>
+  <button id="btn-mod-pedidos" onclick="PED_switchModule('pedidos')">📋 Pedidos</button>
 </div>
 
 <div id="mod-lotes">
@@ -4419,13 +4421,13 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
   </div>
 </div>
 <div class="toast" id="toast"></div>
-</div><!-- /mod-lotes -->
 
-<div id="mod-pedidos">
+</div><!-- /mod-lotes -->
+<div id="mod-pedidos" style="display:none">
 
 
 <!-- TOPO -->
-<div id="topo">
+<div id="ped-topo">
   <div class="logo">
     <div class="logo-box">
       <svg viewBox="0 0 42 42" width="22" height="22" aria-hidden="true">
@@ -4440,37 +4442,37 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
       <div class="logo-sub">CONFERÊNCIA DE PEDIDOS E CANHOTOS</div>
     </div>
   </div>
-  <div id="topo-mid">
-    <div id="topo-titulo">—</div>
-    <div id="topo-sub">Nenhum arquivo importado</div>
+  <div id="ped-topo-mid">
+    <div id="ped-topo-titulo">—</div>
+    <div id="ped-topo-sub">Nenhum arquivo importado</div>
   </div>
   <div class="topo-btns">
     <button class="btn-topo primary" onclick="document.getElementById('fi').click()">⬆ Importar Arquivos</button>
-    <button class="btn-topo" onclick="resetarFiltros()" title="Zera ordenações e filtros, mantém os dados">↺ Resetar</button>
-    <button class="btn-topo danger" onclick="descarregarDados()" title="Remove os dados e volta à tela de importação">✕ Descarregar</button>
-    <input type="file" id="fi" multiple accept=".xls,.xlsx" onchange="handleFiles(this.files)" style="display:none"/>
+    <button class="btn-topo" onclick="PED_resetarFiltros()" title="Zera ordenações e filtros, mantém os dados">↺ Resetar</button>
+    <button class="btn-topo danger" onclick="PED_descarregarDados()" title="Remove os dados e volta à tela de importação">✕ Descarregar</button>
+    <input type="file" id="ped-fi" multiple accept=".xls,.xlsx" onchange="PED_handleFiles(this.files)" style="display:none"/>
   </div>
 </div>
 
 <!-- ABAS -->
-<div id="abas">
-  <div class="aba ativa" onclick="mudarAba(0)">📊 Resumo</div>
-  <div class="aba" onclick="mudarAba(1)">📋 Pedidos de Venda</div>
-  <div class="aba" onclick="mudarAba(2)">🌱 Sementes</div>
-  <div class="aba" onclick="mudarAba(3)">📄 Canhotos / Mês</div>
-  <div class="aba" onclick="mudarAba(4)">👤 Canhotos / Vendedor</div>
-  <div class="aba" onclick="mudarAba(5)">🎯 Diagnóstico & Ação</div>
-  <div class="aba" onclick="mudarAba(6)">📌 Apresentação</div>
-  <div class="aba aba-historico" onclick="mudarAba(7)" title="Acumulador de auditorias — uso exclusivo da Auditoria Interna">🗂 Histórico</div>
-  <div class="aba aba-guia" onclick="mudarAba(8)" title="Passo a passo de uso do painel">📖 Guia</div>
+<div id="ped-abas">
+  <div class="aba ativa" onclick="PED_mudarAba(0)">📊 Resumo</div>
+  <div class="aba" onclick="PED_mudarAba(1)">📋 Pedidos de Venda</div>
+  <div class="aba" onclick="PED_mudarAba(2)">🌱 Sementes</div>
+  <div class="aba" onclick="PED_mudarAba(3)">📄 Canhotos / Mês</div>
+  <div class="aba" onclick="PED_mudarAba(4)">👤 Canhotos / Vendedor</div>
+  <div class="aba" onclick="PED_mudarAba(5)">🎯 Diagnóstico & Ação</div>
+  <div class="aba" onclick="PED_mudarAba(6)">📌 Apresentação</div>
+  <div class="aba aba-historico" onclick="PED_mudarAba(7)" title="Acumulador de auditorias — uso exclusivo da Auditoria Interna">🗂 Histórico</div>
+  <div class="aba aba-guia" onclick="PED_mudarAba(8)" title="Passo a passo de uso do painel">📖 Guia</div>
 </div>
 
 <!-- CONTEÚDO -->
-<div id="conteudo">
+<div id="ped-conteudo">
 
   <!-- TELA IMPORT -->
-  <div id="tela-import">
-    <div id="drop-zone" ondragover="evDrag(event)" ondragleave="dlDrag()" ondrop="dropArq(event)"
+  <div id="ped-tela-import">
+    <div id="ped-drop-zone" ondragover="PED_evDrag(event)" ondragleave="PED_dlDrag()" ondrop="PED_dropArq(event)"
          onclick="document.getElementById('fi').click()">
       <div class="drop-icon">📂</div>
       <h2>Importar arquivos do sistema</h2>
@@ -4484,236 +4486,236 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
       </div>
       <br/>
       <button class="btn-az" onclick="event.stopPropagation();document.getElementById('fi').click()">Selecionar arquivos</button>
-      <div class="arq-status" id="arq-status"></div>
+      <div class="arq-status" id="ped-arq-status"></div>
     </div>
   </div>
 
   <!-- PAINEL -->
-  <div id="painel" class="hidden">
+  <div id="ped-painel" class="hidden">
 
     <!-- ABA 0: RESUMO -->
-    <div id="aba-0">
-      <div id="import-diag" class="import-diag"></div>
+    <div id="ped-aba-0">
+      <div id="ped-import-diag" class="import-diag"></div>
       <div class="info-filial" id="ped-info-filial"></div>
-      <div class="kpi-grid" id="kpis" style="margin-bottom:18px;"></div>
+      <div class="kpi-grid" id="ped-kpis" style="margin-bottom:18px;"></div>
       <div class="resumo-grid">
         <div>
           <div class="secao-titulo">Ranking — Pedidos por Vendedor</div>
-          <div class="ranking-wrap" id="rank-pedidos"></div>
+          <div class="ranking-wrap" id="ped-rank-pedidos"></div>
         </div>
         <div>
           <div class="secao-titulo">Canhotos por Mês</div>
-          <div class="ranking-wrap" id="rank-canhotos"></div>
+          <div class="ranking-wrap" id="ped-rank-canhotos"></div>
         </div>
       </div>
     </div>
 
     <!-- ABA 1: PEDIDOS -->
-    <div id="aba-1" class="hidden">
-      <div id="alerta-ped" class="hidden"></div>
+    <div id="ped-aba-1" class="hidden">
+      <div id="ped-alerta-ped" class="hidden"></div>
       <div class="tab-wrap">
         <div class="tab-top">
           <span class="tab-titulo">Conferência de Pedidos de Venda — por Vendedor</span>
           <div class="tab-acoes">
-            <button class="btn-exp small" onclick="expandirTodos('tb-ped')">Expandir todos</button>
-            <button class="btn-exp small" onclick="recolherTodos('tb-ped')">Recolher todos</button>
-            <button class="btn-exp primary" onclick="expConferencia('pedidos')" title="Planilha organizada para o supervisor — resumo + pendências">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="expPNG('wrap-ped')">PNG</button>
-            <button class="btn-exp" onclick="expPDF('wrap-ped','pedidos')">PDF</button>
-            <button class="btn-limpar" onclick="resetarFiltros()">↺ Resetar</button>
+            <button class="btn-exp small" onclick="PED_expandirTodos('tb-ped')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('tb-ped')">Recolher todos</button>
+            <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor — resumo + pendências">📋 Conferência (Supervisor)</button>
+            <button class="btn-exp" onclick="PED_expPNG('wrap-ped')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('wrap-ped','pedidos')">PDF</button>
+            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
-        <div id="wrap-ped">
-          <table id="tb-ped">
+        <div id="ped-wrap-ped">
+          <table id="ped-tb-ped">
             <thead><tr>
               <th style="width:36px"></th>
-              <th class="sortable" onclick="sortTab('tb-ped',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-ped',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-ped',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-ped',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-ped',5,this)">% Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-ped',6,this)">Sem. Pend.<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-ped',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-ped',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-ped',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-ped',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-ped',5,this)">% Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-ped',6,this)">Sem. Pend.<span class="si"></span></th>
               <th>Período</th>
             </tr></thead>
-            <tbody id="body-ped"></tbody>
+            <tbody id="ped-body-ped"></tbody>
           </table>
-          <div class="caixas" id="cxs-ped"></div>
+          <div class="caixas" id="ped-cxs-ped"></div>
         </div>
       </div>
     </div>
 
     <!-- ABA 2: SEMENTES -->
-    <div id="aba-2" class="hidden">
-      <div id="alerta-sem" class="hidden"></div>
+    <div id="ped-aba-2" class="hidden">
+      <div id="ped-alerta-sem" class="hidden"></div>
       <div class="tab-wrap">
         <div class="tab-top">
           <span class="tab-titulo">Conferência de Pedidos — Sementes — por Vendedor</span>
           <div class="tab-acoes">
-            <button class="btn-exp small" onclick="expandirTodos('tb-sem')">Expandir todos</button>
-            <button class="btn-exp small" onclick="recolherTodos('tb-sem')">Recolher todos</button>
-            <button class="btn-exp primary" onclick="expConferencia('sementes')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="expPNG('wrap-sem')">PNG</button>
-            <button class="btn-exp" onclick="expPDF('wrap-sem','sementes')">PDF</button>
-            <button class="btn-limpar" onclick="resetarFiltros()">↺ Resetar</button>
+            <button class="btn-exp small" onclick="PED_expandirTodos('tb-sem')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('tb-sem')">Recolher todos</button>
+            <button class="btn-exp primary" onclick="PED_expConferencia('sementes')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
+            <button class="btn-exp" onclick="PED_expPNG('wrap-sem')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('wrap-sem','sementes')">PDF</button>
+            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
-        <div id="wrap-sem">
-          <table id="tb-sem">
+        <div id="ped-wrap-sem">
+          <table id="ped-tb-sem">
             <thead><tr>
               <th style="width:36px"></th>
-              <th class="sortable" onclick="sortTab('tb-sem',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-sem',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-sem',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-sem',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-sem',5,this)">% Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-sem',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-sem',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-sem',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-sem',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-sem',5,this)">% Assinados<span class="si"></span></th>
               <th>Período</th>
             </tr></thead>
-            <tbody id="body-sem"></tbody>
+            <tbody id="ped-body-sem"></tbody>
           </table>
-          <div class="caixas" id="cxs-sem"></div>
+          <div class="caixas" id="ped-cxs-sem"></div>
         </div>
       </div>
     </div>
 
     <!-- ABA 3: CANHOTO MÊS -->
-    <div id="aba-3" class="hidden">
+    <div id="ped-aba-3" class="hidden">
       <div class="tab-wrap">
         <div class="tab-top">
           <span class="tab-titulo">Conferência de Canhotos — por Mês</span>
           <div class="tab-acoes">
-            <button class="btn-exp small" onclick="expandirTodos('tb-cm')">Expandir todos</button>
-            <button class="btn-exp small" onclick="recolherTodos('tb-cm')">Recolher todos</button>
-            <button class="btn-exp primary" onclick="expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="expPNG('wrap-cm')">PNG</button>
-            <button class="btn-exp" onclick="expPDF('wrap-cm','canhotos')">PDF</button>
-            <button class="btn-limpar" onclick="resetarFiltros()">↺ Resetar</button>
+            <button class="btn-exp small" onclick="PED_expandirTodos('tb-cm')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('tb-cm')">Recolher todos</button>
+            <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
+            <button class="btn-exp" onclick="PED_expPNG('wrap-cm')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('wrap-cm','canhotos')">PDF</button>
+            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
-        <div id="wrap-cm">
-          <table id="tb-cm">
+        <div id="ped-wrap-cm">
+          <table id="ped-tb-cm">
             <thead><tr>
               <th style="width:36px"></th>
-              <th class="sortable" onclick="sortTab('tb-cm',1,this)">Mês<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-cm',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-cm',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-cm',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-cm',5,this)">% Inconsistente<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cm',1,this)">Mês<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cm',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cm',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cm',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cm',5,this)">% Inconsistente<span class="si"></span></th>
             </tr></thead>
-            <tbody id="body-cm"></tbody>
+            <tbody id="ped-body-cm"></tbody>
           </table>
-          <div class="caixas" id="cxs-cm"></div>
+          <div class="caixas" id="ped-cxs-cm"></div>
         </div>
       </div>
     </div>
 
     <!-- ABA 4: CANHOTO VENDEDOR -->
-    <div id="aba-4" class="hidden">
+    <div id="ped-aba-4" class="hidden">
       <div class="tab-wrap">
         <div class="tab-top">
           <span class="tab-titulo">Conferência de Canhotos — por Vendedor</span>
           <div class="tab-acoes">
-            <button class="btn-exp small" onclick="expandirTodos('tb-cv')">Expandir todos</button>
-            <button class="btn-exp small" onclick="recolherTodos('tb-cv')">Recolher todos</button>
-            <button class="btn-exp primary" onclick="expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-            <button class="btn-exp" onclick="expPNG('wrap-cv')">PNG</button>
-            <button class="btn-exp" onclick="expPDF('wrap-cv','canhotos')">PDF</button>
-            <button class="btn-limpar" onclick="resetarFiltros()">↺ Resetar</button>
+            <button class="btn-exp small" onclick="PED_expandirTodos('tb-cv')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('tb-cv')">Recolher todos</button>
+            <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
+            <button class="btn-exp" onclick="PED_expPNG('wrap-cv')">PNG</button>
+            <button class="btn-exp" onclick="PED_expPDF('wrap-cv','canhotos')">PDF</button>
+            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
-        <div id="wrap-cv">
-          <table id="tb-cv">
+        <div id="ped-wrap-cv">
+          <table id="ped-tb-cv">
             <thead><tr>
               <th style="width:36px"></th>
-              <th class="sortable" onclick="sortTab('tb-cv',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-cv',2,this)">Conferidos<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-cv',3,this)">Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-cv',4,this)">Inconsistentes<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-cv',5,this)">% Inconsistente<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cv',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cv',2,this)">Conferidos<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cv',3,this)">Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cv',4,this)">Inconsistentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-cv',5,this)">% Inconsistente<span class="si"></span></th>
             </tr></thead>
-            <tbody id="body-cv"></tbody>
+            <tbody id="ped-body-cv"></tbody>
           </table>
-          <div class="caixas" id="cxs-cv"></div>
+          <div class="caixas" id="ped-cxs-cv"></div>
         </div>
       </div>
     </div>
 
     <!-- ABA 5: DIAGNÓSTICO & AÇÃO -->
-    <div id="aba-5" class="hidden">
+    <div id="ped-aba-5" class="hidden">
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;">
-        <button class="btn-exp primary" onclick="expConferencia('pedidos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-        <button class="btn-exp" onclick="expPNG('diag-wrap')">PNG (com gráficos)</button>
-        <button class="btn-limpar" onclick="resetarFiltros()">↺ Resetar</button>
+        <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
+        <button class="btn-exp" onclick="PED_expPNG('diag-wrap')">PNG (com gráficos)</button>
+        <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
       </div>
-      <div id="diag-wrap">
+      <div id="ped-diag-wrap">
         <!-- Narrativa automática -->
-        <div id="narrativa" class="narrativa"></div>
+        <div id="ped-narrativa" class="narrativa"></div>
 
         <!-- Gráficos -->
         <div class="graf-grid">
           <div class="graf-card">
             <div class="graf-titulo">Tendência mensal — % Assinados (Pedidos)</div>
-            <canvas id="chart-tend"></canvas>
+            <canvas id="ped-chart-tend"></canvas>
           </div>
           <div class="graf-card">
             <div class="graf-titulo">Desempenho por vendedor — % Assinados</div>
-            <canvas id="chart-vend"></canvas>
+            <canvas id="ped-chart-vend"></canvas>
           </div>
         </div>
 
         <!-- Risco financeiro -->
         <div class="secao-titulo">Risco Financeiro — Sementes Pendentes</div>
-        <div id="risco-box"></div>
+        <div id="ped-risco-box"></div>
 
         <!-- Ranking de clientes -->
         <div class="secao-titulo">Clientes com Mais Pendências</div>
         <div class="tab-wrap">
-          <table id="tb-clientes">
+          <table id="ped-tb-clientes">
             <thead><tr>
-              <th class="sortable" onclick="sortTab('tb-clientes',0,this)">Cliente<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-clientes',1,this)">Pendências<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-clientes',0,this)">Cliente<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-clientes',1,this)">Pendências<span class="si"></span></th>
             </tr></thead>
-            <tbody id="body-clientes"></tbody>
+            <tbody id="ped-body-clientes"></tbody>
           </table>
         </div>
 
         <!-- Plano de ação -->
         <div class="secao-titulo">Plano de Ação Priorizado</div>
         <div class="tab-wrap">
-          <table id="tb-plano">
+          <table id="ped-tb-plano">
             <thead><tr>
               <th>Prior.</th>
-              <th class="sortable" onclick="sortTab('tb-plano',1,this)">Vendedor<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-plano',2,this)">% Assinados<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-plano',3,this)">Pendentes<span class="si"></span></th>
-              <th class="sortable" onclick="sortTab('tb-plano',4,this)">Sem. Pend.<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-plano',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-plano',2,this)">% Assinados<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-plano',3,this)">Pendentes<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('tb-plano',4,this)">Sem. Pend.<span class="si"></span></th>
               <th>Ação Recomendada</th>
             </tr></thead>
-            <tbody id="body-plano"></tbody>
+            <tbody id="ped-body-plano"></tbody>
           </table>
         </div>
       </div>
     </div>
 
     <!-- ABA 6: APRESENTAÇÃO -->
-    <div id="aba-6" class="hidden">
+    <div id="ped-aba-6" class="hidden">
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
-        <button class="btn-exp" onclick="expPNG('apres-wrap')">PNG</button>
-        <button class="btn-exp" onclick="expPDF('apres-wrap','pedidos')">PDF</button>
-        <button class="btn-limpar" onclick="resetarFiltros()">↺ Resetar</button>
+        <button class="btn-exp" onclick="PED_expPNG('apres-wrap')">PNG</button>
+        <button class="btn-exp" onclick="PED_expPDF('apres-wrap','pedidos')">PDF</button>
+        <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
       </div>
-      <div id="apres-wrap" class="apres">
-        <div class="apres-filial" id="ap-filial">—</div>
-        <div class="apres-periodo" id="ap-periodo">—</div>
-        <div class="apres-resp" id="ap-resp"></div>
-        <div id="ap-narrativa" class="narrativa" style="margin:18px 0;"></div>
-        <div class="apres-blocos" id="ap-blocos"></div>
+      <div id="ped-apres-wrap" class="apres">
+        <div class="apres-filial" id="ped-ap-filial">—</div>
+        <div class="apres-periodo" id="ped-ap-periodo">—</div>
+        <div class="apres-resp" id="ped-ap-resp"></div>
+        <div id="ped-ap-narrativa" class="narrativa" style="margin:18px 0;"></div>
+        <div class="apres-blocos" id="ped-ap-blocos"></div>
       </div>
     </div>
 
   </div><!-- /painel -->
 
   <!-- ABA 7: HISTÓRICO — USO EXCLUSIVO AUDITORIA INTERNA -->
-  <div id="aba-7" class="hidden">
+  <div id="ped-aba-7" class="hidden">
     <div class="tab-wrap">
       <div class="tab-top" style="align-items:flex-start;flex-direction:column;gap:6px;">
         <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
@@ -4722,32 +4724,32 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
             <span style="font-size:11px;color:var(--text3);margin-left:10px;">Uso exclusivo da Auditoria Interna</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn-exp primary" onclick="registrarAuditoria()" id="btn-registrar" title="Registra os resultados da auditoria atual no histórico">
+            <button class="btn-exp primary" onclick="PED_registrarAuditoria()" id="ped-btn-registrar" title="Registra os resultados da auditoria atual no histórico">
               ✚ Registrar esta Auditoria
             </button>
-            <button class="btn-exp" onclick="expHistoricoXLS()" title="Exporta todo o histórico para o Acumulador Excel (.xlsx)">📥 Exportar Acumulador (.xlsx)</button>
-            <button class="btn-exp" onclick="expHistoricoJSON()" title="Exporta o histórico como arquivo .json para reimportar no painel">💾 Salvar Histórico (.json)</button>
-            <button class="btn-exp" onclick="importarHistoricoJSON()" title="Carrega histórico do arquivo .xlsx ou .json gerado por 'Exportar Acumulador'">📂 Carregar Histórico (.xlsx/.json)</button>
-            <button class="btn-exp small" onclick="if(confirm('Limpar TODO o histórico salvo?')){localStorage.removeItem('aqHistorico');H_DADOS=[];renderHistorico();}">🗑 Limpar</button>
-            <input type="file" id="inp-hist-json" accept=".json,.xlsx,.xls" style="display:none" onchange="lerArquivoHistorico(this)">
+            <button class="btn-exp" onclick="PED_expHistoricoXLS()" title="Exporta todo o histórico para o Acumulador Excel (.xlsx)">📥 Exportar Acumulador (.xlsx)</button>
+            <button class="btn-exp" onclick="PED_expHistoricoJSON()" title="Exporta o histórico como arquivo .json para reimportar no painel">💾 Salvar Histórico (.json)</button>
+            <button class="btn-exp" onclick="PED_importarHistoricoJSON()" title="Carrega histórico do arquivo .xlsx ou .json gerado por 'Exportar Acumulador'">📂 Carregar Histórico (.xlsx/.json)</button>
+            <button class="btn-exp small" onclick="if(confirm('Limpar TODO o histórico salvo?')){localStorage.removeItem('aqHistorico');H_DADOS=[];PED_renderHistorico();}">🗑 Limpar</button>
+            <input type="file" id="ped-inp-hist-json" accept=".json,.xlsx,.xls" style="display:none" onchange="PED_lerArquivoHistorico(this)">
           </div>
         </div>
-        <div id="hist-aviso" style="font-size:12px;color:var(--verm);display:none;padding:4px 8px;background:var(--verm-bg);border-radius:6px;border-left:3px solid var(--verm);">
+        <div id="ped-hist-aviso" style="font-size:12px;color:var(--verm);display:none;padding:4px 8px;background:var(--verm-bg);border-radius:6px;border-left:3px solid var(--verm);">
           ⚠ Nenhuma auditoria carregada. Importe os arquivos e clique em "Registrar esta Auditoria".
         </div>
       </div>
 
       <!-- KPIs do histórico -->
-      <div id="hist-kpis" class="kpis-row" style="display:none;margin:12px 0;gap:10px;flex-wrap:wrap;"></div>
+      <div id="ped-hist-kpis" class="kpis-row" style="display:none;margin:12px 0;gap:10px;flex-wrap:wrap;"></div>
 
       <!-- Tabela de auditorias registradas -->
-      <div id="hist-wrap" style="overflow-x:auto;">
-        <div id="hist-vazio" style="padding:40px;text-align:center;color:var(--text3);">
+      <div id="ped-hist-wrap" style="overflow-x:auto;">
+        <div id="ped-hist-vazio" style="padding:40px;text-align:center;color:var(--text3);">
           <div style="font-size:40px;margin-bottom:8px;">🗂</div>
           <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Nenhuma auditoria registrada ainda</div>
           <div style="font-size:12px;">Importe os arquivos, revise os pedidos e canhotos, depois clique em<br><b>✚ Registrar esta Auditoria</b></div>
         </div>
-        <table id="tb-hist" style="display:none;width:100%;border-collapse:collapse;font-size:12px;">
+        <table id="ped-tb-hist" style="display:none;width:100%;border-collapse:collapse;font-size:12px;">
           <thead>
             <tr>
               <th style="width:30px">#</th>
@@ -4767,7 +4769,7 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
               <th></th>
             </tr>
           </thead>
-          <tbody id="body-hist"></tbody>
+          <tbody id="ped-body-hist"></tbody>
         </table>
       </div>
 
@@ -4783,7 +4785,7 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
   </div>
 
   <!-- ABA 8: GUIA DE USO -->
-  <div id="aba-8" class="hidden">
+  <div id="ped-aba-8" class="hidden">
     <div class="tab-wrap">
       <div class="tab-top">
         <span class="tab-titulo">📖 Guia de Uso — Painel de Conferência Agroquima</span>
@@ -6293,17 +6295,19 @@ document.addEventListener('DOMContentLoaded', carregarBaseSalva);
   // Fecha sidebar ao navegar (mobile)
   const _origShowTab = typeof showTab === 'function' ? showTab : null;
 
-function switchModule(mod) {
-  const lDiv = document.getElementById('mod-lotes');
-  const pDiv = document.getElementById('mod-pedidos');
-  const bL = document.getElementById('btn-mod-lotes');
-  const bP = document.getElementById('btn-mod-pedidos');
+
+function PED_switchModule(mod) {
+  var lDiv = document.getElementById('mod-lotes');
+  var pDiv = document.getElementById('mod-pedidos');
+  var bL = document.getElementById('btn-mod-lotes');
+  var bP = document.getElementById('btn-mod-pedidos');
+  if (!lDiv || !pDiv) return;
   if (mod === 'lotes') {
     lDiv.style.display = ''; pDiv.style.display = 'none';
-    bL.classList.add('active'); bP.classList.remove('active');
+    if(bL) bL.classList.add('ativo'); if(bP) bP.classList.remove('ativo');
   } else {
     lDiv.style.display = 'none'; pDiv.style.display = '';
-    bL.classList.remove('active'); bP.classList.add('active');
+    if(bL) bL.classList.remove('ativo'); if(bP) bP.classList.add('ativo');
   }
 }
 
@@ -6326,24 +6330,24 @@ const CFOP_NAO_C=new Set(['5922','6922']);
 // não do PEDIDO. Por isso são ignorados na contagem de pedidos.
 const CFOP_REMESSA=new Set(['5116','5117','6116','6117']);
 
-function exCfop(c){const m=String(c||'').trim().match(/^(\d+)/);return m?m[1]:'';}
-function exNum(p){const m=String(p||'').match(/^(\d+)/);return m?m[1]:String(p);}
-function exCod(v){const m=String(v||'').match(/^(\d+)\s*-/);return m?parseInt(m[1]):null;}
+function PED_exCfop(c){const m=String(c||'').trim().match(/^(\d+)/);return m?m[1]:'';}
+function PED_exNum(p){const m=String(p||'').match(/^(\d+)/);return m?m[1]:String(p);}
+function PED_exCod(v){const m=String(v||'').match(/^(\d+)\s*-/);return m?parseInt(m[1]):null;}
 // Detecta se o "vendedor" é na verdade um escritório de outra filial.
 // Padrão real nos dados: "CÓDIGO - ESC.XXXXX" ou "CÓDIGO - ESC XXXXX"
 // (ex.: "1336 - ESC FORMOS", "24 - ESC.MATRIZ"). O cadastro é bagunçado,
 // mas o único padrão confiável é o nome (após o código) começar com "ESC" + espaço/ponto.
 // Esses registros NÃO entram em nenhuma contagem (nem pedido, nem canhoto).
-function ehEscritorio(v){
+function PED_ehEscritorio(v){
   const nome=String(v||'').replace(/^\d+\s*-\s*/,'').trim();
   return /^ESC[\s.]/i.test(nome) || nome.toUpperCase()==='ESC';
 }
-function nomeLimpo(v){return String(v||'').replace(/^\d+\s*-\s*/,'').trim();}
+function PED_nomeLimpo(v){return String(v||'').replace(/^\d+\s*-\s*/,'').trim();}
 
-function stPedido(row,copiaIds,semIds){
+function PED_stPedido(row,copiaIds,semIds){
   // Status de UMA linha de pedido (antes do agrupamento).
   // CFOP de remessa de entrega futura: cobra-se a nota, não o pedido → 'REMESSA' (ignorar)
-  const cfop=exCfop(row.CFOP||row['CFOP']||'');
+  const cfop=PED_exCfop(row.CFOP||row['CFOP']||'');
   if(CFOP_REMESSA.has(cfop)) return 'REMESSA';
   const tipo=String(row['TIPO PEDIDO']||'').trim();
   const num=row._num;
@@ -6363,18 +6367,18 @@ function stPedido(row,copiaIds,semIds){
 //  - VENDA A VISTA não-semente → sempre NA (desprezado da %). Cópia não muda isso.
 //  - Cópia força PENDENTE SOMENTE se houver ao menos uma linha cobrável não-NA.
 //  - Senão: se alguma cobrável é PENDENTE → PENDENTE; se todas NA → NA; senão ASSINADO.
-function agruparPedidos(){
+function PED_agruparPedidos(){
   const grupos={};
   APP_PED.pedidos.forEach(r=>{
     // Ignorar escritórios de filial (ESC.*) — não entram em nenhuma contagem
-    if(ehEscritorio(r.VENDEDOR||r['VENDEDOR'])) return;
+    if(PED_ehEscritorio(r.VENDEDOR||r['VENDEDOR'])) return;
     const num=r._num;
     if(!grupos[num]) grupos[num]={num,linhas:[],repr:r};
     grupos[num].linhas.push(r);
   });
   const out=[];
   Object.values(grupos).forEach(g=>{
-    const statusLinhas=g.linhas.map(r=>({r,st:stPedido(r,APP_PED.copiaIds,APP_PED.semIds)}));
+    const statusLinhas=g.linhas.map(r=>({r,st:PED_stPedido(r,APP_PED.copiaIds,APP_PED.semIds)}));
     const cobraveis=statusLinhas.filter(x=>x.st!=='REMESSA');
     if(!cobraveis.length){ // só remessa → ignora o pedido
       out.push({num:g.num,status:'IGNORADO',repr:g.repr,linhaRepr:g.linhas[0],naMotivo:'remessa'});
@@ -6400,9 +6404,9 @@ function agruparPedidos(){
   });
   return out;
 }
-function stNota(row){
+function PED_stNota(row){
   const tipo=String(row['TIPO PEDIDO']||'').trim();
-  const cfop=exCfop(row['CFOP']||'');
+  const cfop=PED_exCfop(row['CFOP']||'');
   if(CFOP_NAO_C.has(cfop)) return 'ASSINADO';
   if(TIPOS_NAO_C.has(tipo)) return 'ASSINADO';
   const ass=String(row['ASS NOTA']||'').trim();
@@ -6419,7 +6423,7 @@ let _charts={}; // referências aos gráficos Chart.js para destruir antes de re
 // ============================================================
 // PROCESSAMENTO DE ARQUIVOS
 // ============================================================
-function detectTipo(nome, colunas){
+function PED_detectTipo(nome, colunas){
   // ESTRATÉGIA EM CAMADAS para máxima robustez:
   // O nome pode ter o separador alterado pelo navegador/SO (_-_ vira _–_, _—_, " - ").
   // O prefixo "RelatorioBaixaCanhotoXLS" contém "canhoto" e engana detecção ingênua.
@@ -6461,7 +6465,7 @@ function detectTipo(nome, colunas){
 
   return null;
 }
-function lerArq(file,tipoNome){
+function PED_lerArq(file,tipoNome){
   return new Promise((res,rej)=>{
     const fr=new FileReader();
     fr.onload=e=>{
@@ -6471,15 +6475,15 @@ function lerArq(file,tipoNome){
         const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
         // Reconfirma o tipo usando o CONTEÚDO (colunas) — corrige caso o nome tenha enganado
         const colunas=rows.length?Object.keys(rows[0]):[];
-        const tipoFinal=detectTipo(file.name,colunas)||tipoNome;
+        const tipoFinal=PED_detectTipo(file.name,colunas)||tipoNome;
         res({tipo:tipoFinal,rows,nome:file.name});
       }catch(er){rej(er);}
     };
     fr.readAsArrayBuffer(file);
   });
 }
-async function handleFiles(files){
-  const st=document.getElementById('arq-status');
+async function PED_handleFiles(files){
+  const st=document.getElementById('ped-arq-status');
   st.innerHTML='';
   const arr=Array.from(files);
   if(!arr.length) return;
@@ -6490,11 +6494,11 @@ async function handleFiles(files){
   S={pedidos:[],canhoto:[],semIds:new Set(),copiaIds:new Set(),semValor:{},semFilial:null,filialManual:null,filialIncerta:false,fi:null,periodo:''};
 
   // Ler todos os arquivos. A detecção inicial pelo nome serve só para enfileirar;
-  // o tipo DEFINITIVO vem de lerArq (que reconfirma pelas colunas do conteúdo).
+  // o tipo DEFINITIVO vem de PED_lerArq (que reconfirma pelas colunas do conteúdo).
   const lts=[];
   for(const f of arr){
-    const tNome=detectTipo(f.name); // pode ser null; lerArq tenta de novo com colunas
-    lts.push(lerArq(f,tNome));
+    const tNome=PED_detectTipo(f.name); // pode ser null; PED_lerArq tenta de novo com colunas
+    lts.push(PED_lerArq(f,tNome));
   }
 
   let res;
@@ -6518,10 +6522,10 @@ async function handleFiles(files){
 
   // Processar (se houver 2 do mesmo tipo, o último vence — avisamos depois)
   res.forEach(r=>{
-    if(r.tipo==='pedido') procPedido(r.rows);
-    else if(r.tipo==='canhoto') procCanhoto(r.rows);
-    else if(r.tipo==='sementes') procSementes(r.rows);
-    else if(r.tipo==='copia') procCopia(r.rows);
+    if(r.tipo==='pedido') PED_procPedido(r.rows);
+    else if(r.tipo==='canhoto') PED_procCanhoto(r.rows);
+    else if(r.tipo==='sementes') PED_procSementes(r.rows);
+    else if(r.tipo==='copia') PED_procCopia(r.rows);
   });
 
   // ===== DIAGNÓSTICO DE IMPORTAÇÃO (transparência total) =====
@@ -6542,7 +6546,7 @@ async function handleFiles(files){
   if(!porTipo['copia']) diag+=`<span class="arq-tag err">⚠ Sem arquivo Pedido Cópia</span>`;
   st.innerHTML=diag;
   // Espelhar no painel (fica visível após renderizar, no topo do Resumo)
-  const diagPainel=document.getElementById('import-diag');
+  const diagPainel=document.getElementById('ped-import-diag');
   if(diagPainel) diagPainel.innerHTML=diag;
 
   // Se faltou o essencial (pedido), não renderiza
@@ -6551,20 +6555,20 @@ async function handleFiles(files){
     return;
   }
 
-  renderTudo();
+  PED_renderTudo();
 }
-function procPedido(rows){
-  APP_PED.pedidos=rows.map(r=>({...r,_num:exNum(r.PEDIDO||r['PEDIDO'])}));
+function PED_procPedido(rows){
+  APP_PED.pedidos=rows.map(r=>({...r,_num:PED_exNum(r.PEDIDO||r['PEDIDO'])}));
 }
-function procCanhoto(rows){
+function PED_procCanhoto(rows){
   APP_PED.canhoto=rows.map(r=>{
     const d=r['DT EMISSAO NF']||r['DT EMISSAO NF ']||'';
     let mes='';
     if(d){const dt=d instanceof Date?d:new Date(d);if(!isNaN(dt))mes=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;}
-    return {...r,_num:exNum(r.PEDIDO||r['PEDIDO']),_mes:mes};
+    return {...r,_num:PED_exNum(r.PEDIDO||r['PEDIDO']),_mes:mes};
   });
 }
-function procSementes(rows){
+function PED_procSementes(rows){
   APP_PED.semIds=new Set();
   APP_PED.semValor={}; // num pedido -> valor total do produto
   APP_PED.semFilial=null; // sigla da filial vinda do arquivo (fonte confiável)
@@ -6583,17 +6587,17 @@ function procSementes(rows){
     }
   });
 }
-function procCopia(rows){
-  APP_PED.copiaIds=new Set(rows.map(r=>exNum(r.PEDIDO||r['PEDIDO'])));
+function PED_procCopia(rows){
+  APP_PED.copiaIds=new Set(rows.map(r=>PED_exNum(r.PEDIDO||r['PEDIDO'])));
 }
 
 // ============================================================
 // AGREGAÇÕES
 // ============================================================
-function agPedidosVend(){
+function PED_agPedidosVend(){
   const map={};
   let dtMin=null,dtMax=null;
-  const pedidos=agruparPedidos();
+  const pedidos=PED_agruparPedidos();
   pedidos.forEach(p=>{
     if(p.status==='IGNORADO'||p.status==='NA') {
       // Contabiliza período + guarda no naoContab do vendedor para exibição visual
@@ -6604,7 +6608,7 @@ function agPedidosVend(){
         const r=p.repr;
         const vend=String(r.VENDEDOR||r['VENDEDOR']||'').trim();
         if(!map[vend]) map[vend]={vend,ass:0,pend:0,semPend:0,dets:[],naoContab:[]};
-        map[vend].naoContab.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||r['NT_FISCAL']||'').trim(),cfop:exCfop(r.CFOP||''),motivo:p.naMotivo});
+        map[vend].naoContab.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||r['NT_FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||''),motivo:p.naMotivo});
       }
       return;
     }
@@ -6616,18 +6620,18 @@ function agPedidosVend(){
     else{
       map[vend].pend++;
       if(isSem) map[vend].semPend++;
-      map[vend].dets.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||r['NT_FISCAL']||'').trim(),cfop:exCfop(r.CFOP||''),sem:isSem});
+      map[vend].dets.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||r['NT_FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||''),sem:isSem});
     }
     const d=r['DT EMISSAO NF']||r['DT EMISSAO NF '];
     if(d){const dt=d instanceof Date?d:new Date(d);if(!isNaN(dt)){if(!dtMin||dt<dtMin)dtMin=dt;if(!dtMax||dt>dtMax)dtMax=dt;}}
   });
-  const fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-  APP_PED.periodo=dtMin?`${fmt(dtMin)} a ${fmt(dtMax)}`:'';
+  const PED_fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  APP_PED.periodo=dtMin?`${PED_fmt(dtMin)} a ${PED_fmt(dtMax)}`:'';
   return Object.values(map);
 }
-function agSementesVend(){
+function PED_agSementesVend(){
   const map={};
-  const pedidos=agruparPedidos();
+  const pedidos=PED_agruparPedidos();
   pedidos.forEach(p=>{
     if(!p.isSem) return;
     if(p.status==='IGNORADO'||p.status==='NA') return;
@@ -6635,31 +6639,31 @@ function agSementesVend(){
     const vend=String(r.VENDEDOR||r['VENDEDOR']||'').trim();
     if(!map[vend]) map[vend]={vend,ass:0,pend:0,dets:[]};
     if(p.status==='ASSINADO') map[vend].ass++;
-    else{map[vend].pend++;map[vend].dets.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:exCfop(r.CFOP||'')});}
+    else{map[vend].pend++;map[vend].dets.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||'')});}
   });
   return Object.values(map);
 }
-function agCanMes(){
+function PED_agCanMes(){
   const map={};
   APP_PED.canhoto.forEach(r=>{
-    if(ehEscritorio(r.VENDEDOR||r['VENDEDOR'])) return; // escritórios não contam
-    const st=stNota(r);
+    if(PED_ehEscritorio(r.VENDEDOR||r['VENDEDOR'])) return; // escritórios não contam
+    const st=PED_stNota(r);
     const mes=r._mes||'Desconhecido';
     if(!map[mes]) map[mes]={mes,ass:0,pend:0,dets:[]};
     if(st==='ASSINADO') map[mes].ass++;
-    else{map[mes].pend++;map[mes].dets.push({ped:r._num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:exCfop(r.CFOP||'')});}
+    else{map[mes].pend++;map[mes].dets.push({ped:r._num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||'')});}
   });
   return Object.values(map).sort((a,b)=>a.mes.localeCompare(b.mes));
 }
-function agCanVend(){
+function PED_agCanVend(){
   const map={};
   APP_PED.canhoto.forEach(r=>{
-    if(ehEscritorio(r.VENDEDOR||r['VENDEDOR'])) return; // escritórios não contam
-    const st=stNota(r);
+    if(PED_ehEscritorio(r.VENDEDOR||r['VENDEDOR'])) return; // escritórios não contam
+    const st=PED_stNota(r);
     const vend=String(r.VENDEDOR||r['VENDEDOR']||'').trim();
     if(!map[vend]) map[vend]={vend,ass:0,pend:0,dets:[]};
     if(st==='ASSINADO') map[vend].ass++;
-    else{map[vend].pend++;map[vend].dets.push({ped:r._num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:exCfop(r.CFOP||'')});}
+    else{map[vend].pend++;map[vend].dets.push({ped:r._num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||'')});}
   });
   return Object.values(map);
 }
@@ -6667,17 +6671,17 @@ function agCanVend(){
 // ============================================================
 // HELPERS RENDER
 // ============================================================
-function pct(a,t){return t>0?Math.round(a/t*10000)/100:0;}
+function PED_pct(a,t){return t>0?Math.round(a/t*10000)/100:0;}
 function PED_fp(v){return v.toFixed(2)+'%';}
-function corP(v){return v>=80?'g':v>=60?'a':'r';}
-function corPCss(v){return v>=80?'verde':v>=60?'amar':'verm';}
-function corPInvCss(v){return v<=20?'verde':v<=40?'amar':'verm';}
-function corPInv(v){return v<=20?'g':v<=40?'a':'r';}
-function mesNome(ym){
+function PED_corP(v){return v>=80?'g':v>=60?'a':'r';}
+function PED_corPCss(v){return v>=80?'verde':v>=60?'amar':'verm';}
+function PED_corPInvCss(v){return v<=20?'verde':v<=40?'amar':'verm';}
+function PED_corPInv(v){return v<=20?'g':v<=40?'a':'r';}
+function PED_mesNome(ym){
   const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const p=ym.split('-');return p.length===2?`${ms[parseInt(p[1])-1]}/${p[0]}`:ym;
 }
-function detHTML(dets,cols,naoContab){
+function PED_detHTML(dets,cols,naoContab){
   let html='';
   // Seção de pendentes reais
   if(!dets||!dets.length){
@@ -6713,7 +6717,7 @@ function detHTML(dets,cols,naoContab){
 // RENDER TABELA GENÉRICA (com botão detalhar separado)
 // ============================================================
 let _detStore={};
-function renderTabela(tbodyId,dados,tipo,cols,rowFn,totFn,cxId,detColsLabels){
+function PED_renderTabela(tbodyId,dados,tipo,cols,rowFn,totFn,cxId,detColsLabels){
   _detStore[tbodyId]=dados;
   const tbody=document.getElementById(tbodyId);
   let html='';
@@ -6721,19 +6725,19 @@ function renderTabela(tbodyId,dados,tipo,cols,rowFn,totFn,cxId,detColsLabels){
     const rowId=`det-${tbodyId}-${i}`;
     html+=rowFn(v,i,rowId);
     html+=`<tr id="${rowId}" class="tr-det hidden"><td colspan="${cols}"><div class="det-inner">
-      <div class="det-tit">Pendentes de ${v.vend!==undefined?nomeLimpo(v.vend):(mesNome(v.mes||''))}</div>
-      ${detHTML(v.dets,detColsLabels,v.naoContab)}
+      <div class="det-tit">Pendentes de ${v.vend!==undefined?PED_nomeLimpo(v.vend):(PED_mesNome(v.mes||''))}</div>
+      ${PED_detHTML(v.dets,detColsLabels,v.naoContab)}
     </div></td></tr>`;
   });
   html+=totFn(dados);
   tbody.innerHTML=html;
-  if(cxId) document.getElementById(cxId).innerHTML=caixasHTML(dados,tipo);
+  if(cxId) document.getElementById(cxId).innerHTML=PED_caixasHTML(dados,tipo);
 }
 
-function caixasHTML(dados,tipo){
+function PED_caixasHTML(dados,tipo){
   let tC=0,tA=0,tP=0;
   dados.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;});
-  const pA=pct(tA,tC),pP=pct(tP,tC);
+  const pA=PED_pct(tA,tC),pP=PED_pct(tP,tC);
   return `<div class="caixa"><div class="caixa-l">% Validados</div><div class="caixa-v">${PED_fp(pA)}</div></div>
   <div class="caixa"><div class="caixa-l">% Inconsistente</div><div class="caixa-v">${PED_fp(pP)}</div></div>
   <div class="caixa"><div class="caixa-l">Total Conferidos</div><div class="caixa-v">${tC}</div></div>
@@ -6741,7 +6745,7 @@ function caixasHTML(dados,tipo){
   <div class="caixa"><div class="caixa-l">Total Pendentes</div><div class="caixa-v">${tP}</div></div>`;
 }
 
-function toggleDet(rowId){
+function PED_toggleDet(rowId){
   const r=document.getElementById(rowId);
   if(!r) return;
   const vis=!r.classList.contains('hidden');
@@ -6749,14 +6753,14 @@ function toggleDet(rowId){
   const btn=r.previousElementSibling?.querySelector('.btn-det');
   if(btn) btn.textContent=vis?'▶ Detalhar':'▼ Recolher';
 }
-function expandirTodos(tblId){
+function PED_expandirTodos(tblId){
   document.querySelectorAll(`#${tblId} .tr-det`).forEach(r=>{
     r.classList.remove('hidden');
     const btn=r.previousElementSibling?.querySelector('.btn-det');
     if(btn) btn.textContent='▼ Recolher';
   });
 }
-function recolherTodos(tblId){
+function PED_recolherTodos(tblId){
   document.querySelectorAll(`#${tblId} .tr-det`).forEach(r=>{
     r.classList.add('hidden');
     const btn=r.previousElementSibling?.querySelector('.btn-det');
@@ -6767,14 +6771,14 @@ function recolherTodos(tblId){
 // ============================================================
 // RENDER TUDO
 // ============================================================
-function renderTudo(){
-  document.getElementById('tela-import').classList.add('hidden');
-  document.getElementById('painel').classList.remove('hidden');
+function PED_renderTudo(){
+  document.getElementById('ped-tela-import').classList.add('hidden');
+  document.getElementById('ped-painel').classList.remove('hidden');
 
-  const pedVend=agPedidosVend();
-  const semVend=agSementesVend();
-  const canMes=agCanMes();
-  const canVend=agCanVend();
+  const pedVend=PED_agPedidosVend();
+  const semVend=PED_agSementesVend();
+  const canMes=PED_agCanMes();
+  const canVend=PED_agCanVend();
 
   // Detectar filial — prioridade:
   // 1) Sigla vinda do arquivo de SEMENTES (coluna "Filial" — fonte confiável)
@@ -6798,33 +6802,33 @@ function renderTudo(){
   semVend.forEach(v=>{tSC+=v.ass+v.pend;tSA+=v.ass;tSPend+=v.pend;});
 
   // Novas análises
-  const tendMes=agTendenciaMes();
-  const clientes=agClientesPendentes();
-  const risco=agRiscoSementes();
-  const plano=agPlanoAcao(pedVend);
-  const narr=gerarNarrativa(tPC,tPA,tPP,tSP,tCC,tCA,tCP,tendMes,plano,risco);
+  const tendMes=PED_agTendenciaMes();
+  const clientes=PED_agClientesPendentes();
+  const risco=PED_agRiscoSementes();
+  const plano=PED_agPlanoAcao(pedVend);
+  const narr=PED_gerarNarrativa(tPC,tPA,tPP,tSP,tCC,tCA,tCP,tendMes,plano,risco);
 
-  renderInfoFilial();
-  renderKPIs(tPC,tPA,tPP,tSP,tCC,tCA,tCP);
-  renderRankings(pedVend,canMes);
-  renderPedidos(pedVend,tPC,tPA,tPP,tSP);
-  renderSementes(semVend,tSC,tSA,tSPend);
-  renderCanMes(canMes,tCC,tCA,tCP);
-  renderCanVend(canVend,tCC,tCA,tCP);
-  renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano);
-  renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr);
+  PED_renderInfoFilial();
+  PED_renderKPIs(tPC,tPA,tPP,tSP,tCC,tCA,tCP);
+  PED_renderRankings(pedVend,canMes);
+  PED_renderPedidos(pedVend,tPC,tPA,tPP,tSP);
+  PED_renderSementes(semVend,tSC,tSA,tSPend);
+  PED_renderCanMes(canMes,tCC,tCA,tCP);
+  PED_renderCanVend(canVend,tCC,tCA,tCP);
+  PED_renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano);
+  PED_renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr);
 
-  document.getElementById('topo-titulo').textContent='CONFERÊNCIA — '+(APP_PED.fi?.loja||'');
-  document.getElementById('topo-sub').textContent=APP_PED.periodo?'Período: '+APP_PED.periodo:'';
+  document.getElementById('ped-topo-titulo').textContent='CONFERÊNCIA — '+(APP_PED.fi?.loja||'');
+  document.getElementById('ped-topo-sub').textContent=APP_PED.periodo?'Período: '+APP_PED.periodo:'';
 }
 
 // ============================================================
 // NOVAS AGREGAÇÕES (Diagnóstico)
 // ============================================================
-function agTendenciaMes(){
+function PED_agTendenciaMes(){
   // % assinados de pedidos conferíveis por mês (pedidos agrupados, não linhas)
   const map={};
-  agruparPedidos().forEach(p=>{
+  PED_agruparPedidos().forEach(p=>{
     if(p.status!=='ASSINADO'&&p.status!=='PENDENTE') return;
     const r=p.repr;
     const d=r['DT EMISSAO NF']||r['DT EMISSAO NF '];
@@ -6836,11 +6840,11 @@ function agTendenciaMes(){
     if(p.status==='ASSINADO') map[mes].ass++; else map[mes].pend++;
   });
   return Object.values(map).sort((a,b)=>a.mes.localeCompare(b.mes))
-    .map(m=>({...m,total:m.ass+m.pend,pct:pct(m.ass,m.ass+m.pend)}));
+    .map(m=>({...m,total:m.ass+m.pend,PED_pct:PED_pct(m.ass,m.ass+m.pend)}));
 }
-function agClientesPendentes(){
+function PED_agClientesPendentes(){
   const map={};
-  agruparPedidos().forEach(p=>{
+  PED_agruparPedidos().forEach(p=>{
     if(p.status!=='PENDENTE') return;
     const r=p.repr;
     const cli=String(r['CLIENTE  ']||r['CLIENTE']||'').trim();
@@ -6850,53 +6854,53 @@ function agClientesPendentes(){
   return Object.entries(map).map(([cli,n])=>({cli,n}))
     .sort((a,b)=>b.n-a.n).slice(0,15);
 }
-function agRiscoSementes(){
+function PED_agRiscoSementes(){
   // Pedidos semente pendentes + valor em R$ (agrupados)
   const itens=[];
-  agruparPedidos().forEach(p=>{
+  PED_agruparPedidos().forEach(p=>{
     if(!p.isSem) return;
     if(p.status!=='PENDENTE') return;
     const r=p.repr;
     itens.push({
       ped:p.num,
       tipo:String(r['TIPO PEDIDO']||'').trim(),
-      vend:nomeLimpo(String(r.VENDEDOR||r['VENDEDOR']||'')),
+      vend:PED_nomeLimpo(String(r.VENDEDOR||r['VENDEDOR']||'')),
       valor:(Number(APP_PED.semValor[p.num])||0)
     });
   });
   const total=itens.reduce((s,i)=>s+(Number(i.valor)||0),0);
   return {itens,total};
 }
-function agPlanoAcao(pedVend){
+function PED_agPlanoAcao(pedVend){
   // Priorizar: semente pendente primeiro, depois qtd pendências, depois % baixo
   return [...pedVend].map(v=>{
-    const t=v.ass+v.pend; const p=pct(v.ass,t);
+    const t=v.ass+v.pend; const p=PED_pct(v.ass,t);
     let acao,nivel;
     if(v.semPend>0){acao='URGENTE — cobrar semente pendente imediatamente';nivel='urg';}
     else if(p<60){acao='Crítico — vendedor abaixo de 60%';nivel='urg';}
     else if(p<80){acao='Atenção — abaixo da meta de 80%';nivel='aten';}
     else{acao='Adequado — manter acompanhamento';nivel='ok';}
-    return {vend:nomeLimpo(v.vend),total:t,ass:v.ass,pend:v.pend,semPend:v.semPend,pct:p,acao,nivel};
+    return {vend:PED_nomeLimpo(v.vend),total:t,ass:v.ass,pend:v.pend,semPend:v.semPend,PED_pct:p,acao,nivel};
   }).sort((a,b)=>{
     if(b.semPend!==a.semPend) return b.semPend-a.semPend;
     if(b.pend!==a.pend) return b.pend-a.pend;
-    return a.pct-b.pct;
+    return a.PED_pct-b.PED_pct;
   });
 }
-function gerarNarrativa(tPC,tPA,tPP,tSP,tCC,tCA,tCP,tendMes,plano,risco){
-  const pPed=pct(tPA,tPC), pCan=pct(tCA,tCC);
+function PED_gerarNarrativa(tPC,tPA,tPP,tSP,tCC,tCA,tCP,tendMes,plano,risco){
+  const pPed=PED_pct(tPA,tPC), pCan=PED_pct(tCA,tCC);
   // Tendência: comparar primeiro e último mês
   let tendTxt='';
   if(tendMes.length>=2){
     const ini=tendMes[0], fim=tendMes[tendMes.length-1];
-    const delta=fim.pct-ini.pct;
-    if(delta<-5) tendTxt=`A assinatura de pedidos <span class="nv-pend">caiu de ${ini.pct.toFixed(1)}% para ${fim.pct.toFixed(1)}%</span> entre ${mesNome(ini.mes)} e ${mesNome(fim.mes)} — tendência de piora que exige atenção.`;
-    else if(delta>5) tendTxt=`A assinatura de pedidos <span class="nv-ok">subiu de ${ini.pct.toFixed(1)}% para ${fim.pct.toFixed(1)}%</span> entre ${mesNome(ini.mes)} e ${mesNome(fim.mes)} — tendência positiva.`;
-    else tendTxt=`A assinatura de pedidos manteve-se estável (${ini.pct.toFixed(1)}% → ${fim.pct.toFixed(1)}%) no período.`;
+    const delta=fim.PED_pct-ini.PED_pct;
+    if(delta<-5) tendTxt=`A assinatura de pedidos <span class="nv-pend">caiu de ${ini.PED_pct.toFixed(1)}% para ${fim.PED_pct.toFixed(1)}%</span> entre ${PED_mesNome(ini.mes)} e ${PED_mesNome(fim.mes)} — tendência de piora que exige atenção.`;
+    else if(delta>5) tendTxt=`A assinatura de pedidos <span class="nv-ok">subiu de ${ini.PED_pct.toFixed(1)}% para ${fim.PED_pct.toFixed(1)}%</span> entre ${PED_mesNome(ini.mes)} e ${PED_mesNome(fim.mes)} — tendência positiva.`;
+    else tendTxt=`A assinatura de pedidos manteve-se estável (${ini.PED_pct.toFixed(1)}% → ${fim.PED_pct.toFixed(1)}%) no período.`;
   }
   // Pior vendedor
   const pior=plano.find(p=>p.nivel==='urg')||plano[0];
-  const piorTxt=pior?`O ponto de maior atenção é <b>${pior.vend}</b> (${pior.pct.toFixed(1)}% assinados, ${pior.pend} pendentes${pior.semPend>0?`, <span class="nv-pend">${pior.semPend} semente pendente</span>`:''}).`:'';
+  const piorTxt=pior?`O ponto de maior atenção é <b>${pior.vend}</b> (${pior.PED_pct.toFixed(1)}% assinados, ${pior.pend} pendentes${pior.semPend>0?`, <span class="nv-pend">${pior.semPend} semente pendente</span>`:''}).`:'';
   // Risco
   const riscoTxt=risco.total>0?`Há <span class="nv-pend">R$ ${risco.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})} em sementes pendentes</span> — risco direto que deve ser zerado.`:`<span class="nv-ok">Nenhuma semente pendente</span> — situação ideal nesse ponto crítico.`;
 
@@ -6907,7 +6911,7 @@ function gerarNarrativa(tPC,tPA,tPP,tSP,tCC,tCA,tCP,tendMes,plano,risco){
   };
 }
 
-function renderInfoFilial(){
+function PED_renderInfoFilial(){
   const fi=APP_PED.fi||{};
   // Seletor de filial — permite ao usuário corrigir caso a detecção esteja errada
   const opts=BASE.slice().sort((a,b)=>a.loja.localeCompare(b.loja))
@@ -6929,14 +6933,14 @@ function renderInfoFilial(){
 }
 function PED_trocarFilial(sigla){
   APP_PED.filialManual=sigla;
-  renderTudo();
-  mudarAba(0);
+  PED_renderTudo();
+  PED_mudarAba(0);
 }
 
-function renderKPIs(tPC,tPA,tPP,tSP,tCC,tCA,tCP){
-  const pP=pct(tPA,tPC),pC=pct(tCA,tCC);
-  const cP=corP(pP),cC=corP(pC),cPcss=corPCss(pP),cCcss=corPCss(pC);
-  document.getElementById('kpis').innerHTML=`
+function PED_renderKPIs(tPC,tPA,tPP,tSP,tCC,tCA,tCP){
+  const pP=PED_pct(tPA,tPC),pC=PED_pct(tCA,tCC);
+  const cP=PED_corP(pP),cC=PED_corP(pC),cPcss=PED_corPCss(pP),cCcss=PED_corPCss(pC);
+  document.getElementById('ped-kpis').innerHTML=`
     <div class="kpi ${cP}">
       <div class="kpi-label">Pedidos Assinados</div>
       <div class="kpi-val">${PED_fp(pP)}</div>
@@ -6966,54 +6970,54 @@ function renderKPIs(tPC,tPA,tPP,tSP,tCC,tCA,tCP){
     </div>`;
 }
 
-function renderRankings(pedVend,canMes){
+function PED_renderRankings(pedVend,canMes){
   // Ranking pedidos — ordenado por % asc (piores primeiro)
-  const pv=[...pedVend].map(v=>({nome:nomeLimpo(v.vend),ass:v.ass,pend:v.pend,t:v.ass+v.pend,p:pct(v.ass,v.ass+v.pend)}))
+  const pv=[...pedVend].map(v=>({nome:PED_nomeLimpo(v.vend),ass:v.ass,pend:v.pend,t:v.ass+v.pend,p:PED_pct(v.ass,v.ass+v.pend)}))
     .sort((a,b)=>a.p-b.p);
   const maxPT=Math.max(...pv.map(v=>v.t),1);
   let rH=`<div class="ranking-header"><span>Vendedor</span><span>% Assinados</span></div>`;
   pv.forEach((v,i)=>{
-    const c=corP(v.p);const cCss=corPCss(v.p);
+    const c=PED_corP(v.p);const cCss=PED_corPCss(v.p);
     const pos=i===0&&v.p<80?'bot':i===pv.length-1&&v.p>=80?'top':'';
     rH+=`<div class="ranking-row${v.p<60?' pior':''}">
       <div class="ranking-pos ${pos||'azul'}" style="${!pos?'background:var(--az5);color:var(--az2)':''}">${i+1}</div>
       <div class="ranking-nome">${v.nome}<br><span style="font-size:11px;color:var(--c3)">${v.ass}✔ / ${v.pend}✗ (${v.t})</span></div>
       <div class="ranking-bar-wrap"><div class="ranking-bar-fill" style="width:${v.p}%;background:var(--${cCss})"></div></div>
-      <div class="ranking-pct" style="color:var(--${cCss})">${PED_fp(v.p)}</div>
+      <div class="ranking-PED_pct" style="color:var(--${cCss})">${PED_fp(v.p)}</div>
     </div>`;
   });
-  document.getElementById('rank-pedidos').innerHTML=rH;
+  document.getElementById('ped-rank-pedidos').innerHTML=rH;
 
   // Ranking canhotos por mês
   let cH=`<div class="ranking-header"><span>Mês</span><span>% Pendente</span></div>`;
   canMes.forEach(v=>{
-    const t=v.ass+v.pend; const pInc=pct(v.pend,t); const c=corPInv(pInc); const cCss=corPInvCss(pInc);
+    const t=v.ass+v.pend; const pInc=PED_pct(v.pend,t); const c=PED_corPInv(pInc); const cCss=PED_corPInvCss(pInc);
     cH+=`<div class="ranking-row">
       <div class="ranking-pos" style="background:var(--brand-lt);color:var(--brand-dk);width:28px;height:28px;border-radius:4px;font-size:10px">📅</div>
-      <div class="ranking-nome">${mesNome(v.mes)}<br><span style="font-size:11px;color:var(--c3)">${v.ass}✔ / ${v.pend}✗ (${t})</span></div>
+      <div class="ranking-nome">${PED_mesNome(v.mes)}<br><span style="font-size:11px;color:var(--c3)">${v.ass}✔ / ${v.pend}✗ (${t})</span></div>
       <div class="ranking-bar-wrap"><div class="ranking-bar-fill" style="width:${pInc}%;background:var(--${cCss})"></div></div>
-      <div class="ranking-pct" style="color:var(--${cCss})">${PED_fp(pInc)}</div>
+      <div class="ranking-PED_pct" style="color:var(--${cCss})">${PED_fp(pInc)}</div>
     </div>`;
   });
-  document.getElementById('rank-canhotos').innerHTML=cH;
+  document.getElementById('ped-rank-canhotos').innerHTML=cH;
 }
 
 // ============================================================
 // TABELAS DETALHADAS
 // ============================================================
-function renderPedidos(dados,tC,tA,tP,tSP){
+function PED_renderPedidos(dados,tC,tA,tP,tSP){
   // Alerta sementes
-  const al=document.getElementById('alerta-ped');
+  const al=document.getElementById('ped-alerta-ped');
   if(tSP>0){al.className='alerta-box verm';al.innerHTML=`<span class="alerta-icon">⚠️</span>${tSP} pedido(s) de SEMENTES pendente(s) — zero tolerância.`;al.classList.remove('hidden');}
   else{al.className='alerta-box verde';al.innerHTML=`<span class="alerta-icon">✔</span>Nenhum pedido semente pendente.`;al.classList.remove('hidden');}
 
-  const sorted=[...dados].sort((a,b)=>pct(a.ass,a.ass+a.pend)-pct(b.ass,b.ass+b.pend));
-  renderTabela('body-ped',sorted,'ped',8,
+  const sorted=[...dados].sort((a,b)=>PED_pct(a.ass,a.ass+a.pend)-PED_pct(b.ass,b.ass+b.pend));
+  PED_renderTabela('body-ped',sorted,'ped',8,
     (v,i,rid)=>{
-      const t=v.ass+v.pend; const p=pct(v.ass,t); const c=corP(p);
+      const t=v.ass+v.pend; const p=PED_pct(v.ass,t); const c=PED_corP(p);
       return `<tr>
-        <td><button class="btn-det" onclick="toggleDet('${rid}')">▶ Detalhar</button></td>
-        <td>${nomeLimpo(v.vend)}</td>
+        <td><button class="btn-det" onclick="PED_toggleDet('${rid}')">▶ Detalhar</button></td>
+        <td>${PED_nomeLimpo(v.vend)}</td>
         <td>${t}</td><td>${v.ass}</td>
         <td>${v.pend}${v.semPend>0?`<span class="tag-sem">🌱 ${v.semPend}</span>`:''}</td>
         <td><span class="badge b${c[0]}">${PED_fp(p)}</span></td>
@@ -7022,62 +7026,62 @@ function renderPedidos(dados,tC,tA,tP,tSP){
       </tr>`;
     },
     (dados)=>{const tT=dados.reduce((s,v)=>s+v.ass+v.pend,0);const tA=dados.reduce((s,v)=>s+v.ass,0);const tP=dados.reduce((s,v)=>s+v.pend,0);
-      return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(pct(tA,tT))}</td><td></td><td></td></tr>`;},
+      return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tA,tT))}</td><td></td><td></td></tr>`;},
     'cxs-ped',['Nº Pedido','Tipo','NT Fiscal','CFOP','Semente']
   );
 }
 
-function renderSementes(dados,tC,tA,tP){
-  const al=document.getElementById('alerta-sem');
+function PED_renderSementes(dados,tC,tA,tP){
+  const al=document.getElementById('ped-alerta-sem');
   if(tP>0){al.className='alerta-box verm';al.innerHTML=`<span class="alerta-icon">⚠️</span>${tP} pedido(s) de semente PENDENTE(s) — esta filial não pode ter nenhum.`;al.classList.remove('hidden');}
   else{al.className='alerta-box verde';al.innerHTML=`<span class="alerta-icon">✔</span>Nenhum pedido semente pendente.`;al.classList.remove('hidden');}
 
   const sorted=[...dados].sort((a,b)=>b.pend-a.pend);
-  renderTabela('body-sem',sorted,'sem',7,
+  PED_renderTabela('body-sem',sorted,'sem',7,
     (v,i,rid)=>{
-      const t=v.ass+v.pend; const p=pct(v.ass,t); const c=corP(p);
+      const t=v.ass+v.pend; const p=PED_pct(v.ass,t); const c=PED_corP(p);
       return `<tr>
-        <td><button class="btn-det" onclick="toggleDet('${rid}')">▶ Detalhar</button></td>
-        <td>${nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td>${v.pend}</td>
+        <td><button class="btn-det" onclick="PED_toggleDet('${rid}')">▶ Detalhar</button></td>
+        <td>${PED_nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td>${v.pend}</td>
         <td><span class="badge b${c[0]}">${PED_fp(p)}</span></td>
         <td style="font-size:11px;color:var(--c3)">${APP_PED.periodo}</td>
       </tr>`;
     },
     (dados)=>{const tT=dados.reduce((s,v)=>s+v.ass+v.pend,0);const tA=dados.reduce((s,v)=>s+v.ass,0);const tP=dados.reduce((s,v)=>s+v.pend,0);
-      return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(pct(tA,tT))}</td><td></td></tr>`;},
+      return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tA,tT))}</td><td></td></tr>`;},
     'cxs-sem',['Nº Pedido','Tipo','NT Fiscal','CFOP']
   );
 }
 
-function renderCanMes(dados,tC,tA,tP){
-  renderTabela('body-cm',dados,'cm',6,
+function PED_renderCanMes(dados,tC,tA,tP){
+  PED_renderTabela('body-cm',dados,'cm',6,
     (v,i,rid)=>{
-      const t=v.ass+v.pend; const pInc=pct(v.pend,t); const c=corPInv(pInc); const cCss=corPInvCss(pInc);
+      const t=v.ass+v.pend; const pInc=PED_pct(v.pend,t); const c=PED_corPInv(pInc); const cCss=PED_corPInvCss(pInc);
       return `<tr>
-        <td><button class="btn-det" onclick="toggleDet('${rid}')">▶ Detalhar</button></td>
-        <td>${mesNome(v.mes)}</td><td>${t}</td><td>${v.ass}</td><td>${v.pend}</td>
+        <td><button class="btn-det" onclick="PED_toggleDet('${rid}')">▶ Detalhar</button></td>
+        <td>${PED_mesNome(v.mes)}</td><td>${t}</td><td>${v.ass}</td><td>${v.pend}</td>
         <td><span class="badge b${c[0]}">${PED_fp(pInc)}</span></td>
       </tr>`;
     },
     (dados)=>{const tT=dados.reduce((s,v)=>s+v.ass+v.pend,0);const tA=dados.reduce((s,v)=>s+v.ass,0);const tP=dados.reduce((s,v)=>s+v.pend,0);
-      return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(pct(tP,tT))}</td></tr>`;},
+      return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tP,tT))}</td></tr>`;},
     'cxs-cm',['Nº Pedido','Tipo','NT Fiscal','CFOP']
   );
 }
 
-function renderCanVend(dados,tC,tA,tP){
+function PED_renderCanVend(dados,tC,tA,tP){
   const sorted=[...dados].sort((a,b)=>b.pend-a.pend);
-  renderTabela('body-cv',sorted,'cv',6,
+  PED_renderTabela('body-cv',sorted,'cv',6,
     (v,i,rid)=>{
-      const t=v.ass+v.pend; const pInc=pct(v.pend,t); const c=corPInv(pInc); const cCss=corPInvCss(pInc);
+      const t=v.ass+v.pend; const pInc=PED_pct(v.pend,t); const c=PED_corPInv(pInc); const cCss=PED_corPInvCss(pInc);
       return `<tr>
-        <td><button class="btn-det" onclick="toggleDet('${rid}')">▶ Detalhar</button></td>
-        <td>${nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td>${v.pend}</td>
+        <td><button class="btn-det" onclick="PED_toggleDet('${rid}')">▶ Detalhar</button></td>
+        <td>${PED_nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td>${v.pend}</td>
         <td><span class="badge b${c[0]}">${PED_fp(pInc)}</span></td>
       </tr>`;
     },
     (dados)=>{const tT=dados.reduce((s,v)=>s+v.ass+v.pend,0);const tA=dados.reduce((s,v)=>s+v.ass,0);const tP=dados.reduce((s,v)=>s+v.pend,0);
-      return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(pct(tP,tT))}</td></tr>`;},
+      return `<tr class="tr-tot"><td></td><td>TOTAL</td><td>${tT}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tP,tT))}</td></tr>`;},
     'cxs-cv',['Nº Pedido','Tipo','NT Fiscal','CFOP']
   );
 }
@@ -7088,17 +7092,17 @@ function renderCanVend(dados,tC,tA,tP){
 // ============================================================
 // RENDER DIAGNÓSTICO & AÇÃO
 // ============================================================
-function renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano){
+function PED_renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano){
   // Narrativa
-  document.getElementById('narrativa').innerHTML=narr.html;
+  document.getElementById('ped-narrativa').innerHTML=narr.html;
 
   // Gráfico tendência (linha)
-  desenharGraficoTendencia(tendMes);
+  PED_desenharGraficoTendencia(tendMes);
   // Gráfico vendedores (barra)
-  desenharGraficoVendedores(pedVend);
+  PED_desenharGraficoVendedores(pedVend);
 
   // Risco financeiro
-  const rb=document.getElementById('risco-box');
+  const rb=document.getElementById('ped-risco-box');
   if(risco.total>0){
     rb.innerHTML=`<div class="risco-card">
       <div class="risco-val">R$ ${risco.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
@@ -7116,18 +7120,18 @@ function renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano){
   }
 
   // Clientes
-  document.getElementById('body-clientes').innerHTML=clientes.length
+  document.getElementById('ped-body-clientes').innerHTML=clientes.length
     ? clientes.map(c=>`<tr><td>${c.cli}</td><td><span class="badge br">${c.n}</span></td></tr>`).join('')
     : '<tr><td colspan="2" class="empty">Nenhuma pendência de pedido</td></tr>';
 
   // Plano de ação
-  document.getElementById('body-plano').innerHTML=plano.map((p,i)=>{
+  document.getElementById('ped-body-plano').innerHTML=plano.map((p,i)=>{
     const acaoClass=p.nivel==='urg'?'acao-urg':p.nivel==='aten'?'acao-aten':'acao-ok';
     const priorClass=p.nivel==='ok'?'prior-num baixa':'prior-num';
     return `<tr>
       <td><span class="${priorClass}">${i+1}</span></td>
       <td>${p.vend}</td>
-      <td><span class="badge b${corP(p.pct)}">${PED_fp(p.pct)}</span></td>
+      <td><span class="badge b${PED_corP(p.PED_pct)}">${PED_fp(p.PED_pct)}</span></td>
       <td>${p.pend}</td>
       <td>${p.semPend>0?`<span class="badge br">${p.semPend}</span>`:'<span class="badge bg">0</span>'}</td>
       <td><span class="acao ${acaoClass}">${p.acao}</span></td>
@@ -7135,17 +7139,17 @@ function renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano){
   }).join('');
 }
 
-function desenharGraficoTendencia(tendMes){
-  const ctx=document.getElementById('chart-tend');
+function PED_desenharGraficoTendencia(tendMes){
+  const ctx=document.getElementById('ped-chart-tend');
   if(!ctx) return;
   if(_charts.tend) _charts.tend.destroy();
   _charts.tend=new Chart(ctx,{
     type:'line',
     data:{
-      labels:tendMes.map(m=>mesNome(m.mes)),
+      labels:tendMes.map(m=>PED_mesNome(m.mes)),
       datasets:[{
         label:'% Assinados',
-        data:tendMes.map(m=>m.pct),
+        data:tendMes.map(m=>m.PED_pct),
         borderColor:'#2b7fd4',
         backgroundColor:'rgba(43,127,212,.15)',
         borderWidth:2.5,fill:true,tension:.3,
@@ -7163,20 +7167,20 @@ function desenharGraficoTendencia(tendMes){
   });
 }
 
-function desenharGraficoVendedores(pedVend){
-  const ctx=document.getElementById('chart-vend');
+function PED_desenharGraficoVendedores(pedVend){
+  const ctx=document.getElementById('ped-chart-vend');
   if(!ctx) return;
   if(_charts.vend) _charts.vend.destroy();
-  const dados=[...pedVend].map(v=>({nome:nomeLimpo(v.vend),pct:pct(v.ass,v.ass+v.pend)}))
-    .sort((a,b)=>a.pct-b.pct);
+  const dados=[...pedVend].map(v=>({nome:PED_nomeLimpo(v.vend),PED_pct:PED_pct(v.ass,v.ass+v.pend)}))
+    .sort((a,b)=>a.PED_pct-b.PED_pct);
   _charts.vend=new Chart(ctx,{
     type:'bar',
     data:{
       labels:dados.map(d=>d.nome),
       datasets:[{
         label:'% Assinados',
-        data:dados.map(d=>d.pct),
-        backgroundColor:dados.map(d=>d.pct>=80?'#35b87a':d.pct>=60?'#e0a73a':'#e25c4d'),
+        data:dados.map(d=>d.PED_pct),
+        backgroundColor:dados.map(d=>d.PED_pct>=80?'#35b87a':d.PED_pct>=60?'#e0a73a':'#e25c4d'),
         borderRadius:4
       }]
     },
@@ -7191,19 +7195,19 @@ function desenharGraficoVendedores(pedVend){
   });
 }
 
-function renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr){
+function PED_renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr){
   const fi=APP_PED.fi||{};
-  document.getElementById('ap-filial').textContent=fi.loja||'—';
-  document.getElementById('ap-periodo').textContent='Período de auditoria: '+(APP_PED.periodo||'—');
-  document.getElementById('ap-resp').innerHTML=`
+  document.getElementById('ped-ap-filial').textContent=fi.loja||'—';
+  document.getElementById('ped-ap-periodo').textContent='Período de auditoria: '+(APP_PED.periodo||'—');
+  document.getElementById('ped-ap-resp').innerHTML=`
     <div class="ar-item"><div class="ar-l">Gerente</div><div class="ar-v">${fi.gerente||'—'}</div></div>
     <div class="ar-item"><div class="ar-l">Supervisor</div><div class="ar-v">${fi.supervisor||'—'}</div></div>
     <div class="ar-item"><div class="ar-l">Regional</div><div class="ar-v">${fi.regional||'—'}</div></div>
     <div class="ar-item"><div class="ar-l">Auditor</div><div class="ar-v">${fi.auditor||'—'}</div></div>`;
   // Narrativa na apresentação também
-  if(narr) document.getElementById('ap-narrativa').innerHTML=narr.html;
-  const pPed=pct(tPA,tPC),pCan=pct(tCA,tCC);
-  document.getElementById('ap-blocos').innerHTML=`
+  if(narr) document.getElementById('ped-ap-narrativa').innerHTML=narr.html;
+  const pPed=PED_pct(tPA,tPC),pCan=PED_pct(tCA,tCC);
+  document.getElementById('ped-ap-blocos').innerHTML=`
     <div class="apres-bloco">
       <div class="apb-titulo">📋 Pedidos de Venda</div>
       <div class="apb-num ${tPP>0?'verm':'verde'}">${tPP}</div>
@@ -7212,7 +7216,7 @@ function renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr){
       <div class="apb-linha"><span style="color:var(--c3)">Assinados</span><span class="apb-lv ok">${tPA}</span></div>
       <div class="apb-linha"><span style="color:var(--c3)">Pendentes</span><span class="apb-lv pend">${tPP}</span></div>
       <div class="apb-linha"><span style="color:var(--c3)">% Assinados</span><span class="apb-lv">${PED_fp(pPed)}</span></div>
-      <div class="apb-linha"><span style="color:var(--c3)">% Inconsistente</span><span class="apb-lv ${tPP>0?'pend':''}">${PED_fp(pct(tPP,tPC))}</span></div>
+      <div class="apb-linha"><span style="color:var(--c3)">% Inconsistente</span><span class="apb-lv ${tPP>0?'pend':''}">${PED_fp(PED_pct(tPP,tPC))}</span></div>
     </div>
     <div class="apres-bloco">
       <div class="apb-titulo">🌱 Sementes — ZERO TOLERÂNCIA</div>
@@ -7220,7 +7224,7 @@ function renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr){
       <div class="apb-sub">${tSP===0?'nenhuma pendência de semente':'pedidos semente pendentes'}</div>
       ${tSP===0?'<div class="apb-alert-g">✔ Sem pendências de semente</div>':
       '<div class="apb-alert-r">⚠ PENDÊNCIAS CRÍTICAS DE SEMENTE</div>'+
-      semVend.filter(v=>v.pend>0).map(v=>`<div class="apb-linha"><span style="color:var(--c3)">${nomeLimpo(v.vend)}</span><span class="apb-lv pend">${v.pend} pend.</span></div>`).join('')}
+      semVend.filter(v=>v.pend>0).map(v=>`<div class="apb-linha"><span style="color:var(--c3)">${PED_nomeLimpo(v.vend)}</span><span class="apb-lv pend">${v.pend} pend.</span></div>`).join('')}
     </div>
     <div class="apres-bloco">
       <div class="apb-titulo">📄 Canhotos (Notas Fiscais)</div>
@@ -7233,14 +7237,14 @@ function renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr){
       <br/>
       <div style="font-size:10px;font-weight:800;color:var(--c3);margin-bottom:6px;text-transform:uppercase">Por Mês</div>
       <table class="apb-tmes"><thead><tr><th>Mês</th><th>Total</th><th>Assinados</th><th>Pendentes</th><th>%Pend</th></tr></thead>
-      <tbody>${canMes.map(m=>{const t=m.ass+m.pend;return`<tr><td>${mesNome(m.mes)}</td><td>${t}</td><td>${m.ass}</td><td style="color:var(--verm);font-weight:700">${m.pend}</td><td>${PED_fp(pct(m.pend,t))}</td></tr>`;}).join('')}</tbody></table>
+      <tbody>${canMes.map(m=>{const t=m.ass+m.pend;return`<tr><td>${PED_mesNome(m.mes)}</td><td>${t}</td><td>${m.ass}</td><td style="color:var(--verm);font-weight:700">${m.pend}</td><td>${PED_fp(PED_pct(m.pend,t))}</td></tr>`;}).join('')}</tbody></table>
     </div>`;
 }
 
 // ============================================================
 // SORT TABELAS
 // ============================================================
-function sortTab(tblId,ci,th){
+function PED_sortTab(tblId,ci,th){
   const tbl=document.getElementById(tblId);
   const tbody=tbl.querySelector('tbody');
   // IMPORTANTE: usar ':scope > tr' para pegar APENAS as linhas diretas do tbody.
@@ -7289,7 +7293,7 @@ function sortTab(tblId,ci,th){
 // e a relação de pendências (um pedido por linha, sem duplicação de remessa).
 // Exportação LIMPA para conferência do supervisor — não copia o HTML cru.
 // Aceita o tipo: 'pedidos', 'sementes' ou 'canhotos'.
-function expConferencia(tipo){
+function PED_expConferencia(tipo){
   tipo=tipo||'pedidos';
   if(!APP_PED.pedidos.length && !APP_PED.canhoto.length){alert('Importe os arquivos primeiro.');return;}
   const fi=APP_PED.fi||{};
@@ -7297,7 +7301,7 @@ function expConferencia(tipo){
   const dt=new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
 
   // Cabeçalho comum da filial (reutilizado nas duas abas)
-  const cabecalho=(titulo)=>[
+  const PED_cabecalho=(titulo)=>[
     [titulo],
     ['Filial',fi.loja||'—','Estado',fi.estado||'—'],
     ['Gerente',fi.gerente||'—','Supervisor',fi.supervisor||'—'],
@@ -7308,34 +7312,34 @@ function expConferencia(tipo){
 
   if(tipo==='canhotos'){
     // ===== CONFERÊNCIA DE CANHOTOS =====
-    const cv=agCanVend().sort((a,b)=>{
-      const pa=pct(a.pend,a.ass+a.pend),pb=pct(b.pend,b.ass+b.pend);return pb-pa;
+    const cv=PED_agCanVend().sort((a,b)=>{
+      const pa=PED_pct(a.pend,a.ass+a.pend),pb=PED_pct(b.pend,b.ass+b.pend);return pb-pa;
     });
     let tC=0,tA=0,tP=0; cv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;});
-    const cm=agCanMes();
+    const cm=PED_agCanMes();
     // Aba Resumo
-    const r=[...cabecalho('AGROQUIMA — CONFERÊNCIA DE CANHOTOS (NOTAS FISCAIS)')];
+    const r=[...PED_cabecalho('AGROQUIMA — CONFERÊNCIA DE CANHOTOS (NOTAS FISCAIS)')];
     r.push(['INDICADORES GERAIS']);
     r.push(['Canhotos conferidos',tC]);
     r.push(['Assinados',tA]);
     r.push(['Pendentes',tP]);
-    r.push(['% Assinados',pct(tA,tC).toFixed(2)+'%']);
+    r.push(['% Assinados',PED_pct(tA,tC).toFixed(2)+'%']);
     r.push([]);
     r.push(['POR MÊS']);
     r.push(['Mês','Conferidos','Assinados','Pendentes','% Pendente']);
-    cm.forEach(m=>{const t=m.ass+m.pend;r.push([mesNome(m.mes),t,m.ass,m.pend,pct(m.pend,t).toFixed(2)+'%']);});
+    cm.forEach(m=>{const t=m.ass+m.pend;r.push([PED_mesNome(m.mes),t,m.ass,m.pend,PED_pct(m.pend,t).toFixed(2)+'%']);});
     r.push([]);
     r.push(['POR VENDEDOR']);
     r.push(['Vendedor','Conferidos','Assinados','Pendentes','% Pendente']);
-    cv.forEach(v=>{const t=v.ass+v.pend;r.push([nomeLimpo(v.vend),t,v.ass,v.pend,pct(v.pend,t).toFixed(2)+'%']);});
-    r.push(['TOTAL',tC,tA,tP,pct(tP,tC).toFixed(2)+'%']);
+    cv.forEach(v=>{const t=v.ass+v.pend;r.push([PED_nomeLimpo(v.vend),t,v.ass,v.pend,PED_pct(v.pend,t).toFixed(2)+'%']);});
+    r.push(['TOTAL',tC,tA,tP,PED_pct(tP,tC).toFixed(2)+'%']);
     const ws1=XLSX.utils.aoa_to_sheet(r);
     ws1['!cols']=[{wch:32},{wch:12},{wch:12},{wch:12},{wch:13}];
     XLSX.utils.book_append_sheet(wb,ws1,'Resumo');
     // Aba Pendências
     const p=[['CANHOTOS PENDENTES — '+(fi.loja||'')],['Período',APP_PED.periodo||'—'],[],['Vendedor','Nº Pedido','Tipo','NT Fiscal','CFOP']];
     let tem=false;
-    cv.forEach(v=>v.dets.forEach(d=>{tem=true;p.push([nomeLimpo(v.vend),d.ped,d.tipo,d.nf,d.cfop]);}));
+    cv.forEach(v=>v.dets.forEach(d=>{tem=true;p.push([PED_nomeLimpo(v.vend),d.ped,d.tipo,d.nf,d.cfop]);}));
     if(!tem) p.push(['— Nenhuma pendência —']);
     const ws2=XLSX.utils.aoa_to_sheet(p);
     ws2['!cols']=[{wch:28},{wch:14},{wch:22},{wch:12},{wch:10}];
@@ -7346,23 +7350,23 @@ function expConferencia(tipo){
 
   if(tipo==='sementes'){
     // ===== CONFERÊNCIA DE SEMENTES =====
-    const sv=agSementesVend().sort((a,b)=>{
-      const pa=pct(a.ass,a.ass+a.pend),pb=pct(b.ass,b.ass+b.pend);return pa-pb;
+    const sv=PED_agSementesVend().sort((a,b)=>{
+      const pa=PED_pct(a.ass,a.ass+a.pend),pb=PED_pct(b.ass,b.ass+b.pend);return pa-pb;
     });
     let tC=0,tA=0,tP=0; sv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;});
-    const risco=agRiscoSementes();
-    const r=[...cabecalho('AGROQUIMA — CONFERÊNCIA DE SEMENTES (ZERO TOLERÂNCIA)')];
+    const risco=PED_agRiscoSementes();
+    const r=[...PED_cabecalho('AGROQUIMA — CONFERÊNCIA DE SEMENTES (ZERO TOLERÂNCIA)')];
     r.push(['INDICADORES GERAIS']);
     r.push(['Pedidos de semente conferidos',tC]);
     r.push(['Assinados',tA]);
     r.push(['Pendentes',tP]);
-    r.push(['% Assinados',pct(tA,tC).toFixed(2)+'%']);
+    r.push(['% Assinados',PED_pct(tA,tC).toFixed(2)+'%']);
     r.push(['Valor em risco (R$)',risco.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})]);
     r.push([]);
     r.push(['POR VENDEDOR']);
     r.push(['Vendedor','Conferidos','Assinados','Pendentes','% Assinados']);
-    sv.forEach(v=>{const t=v.ass+v.pend;r.push([nomeLimpo(v.vend),t,v.ass,v.pend,pct(v.ass,t).toFixed(2)+'%']);});
-    r.push(['TOTAL',tC,tA,tP,pct(tA,tC).toFixed(2)+'%']);
+    sv.forEach(v=>{const t=v.ass+v.pend;r.push([PED_nomeLimpo(v.vend),t,v.ass,v.pend,PED_pct(v.ass,t).toFixed(2)+'%']);});
+    r.push(['TOTAL',tC,tA,tP,PED_pct(tA,tC).toFixed(2)+'%']);
     const ws1=XLSX.utils.aoa_to_sheet(r);
     ws1['!cols']=[{wch:32},{wch:14},{wch:12},{wch:12},{wch:13}];
     XLSX.utils.book_append_sheet(wb,ws1,'Resumo');
@@ -7379,40 +7383,40 @@ function expConferencia(tipo){
   }
 
   // ===== CONFERÊNCIA DE PEDIDOS (padrão) =====
-  const pv=agPedidosVend().sort((a,b)=>pct(a.ass,a.ass+a.pend)-pct(b.ass,b.ass+b.pend));
+  const pv=PED_agPedidosVend().sort((a,b)=>PED_pct(a.ass,a.ass+a.pend)-PED_pct(b.ass,b.ass+b.pend));
   let tC=0,tA=0,tP=0,tSP=0;
   pv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;tSP+=v.semPend;});
-  const resumo=[...cabecalho('AGROQUIMA — CONFERÊNCIA DE PEDIDOS DE VENDA')];
+  const resumo=[...PED_cabecalho('AGROQUIMA — CONFERÊNCIA DE PEDIDOS DE VENDA')];
   resumo.push(['INDICADORES GERAIS']);
   resumo.push(['Pedidos conferidos',tC]);
   resumo.push(['Assinados',tA]);
   resumo.push(['Pendentes',tP]);
-  resumo.push(['% Assinados',pct(tA,tC).toFixed(2)+'%']);
+  resumo.push(['% Assinados',PED_pct(tA,tC).toFixed(2)+'%']);
   resumo.push(['Sementes pendentes',tSP]);
   resumo.push([]);
   resumo.push(['DESEMPENHO POR VENDEDOR']);
   resumo.push(['Vendedor','Conferidos','Assinados','Pendentes','% Assinados','Sem. Pend.']);
-  pv.forEach(v=>{const t=v.ass+v.pend;resumo.push([nomeLimpo(v.vend),t,v.ass,v.pend,pct(v.ass,t).toFixed(2)+'%',v.semPend]);});
-  resumo.push(['TOTAL',tC,tA,tP,pct(tA,tC).toFixed(2)+'%',tSP]);
+  pv.forEach(v=>{const t=v.ass+v.pend;resumo.push([PED_nomeLimpo(v.vend),t,v.ass,v.pend,PED_pct(v.ass,t).toFixed(2)+'%',v.semPend]);});
+  resumo.push(['TOTAL',tC,tA,tP,PED_pct(tA,tC).toFixed(2)+'%',tSP]);
   const ws1=XLSX.utils.aoa_to_sheet(resumo);
   ws1['!cols']=[{wch:32},{wch:12},{wch:12},{wch:12},{wch:13},{wch:11}];
   XLSX.utils.book_append_sheet(wb,ws1,'Resumo');
   const pend=[['RELAÇÃO DE PENDÊNCIAS — '+(fi.loja||'')],['Período',APP_PED.periodo||'—'],[],['Vendedor','Nº Pedido','Tipo','NT Fiscal','CFOP','Semente?']];
   let temPend=false;
-  pv.forEach(v=>v.dets.forEach(d=>{temPend=true;pend.push([nomeLimpo(v.vend),d.ped,d.tipo,d.nf,d.cfop,d.sem?'SIM':'']);}));
+  pv.forEach(v=>v.dets.forEach(d=>{temPend=true;pend.push([PED_nomeLimpo(v.vend),d.ped,d.tipo,d.nf,d.cfop,d.sem?'SIM':'']);}));
   if(!temPend) pend.push(['— Nenhuma pendência —']);
   const ws2=XLSX.utils.aoa_to_sheet(pend);
   ws2['!cols']=[{wch:28},{wch:14},{wch:22},{wch:12},{wch:10},{wch:10}];
   XLSX.utils.book_append_sheet(wb,ws2,'Pendências');
   XLSX.writeFile(wb,`Conferencia_Pedidos_${(fi.sigla||'Filial')}_${dt}.xlsx`);
 }
-function expPNG(wrId){
+function PED_expPNG(wrId){
   html2canvas(document.getElementById(wrId),{scale:2,backgroundColor:'#ffffff'}).then(c=>{
     const a=document.createElement('a');a.href=c.toDataURL('image/png');
     a.download=`Conferencia_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`;a.click();
   });
 }
-function expPDF(wrId,tipo){
+function PED_expPDF(wrId,tipo){
   // PDF limpo e profissional — monta o conteúdo a partir dos DADOS (não do HTML cru).
   // Recebe o tipo para saber o que renderizar: 'pedidos', 'sementes', 'canhotos', 'diag', 'apres'.
   const fi=APP_PED.fi||{};
@@ -7464,23 +7468,23 @@ function expPDF(wrId,tipo){
 
   let corpo='';
   if(tipo==='canhotos'){
-    const cv=agCanVend().sort((a,b)=>pct(b.pend,b.ass+b.pend)-pct(a.pend,a.ass+a.pend));
-    const cm=agCanMes();
+    const cv=PED_agCanVend().sort((a,b)=>PED_pct(b.pend,b.ass+b.pend)-PED_pct(a.pend,a.ass+a.pend));
+    const cm=PED_agCanMes();
     let tC=0,tA=0,tP=0;cv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;});
     corpo+=`<h2>Indicadores — Canhotos</h2><div class="kpis">
       <div class="kpi"><div class="kl">Conferidos</div><div class="kv">${tC}</div></div>
       <div class="kpi g"><div class="kl">Assinados</div><div class="kv">${tA}</div></div>
       <div class="kpi r"><div class="kl">Pendentes</div><div class="kv">${tP}</div></div>
-      <div class="kpi"><div class="kl">% Assinados</div><div class="kv">${PED_fp(pct(tA,tC))}</div></div></div>`;
+      <div class="kpi"><div class="kl">% Assinados</div><div class="kv">${PED_fp(PED_pct(tA,tC))}</div></div></div>`;
     corpo+=`<h2>Por Mês</h2><table><tr><th>Mês</th><th>Conferidos</th><th>Assinados</th><th>Pendentes</th><th>% Pendente</th></tr>`;
-    cm.forEach(m=>{const t=m.ass+m.pend;corpo+=`<tr><td>${mesNome(m.mes)}</td><td>${t}</td><td>${m.ass}</td><td class="pend">${m.pend}</td><td class="pend">${PED_fp(pct(m.pend,t))}</td></tr>`;});
+    cm.forEach(m=>{const t=m.ass+m.pend;corpo+=`<tr><td>${PED_mesNome(m.mes)}</td><td>${t}</td><td>${m.ass}</td><td class="pend">${m.pend}</td><td class="pend">${PED_fp(PED_pct(m.pend,t))}</td></tr>`;});
     corpo+=`</table>`;
     corpo+=`<h2>Por Vendedor</h2><table><tr><th>Vendedor</th><th>Conferidos</th><th>Assinados</th><th>Pendentes</th><th>% Pendente</th></tr>`;
-    cv.forEach(v=>{const t=v.ass+v.pend;corpo+=`<tr><td>${nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td class="pend">${v.pend}</td><td>${PED_fp(pct(v.pend,t))}</td></tr>`;});
-    corpo+=`<tr class="tot"><td>TOTAL</td><td>${tC}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(pct(tP,tC))}</td></tr></table>`;
+    cv.forEach(v=>{const t=v.ass+v.pend;corpo+=`<tr><td>${PED_nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td class="pend">${v.pend}</td><td>${PED_fp(PED_pct(v.pend,t))}</td></tr>`;});
+    corpo+=`<tr class="tot"><td>TOTAL</td><td>${tC}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tP,tC))}</td></tr></table>`;
   }else if(tipo==='sementes'){
-    const sv=agSementesVend().sort((a,b)=>pct(a.ass,a.ass+a.pend)-pct(b.ass,b.ass+b.pend));
-    const risco=agRiscoSementes();
+    const sv=PED_agSementesVend().sort((a,b)=>PED_pct(a.ass,a.ass+a.pend)-PED_pct(b.ass,b.ass+b.pend));
+    const risco=PED_agRiscoSementes();
     let tC=0,tA=0,tP=0;sv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;});
     corpo+=`<h2>Indicadores — Sementes (Zero Tolerância)</h2><div class="kpis">
       <div class="kpi"><div class="kl">Conferidos</div><div class="kv">${tC}</div></div>
@@ -7488,30 +7492,30 @@ function expPDF(wrId,tipo){
       <div class="kpi r"><div class="kl">Pendentes</div><div class="kv">${tP}</div></div>
       <div class="kpi r"><div class="kl">Risco R$</div><div class="kv" style="font-size:15px">${risco.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div></div>`;
     corpo+=`<h2>Por Vendedor</h2><table><tr><th>Vendedor</th><th>Conferidos</th><th>Assinados</th><th>Pendentes</th><th>% Assinados</th></tr>`;
-    sv.forEach(v=>{const t=v.ass+v.pend;corpo+=`<tr><td>${nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td class="${v.pend>0?'pend':''}">${v.pend}</td><td class="${pct(v.ass,t)>=100?'ok':'pend'}">${PED_fp(pct(v.ass,t))}</td></tr>`;});
-    corpo+=`<tr class="tot"><td>TOTAL</td><td>${tC}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(pct(tA,tC))}</td></tr></table>`;
+    sv.forEach(v=>{const t=v.ass+v.pend;corpo+=`<tr><td>${PED_nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td class="${v.pend>0?'pend':''}">${v.pend}</td><td class="${PED_pct(v.ass,t)>=100?'ok':'pend'}">${PED_fp(PED_pct(v.ass,t))}</td></tr>`;});
+    corpo+=`<tr class="tot"><td>TOTAL</td><td>${tC}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tA,tC))}</td></tr></table>`;
     if(risco.itens.length){
       corpo+=`<h2>Sementes Pendentes</h2><table><tr><th>Vendedor</th><th>Nº Pedido</th><th>Tipo</th><th>Valor R$</th></tr>`;
       risco.itens.forEach(i=>corpo+=`<tr><td>${i.vend}</td><td>${i.ped}</td><td>${i.tipo}</td><td class="pend">${i.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>`);
       corpo+=`</table>`;
     }
   }else{ // pedidos (padrão)
-    const pv=agPedidosVend().sort((a,b)=>pct(a.ass,a.ass+a.pend)-pct(b.ass,b.ass+b.pend));
+    const pv=PED_agPedidosVend().sort((a,b)=>PED_pct(a.ass,a.ass+a.pend)-PED_pct(b.ass,b.ass+b.pend));
     let tC=0,tA=0,tP=0,tSP=0;pv.forEach(v=>{tC+=v.ass+v.pend;tA+=v.ass;tP+=v.pend;tSP+=v.semPend;});
     corpo+=`<h2>Indicadores — Pedidos de Venda</h2><div class="kpis">
       <div class="kpi"><div class="kl">Conferidos</div><div class="kv">${tC}</div></div>
       <div class="kpi g"><div class="kl">Assinados</div><div class="kv">${tA}</div></div>
       <div class="kpi r"><div class="kl">Pendentes</div><div class="kv">${tP}</div></div>
-      <div class="kpi"><div class="kl">% Assinados</div><div class="kv">${PED_fp(pct(tA,tC))}</div></div>
+      <div class="kpi"><div class="kl">% Assinados</div><div class="kv">${PED_fp(PED_pct(tA,tC))}</div></div>
       <div class="kpi ${tSP>0?'r':'g'}"><div class="kl">Sem. Pend.</div><div class="kv">${tSP}</div></div></div>`;
     corpo+=`<h2>Desempenho por Vendedor</h2><table><tr><th>Vendedor</th><th>Conferidos</th><th>Assinados</th><th>Pendentes</th><th>% Assinados</th><th>Sem. Pend.</th></tr>`;
-    pv.forEach(v=>{const t=v.ass+v.pend;corpo+=`<tr><td>${nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td class="${v.pend>0?'pend':''}">${v.pend}</td><td class="${pct(v.ass,t)>=80?'ok':'pend'}">${PED_fp(pct(v.ass,t))}</td><td class="${v.semPend>0?'pend':''}">${v.semPend}</td></tr>`;});
-    corpo+=`<tr class="tot"><td>TOTAL</td><td>${tC}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(pct(tA,tC))}</td><td>${tSP}</td></tr></table>`;
+    pv.forEach(v=>{const t=v.ass+v.pend;corpo+=`<tr><td>${PED_nomeLimpo(v.vend)}</td><td>${t}</td><td>${v.ass}</td><td class="${v.pend>0?'pend':''}">${v.pend}</td><td class="${PED_pct(v.ass,t)>=80?'ok':'pend'}">${PED_fp(PED_pct(v.ass,t))}</td><td class="${v.semPend>0?'pend':''}">${v.semPend}</td></tr>`;});
+    corpo+=`<tr class="tot"><td>TOTAL</td><td>${tC}</td><td>${tA}</td><td>${tP}</td><td>${PED_fp(PED_pct(tA,tC))}</td><td>${tSP}</td></tr></table>`;
     // Pendências detalhadas
     const temPend=pv.some(v=>v.dets.length);
     if(temPend){
       corpo+=`<h2>Relação de Pendências</h2><table><tr><th>Vendedor</th><th>Nº Pedido</th><th>Tipo</th><th>NT Fiscal</th><th>CFOP</th><th>Semente</th></tr>`;
-      pv.forEach(v=>v.dets.forEach(d=>corpo+=`<tr><td>${nomeLimpo(v.vend)}</td><td>${d.ped}</td><td>${d.tipo}</td><td>${d.nf}</td><td>${d.cfop}</td><td>${d.sem?'<span class="pend">SIM</span>':'—'}</td></tr>`));
+      pv.forEach(v=>v.dets.forEach(d=>corpo+=`<tr><td>${PED_nomeLimpo(v.vend)}</td><td>${d.ped}</td><td>${d.tipo}</td><td>${d.nf}</td><td>${d.cfop}</td><td>${d.sem?'<span class="pend">SIM</span>':'—'}</td></tr>`));
       corpo+=`</table>`;
     }
   }
@@ -7528,7 +7532,7 @@ function expPDF(wrId,tipo){
 // ============================================================
 
 // Reseta apenas filtros/ordenações — dados permanecem, rerenderiza tudo
-function resetarFiltros(){
+function PED_resetarFiltros(){
   if(!APP_PED.pedidos.length && !APP_PED.canhoto.length) return;
   // Limpar classes de ordenação em todos os cabeçalhos
   document.querySelectorAll('thead th').forEach(t=>t.classList.remove('asc','desc'));
@@ -7539,30 +7543,30 @@ function resetarFiltros(){
     if(btn) btn.textContent='▶ Detalhar';
   });
   // Rerenderizar todas as tabelas na ordem padrão
-  renderTudo();
+  PED_renderTudo();
 }
 
 // Descarrega completamente os dados e volta à tela de importação
-function descarregarDados(){
+function PED_descarregarDados(){
   if(!confirm('Descarregar todos os dados e voltar ao início?')) return;
   // Destruir gráficos para evitar vazamento
   Object.values(_charts).forEach(c=>{try{c.destroy();}catch(e){}});
   _charts={};
   S={pedidos:[],canhoto:[],semIds:new Set(),copiaIds:new Set(),semValor:{},fi:null,periodo:''};
-  document.getElementById('tela-import').classList.remove('hidden');
-  document.getElementById('painel').classList.add('hidden');
-  document.getElementById('arq-status').innerHTML='';
-  document.getElementById('fi').value='';
-  document.getElementById('topo-titulo').textContent='—';
-  document.getElementById('topo-sub').textContent='Nenhum arquivo importado';
-  mudarAba(0);
+  document.getElementById('ped-tela-import').classList.remove('hidden');
+  document.getElementById('ped-painel').classList.add('hidden');
+  document.getElementById('ped-arq-status').innerHTML='';
+  document.getElementById('ped-fi').value='';
+  document.getElementById('ped-topo-titulo').textContent='—';
+  document.getElementById('ped-topo-sub').textContent='Nenhum arquivo importado';
+  PED_mudarAba(0);
 }
 let _aba=0;
-function mudarAba(i){
+function PED_mudarAba(i){
   _aba=i;
   document.querySelectorAll('.aba').forEach((a,j)=>a.classList.toggle('ativa',j===i));
   for(let j=0;j<9;j++) document.getElementById('aba-'+j)?.classList.toggle('hidden',j!==i);
-  if(i===7) renderHistorico();
+  if(i===7) PED_renderHistorico();
 }
 
 
@@ -7577,7 +7581,7 @@ try {
   if(saved) H_DADOS = JSON.parse(saved);
 } catch(e) { H_DADOS = []; }
 
-function calcScore(d) {
+function PED_calcScore(d) {
   // 4 itens: Semente(40) + Pedido(30) + Vencidos(20) + Canhoto(10) = 100
   const sSem  = (d.semPend === 0) ? 40 : 0;
   const sPed  = d.pedConf > 0 ? Math.min(d.pctPed / 95, 1) * 30 : 0;
@@ -7586,19 +7590,19 @@ function calcScore(d) {
   return Math.round((sSem + sPed + sVenc + sCan) * 100) / 100;
 }
 
-function registrarAuditoria() {
+function PED_registrarAuditoria() {
   if(!APP_PED.pedidos.length && !APP_PED.canhoto.length) {
-    document.getElementById('hist-aviso').style.display = 'flex';
-    document.getElementById('hist-aviso').textContent = '⚠ Importe os arquivos antes de registrar.';
+    document.getElementById('ped-hist-aviso').style.display = 'flex';
+    document.getElementById('ped-hist-aviso').textContent = '⚠ Importe os arquivos antes de registrar.';
     return;
   }
-  document.getElementById('hist-aviso').style.display = 'none';
+  document.getElementById('ped-hist-aviso').style.display = 'none';
 
   // Coletar dados da auditoria atual
   const fi = APP_PED.fi || {};
-  const pv = agPedidosVend();
-  const cv = agCanVend();
-  const risco = agRiscoSementes();
+  const pv = PED_agPedidosVend();
+  const cv = PED_agCanVend();
+  const risco = PED_agRiscoSementes();
 
   let pedConf=0, pedAss=0, pedPend=0;
   pv.forEach(v=>{ pedConf+=v.ass+v.pend; pedAss+=v.ass; pedPend+=v.pend; });
@@ -7624,7 +7628,7 @@ function registrarAuditoria() {
     scoreVenc: null, // preenchível depois
     dataReg: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
   };
-  registro.score = calcScore(registro);
+  registro.score = PED_calcScore(registro);
 
   // Verificar se já existe registro da mesma filial e período (atualiza)
   const idx = H_DADOS.findIndex(d => d.filial === registro.filial && d.periodo === registro.periodo);
@@ -7638,34 +7642,34 @@ function registrarAuditoria() {
   // Salvar no localStorage
   try { localStorage.setItem('aqHistorico', JSON.stringify(H_DADOS)); } catch(e) {}
 
-  renderHistorico();
+  PED_renderHistorico();
 
   // Feedback visual no botão
-  const btn = document.getElementById('btn-registrar');
+  const btn = document.getElementById('ped-btn-registrar');
   const orig = btn.textContent;
   btn.textContent = '✔ Registrado!';
   btn.style.background = '#14693a';
   setTimeout(()=>{ btn.textContent = orig; btn.style.background = ''; }, 2500);
 }
 
-function removerRegistro(id) {
+function PED_removerRegistro(id) {
   if(!confirm('Remover este registro do histórico?')) return;
   H_DADOS = H_DADOS.filter(d => d.id !== id);
   try { localStorage.setItem('aqHistorico', JSON.stringify(H_DADOS)); } catch(e) {}
-  renderHistorico();
+  PED_renderHistorico();
 }
 
-function scoreClass(s) {
+function PED_scoreClass(s) {
   if(s >= 90) return 's-ouro';
   if(s >= 75) return 's-verde';
   if(s >= 60) return 's-amar';
   return 's-verm';
 }
 
-function renderHistorico() {
-  const vazio = document.getElementById('hist-vazio');
-  const tabela = document.getElementById('tb-hist');
-  const kpis = document.getElementById('hist-kpis');
+function PED_renderHistorico() {
+  const vazio = document.getElementById('ped-hist-vazio');
+  const tabela = document.getElementById('ped-tb-hist');
+  const kpis = document.getElementById('ped-hist-kpis');
 
   if(!H_DADOS.length) {
     vazio.style.display = 'block';
@@ -7679,7 +7683,7 @@ function renderHistorico() {
 
   // KPIs do histórico
   const totalAud  = H_DADOS.length;
-  const mediaScore = (H_DADOS.reduce((s,d)=>s+d.score,0)/totalAud).toFixed(1);
+  const PED_mediaScore = (H_DADOS.reduce((s,d)=>s+d.score,0)/totalAud).toFixed(1);
   const semZero    = H_DADOS.filter(d=>d.semPend===0).length;
   const pctSemZero = Math.round(semZero/totalAud*100);
   const metaPed    = H_DADOS.filter(d=>d.pctPed>=95).length;
@@ -7687,7 +7691,7 @@ function renderHistorico() {
 
   kpis.innerHTML = [
     ['Auditorias Registradas', totalAud, 'var(--brand)'],
-    ['Score Médio', mediaScore + ' pts', totalAud ? 'var(--verde,#14693a)' : 'var(--text3)'],
+    ['Score Médio', PED_mediaScore + ' pts', totalAud ? 'var(--verde,#14693a)' : 'var(--text3)'],
     ['Semente = Zero', `${semZero}/${totalAud} (${pctSemZero}%)`, '#14693a'],
     ['Meta Pedido ≥95%', `${metaPed}/${totalAud}`, '#2b7fd4'],
     ['Meta Canhoto ≥95%', `${metaCan}/${totalAud}`, '#2b7fd4'],
@@ -7700,10 +7704,10 @@ function renderHistorico() {
 
   // Tabela — ordenada por data de registro (mais recente primeiro)
   const sorted = [...H_DADOS].sort((a,b)=>b.id-a.id);
-  const tbody = document.getElementById('body-hist');
+  const tbody = document.getElementById('ped-body-hist');
   tbody.innerHTML = sorted.map((d,i) => {
     const sc = d.score;
-    const scClass = scoreClass(sc);
+    const scClass = PED_scoreClass(sc);
     const semCor = d.semPend > 0 ? 'color:#b01c1c;font-weight:900' : 'color:#14693a';
     const pPedCor = d.pctPed >= 95 ? 'color:#14693a;font-weight:700' : (d.pctPed >= 80 ? 'color:#b86c00;font-weight:700' : 'color:#b01c1c;font-weight:700');
     const pCanCor = d.pctCan >= 95 ? 'color:#14693a;font-weight:700' : (d.pctCan >= 80 ? 'color:#b86c00;font-weight:700' : 'color:#b01c1c;font-weight:700');
@@ -7722,12 +7726,12 @@ function renderHistorico() {
       <td style="${d.canPend>0?'color:#b01c1c;font-weight:700':''}">${d.canPend}</td>
       <td><span class="hist-score ${scClass}">${sc.toFixed(1)}</span></td>
       <td style="font-size:10px;color:var(--text3)">${d.dataReg}</td>
-      <td><button class="btn-del-hist" onclick="removerRegistro(${d.id})" title="Remover">✕</button></td>
+      <td><button class="btn-del-hist" onclick="PED_removerRegistro(${d.id})" title="Remover">✕</button></td>
     </tr>`;
   }).join('');
 }
 
-function expHistoricoJSON() {
+function PED_expHistoricoJSON() {
   if(!H_DADOS.length) { alert('Nenhuma auditoria registrada ainda.'); return; }
   const dt  = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
   const blob = new Blob([JSON.stringify(H_DADOS, null, 2)], {type:'application/json'});
@@ -7739,7 +7743,7 @@ function expHistoricoJSON() {
   URL.revokeObjectURL(url);
 }
 
-function expHistoricoXLS() {
+function PED_expHistoricoXLS() {
   if(!H_DADOS.length) { alert('Nenhuma auditoria registrada ainda.'); return; }
 
   const wb = XLSX.utils.book_new();
@@ -7782,19 +7786,19 @@ function expHistoricoXLS() {
   const rank = Object.values(porFilial)
     .map(f => ({
       ...f,
-      mediaScore: parseFloat((f.scores.reduce((a,b)=>a+b,0)/f.scores.length).toFixed(1)),
+      PED_mediaScore: parseFloat((f.scores.reduce((a,b)=>a+b,0)/f.scores.length).toFixed(1)),
       maxScore: Math.max(...f.scores),
       minScore: Math.min(...f.scores),
       auditorias: f.regs.length,
       pctSemZero: Math.round(f.semZero/f.regs.length*100),
     }))
-    .sort((a,b) => b.mediaScore - a.mediaScore);
+    .sort((a,b) => b.PED_mediaScore - a.PED_mediaScore);
 
   const rankHeader = ['#','Filial','Nome','Auditorias','Score Médio','Score Máx','Score Mín','% Semente Zero'];
   const rankRows = [rankHeader];
   rank.forEach((f,i) => rankRows.push([
     i+1, f.filial, f.loja, f.auditorias,
-    f.mediaScore, f.maxScore, f.minScore, f.pctSemZero+'%'
+    f.PED_mediaScore, f.maxScore, f.minScore, f.pctSemZero+'%'
   ]));
   const ws2 = XLSX.utils.aoa_to_sheet(rankRows);
   ws2['!cols'] = [{wch:4},{wch:8},{wch:20},{wch:12},{wch:12},{wch:12},{wch:12},{wch:14}];
@@ -7810,11 +7814,11 @@ function expHistoricoXLS() {
   XLSX.writeFile(wb, `Acumulador_Agroquima_${dt}.xlsx`);
 }
 
-function importarHistoricoJSON() {
-  document.getElementById('inp-hist-json').click();
+function PED_importarHistoricoJSON() {
+  document.getElementById('ped-inp-hist-json').click();
 }
 
-function lerArquivoHistorico(input) {
+function PED_lerArquivoHistorico(input) {
   const file = input.files[0];
   if(!file) return;
 
@@ -7835,7 +7839,7 @@ function lerArquivoHistorico(input) {
           // Linha 2 (índice 1) contém o JSON
           const jsonStr = rows[1] && rows[1][0];
           if(jsonStr && String(jsonStr).trim().startsWith('[')) {
-            _processarHistoricoImportado(JSON.parse(jsonStr));
+            PED__processarHistoricoImportado(JSON.parse(jsonStr));
             return;
           }
         }
@@ -7873,7 +7877,7 @@ function lerArquivoHistorico(input) {
               dataReg:   String(r[16]||''),
             });
           }
-          if(dados.length) { _processarHistoricoImportado(dados); return; }
+          if(dados.length) { PED__processarHistoricoImportado(dados); return; }
         }
         alert('Arquivo não reconhecido. Use o arquivo gerado pelo botão "📥 Exportar Acumulador".');
       } catch(err) {
@@ -7891,7 +7895,7 @@ function lerArquivoHistorico(input) {
     try {
       const dados = JSON.parse(e.target.result);
       if(!Array.isArray(dados)) throw new Error('Formato inválido');
-      _processarHistoricoImportado(dados);
+      PED__processarHistoricoImportado(dados);
     } catch(err) {
       alert('Arquivo inválido. Use o arquivo .xlsx ou .json exportado pelo botão "📥 Exportar Acumulador".');
     }
@@ -7900,25 +7904,25 @@ function lerArquivoHistorico(input) {
   input.value = '';
 }
 
-function _processarHistoricoImportado(dados) {
+function PED__processarHistoricoImportado(dados) {
   const idsExistentes = new Set(H_DADOS.map(d=>d.id));
   let adicionados = 0;
   dados.forEach(d => {
     if(!idsExistentes.has(d.id)) {
       // Recalcular score se não tiver
-      if(!d.score) d.score = calcScore(d);
+      if(!d.score) d.score = PED_calcScore(d);
       H_DADOS.push(d);
       adicionados++;
     }
   });
   try { localStorage.setItem('aqHistorico', JSON.stringify(H_DADOS)); } catch(e) {}
-  renderHistorico();
+  PED_renderHistorico();
   alert(`Histórico carregado: ${dados.length} registro(s) — ${adicionados} novo(s) adicionado(s).`);
 }
 
 // Renderiza histórico ao carregar se já houver dados salvos
 document.addEventListener('DOMContentLoaded', ()=>{
-  if(H_DADOS.length) renderHistorico();
+  if(H_DADOS.length) PED_renderHistorico();
 });
 
 // ============================================================
@@ -7926,11 +7930,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // ============================================================
 
 // Drag & Drop
-function evDrag(e){e.preventDefault();document.getElementById('drop-zone').classList.add('over');}
-function dlDrag(){document.getElementById('drop-zone').classList.remove('over');}
-function dropArq(e){e.preventDefault();dlDrag();handleFiles(e.dataTransfer.files);}
+function PED_evDrag(e){e.preventDefault();document.getElementById('ped-drop-zone').classList.add('over');}
+function PED_dlDrag(){document.getElementById('ped-drop-zone').classList.remove('over');}
+function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTransfer.files);}
 
 
 </script>
+
 </body>
 </html>
