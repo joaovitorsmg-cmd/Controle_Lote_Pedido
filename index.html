@@ -4840,9 +4840,8 @@ function baixarHTMLMobile() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Contagem — ${APP.sigla}</title>
-<script>/* Reutiliza as bibliotecas já carregadas na janela principal (funciona offline/file://) */
-try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = window.opener && window.opener.html2canvas; } catch(e) {}
-<\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; }
@@ -4961,7 +4960,7 @@ try { window.jspdf = window.opener && window.opener.jspdf; window.html2canvas = 
 </div>
 <div class="toast" id="toast"></div>
 
-
+<script>
   const TOTAL = ${itemIdx};
   let conferidos = 0;
   function marcarItem(idx, checked) {
