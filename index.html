@@ -1595,11 +1595,9 @@ body{font-family:var(--fonte);background:var(--bg);color:var(--text);font-size:1
   border-color:transparent;color:#fff;box-shadow:0 2px 8px var(--brand-glow);}
 .btn-exp.primary:hover{filter:brightness(1.06);background:linear-gradient(135deg,var(--brand),var(--brand2));}
 
-/* Aba Histórico */
-.aba-historico{background:linear-gradient(135deg,#1a3a1a,#14693a)!important;
-  color:#fff!important;font-weight:700!important;}
-.aba-historico.ativa{background:linear-gradient(135deg,#0e2710,#0d4a28)!important;
-  border-bottom:2px solid #8ecfaa!important;}
+/* Aba Histórico — discreta (uso interno) */
+.aba-historico{opacity:.45;font-size:11px!important;font-weight:500!important;padding:6px 10px!important;}
+.aba-historico.ativa{opacity:.85;border-bottom:2px solid #5fd4a0!important;}
 .aba-guia{background:linear-gradient(135deg,#2a1a5e,#4a2d9e)!important;
   color:#fff!important;font-weight:700!important;}
 .aba-guia.ativa{background:linear-gradient(135deg,#1a0e3a,#2d1a6e)!important;
@@ -1882,8 +1880,8 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
       <i class="ti ti-list-check nav-icon"></i> Plano de Ação
       <span class="nav-badge orange hidden" id="badge-plano">0</span>
     </div>
-    <div class="nav-item" onclick="showTab('historico')" id="nav-historico" style="background:linear-gradient(135deg,rgba(26,58,26,.5),rgba(20,105,58,.3));border-top:1px solid rgba(20,105,58,.4);margin-top:6px;">
-      <i class="ti ti-history nav-icon" style="color:#5fd4a0;"></i> <span style="color:#5fd4a0;">Histórico</span>
+    <div class="nav-item" onclick="showTab('historico')" id="nav-historico" style="opacity:.45;font-size:11px;padding:6px 14px;margin-top:4px;border-top:1px solid var(--border);" title="Histórico de Auditorias (uso interno)">
+      <i class="ti ti-history nav-icon" style="font-size:13px;"></i> <span>Histórico</span>
       <span class="nav-badge" id="badge-historico" style="background:var(--verde);display:none;">0</span>
     </div>
   </div>
@@ -2297,7 +2295,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
         <div class="checklist-busca-box">
           <i class="ti ti-search checklist-busca-icon"></i>
           <input type="text" id="busca-checklist" class="checklist-busca-input" autocomplete="off"
-                 placeholder="Adicionar lote ao checklist — buscar por código, produto ou lote..."
+                 placeholder="Adicionar lote ao checklist — buscar por código, produto, lote, fabricante ou linha..."
                  oninput="buscarLotesChecklist()">
           <div class="checklist-busca-resultados" id="checklist-busca-resultados"></div>
         </div>
@@ -2363,7 +2361,6 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
               <div class="export-menu-item" onclick="exportarPlanoAcaoExcel();toggleDropdown('dd-plano')" style="color:#4ade80;font-weight:600;"><i class="ti ti-file-spreadsheet" style="color:#22c55e;"></i> Excel (.xlsx)</div>
               <div class="export-menu-item" onclick="gerarPDFSecao('plano-wrap','plano_acao');toggleDropdown('dd-plano')"><i class="ti ti-file-pdf"></i> PDF alta qualidade</div>
               <div class="export-menu-item" onclick="exportarPNGHQ('plano-wrap','plano_acao');toggleDropdown('dd-plano')"><i class="ti ti-photo"></i> Imagem PNG 4K</div>
-              <div class="export-menu-item" onclick="exportarArquivoVencidosPadrao();toggleDropdown('dd-plano')" style="color:var(--amber-dk);"><i class="ti ti-package-export"></i> Exportar p/ Ranking (JSON padrão)</div>
             </div>
           </div>
         </div>
@@ -2377,8 +2374,8 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           e <strong>Estratégica</strong> (melhoria de processos). Use como pauta da reunião de gestão pós-auditoria.
         </div>
       </div>
-      <div id="plano-summary" class="summary-grid"></div>
       <div id="plano-wrap">
+        <div id="plano-summary" class="summary-grid"></div>
         <div id="plano-container" class="plano-grid"></div>
       </div>
     </div>
@@ -4348,7 +4345,7 @@ function buscarLotesChecklist() {
   const jaInclusos = new Set(getTop5PorLinha().map(l => l.codProduto + '|' + String(l.lote).trim()));
 
   const resultados = APP.lotes.filter(l => {
-    const t = `${l.codProduto} ${l.nomeProduto} ${l.lote}`.toLowerCase();
+    const t = `${l.codProduto} ${l.nomeProduto} ${l.lote} ${l.fabricante || ''} ${l.linha} ${getNomeLinha(l.linha)}`.toLowerCase();
     return t.includes(termo);
   }).slice(0, 30);
 
@@ -4368,7 +4365,7 @@ function buscarLotesChecklist() {
           <span class="prod-cod">${l.codProduto}</span>
           <span class="busca-res-nome">${l.nomeProduto.trim()}</span>
         </div>
-        <div class="busca-res-meta">${getNomeLinha(l.linha)} · Lote ${String(l.lote).trim()} · Vence ${l.dtVencimento} · Qtd ${(l.quantidade||0).toLocaleString('pt-BR')}</div>
+        <div class="busca-res-meta">${getNomeLinha(l.linha)} · Lote ${String(l.lote).trim()} · Vence ${l.dtVencimento} · Qtd ${(l.quantidade||0).toLocaleString('pt-BR')}${l.fabricante ? ' · ' + l.fabricante.replace(/^\d+ - /,'') : ''}</div>
         <div class="busca-res-acao">${incluso ? '<i class="ti ti-check"></i> já no checklist' : '<i class="ti ti-plus"></i> Adicionar'}</div>
       </div>`;
   }).join('');
@@ -4853,6 +4850,10 @@ function baixarHTMLMobile() {
   .progress-fill { height: 100%; background: #60a5fa; border-radius: 2px; transition: width 0.3s; }
   .progress-label { font-size: 11px; opacity: 0.8; margin-top: 4px; }
   .content { padding: 12px; max-width: 600px; margin: 0 auto; }
+  .content.print-cols { max-width: 1300px; }
+  .print-cols .grupo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; }
+  .print-cols .grupo-header { grid-column: 1 / -1; }
+  .print-cols .item { margin-bottom: 0; border-radius: 8px; }
   .grupo { margin-bottom: 12px; }
   .grupo-header { background: #1e3a5f; color: #93c5fd; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 8px 14px; border-radius: 8px 8px 0 0; }
   .item { background: white; border: 1px solid #e2e8f0; margin-bottom: 2px; transition: background 0.2s; }
@@ -5051,11 +5052,14 @@ function baixarHTMLMobile() {
     const btn = document.getElementById('btn-pdf');
     btn.textContent = 'Gerando...';
     btn.disabled = true;
+    const contentEl = document.querySelector('.content');
+    // Amplia para 3 colunas só durante a captura, para aproveitar a largura da página A4
+    contentEl.classList.add('print-cols');
     try {
       const { jsPDF } = window.jspdf;
       const SCALE = 1.5;
 
-      // 1) Captura a página inteira em um canvas único
+      // 1) Captura a página inteira (já em layout de 3 colunas) em um canvas único
       const body = document.body;
       const fullCanvas = await html2canvas(body, {
         scale: SCALE,
@@ -5068,20 +5072,17 @@ function baixarHTMLMobile() {
       });
 
       // 2) Mapeia os limites "seguros" de quebra.
-      //    Usamos o topo de cada .grupo e de cada .item, MAS excluímos o primeiro
-      //    .item de cada grupo (para o header do grupo nunca ficar órfão no rodapé).
+      //    Usamos o topo de cada .grupo e de cada LINHA de itens, mas excluímos a
+      //    primeira linha de cada grupo (para o header do grupo nunca ficar órfão no rodapé).
       const bodyTop = body.getBoundingClientRect().top + window.scrollY;
       const pontos = [];
       document.querySelectorAll('.grupo').forEach(grupo => {
         const gtop = grupo.getBoundingClientRect().top + window.scrollY - bodyTop;
         pontos.push(Math.round(gtop * SCALE));
-        const items = grupo.querySelectorAll('.item');
-        // pula o primeiro item (índice 0) — fica colado ao header
-        items.forEach((it, i) => {
-          if (i === 0) return;
-          const ittop = it.getBoundingClientRect().top + window.scrollY - bodyTop;
-          pontos.push(Math.round(ittop * SCALE));
-        });
+        const items = [...grupo.querySelectorAll('.item')];
+        const tops = [...new Set(items.map(it => Math.round(it.getBoundingClientRect().top + window.scrollY - bodyTop)))].sort((a, b) => a - b);
+        // pula a primeira linha de itens (1 a 3 cards) — fica colada ao header
+        tops.slice(1).forEach(t => pontos.push(Math.round(t * SCALE)));
       });
       const cortes = [...new Set(pontos)].filter(y => y > 0).sort((a, b) => a - b);
 
@@ -5146,6 +5147,8 @@ function baixarHTMLMobile() {
       btn.textContent = '⬇ Salvar PDF';
       btn.disabled = false;
       alert('Erro ao gerar PDF: ' + e.message);
+    } finally {
+      contentEl.classList.remove('print-cols');
     }
   }
 <\/script>
@@ -5338,18 +5341,57 @@ function getChecklistSelecao() {
   }
 
   const excluidos = new Set((APP.checklistExcluidos || []).map(e => e.codProduto + '|' + String(e.lote).trim()));
+  const MIN_ITENS = 5;
   const resultado = {};
   for (const [linha, produtos] of Object.entries(porLinha)) {
-    const arr = Object.entries(produtos).map(([cod, lotes]) => ({
+    const todosProdutos = Object.entries(produtos).map(([cod, lotes]) => ({
       cod,
       nome: lotes[0].nomeProduto,
       maxScore: Math.max(...lotes.map(x => x.score)),
-      extra: false,
-      lotes: lotes.filter(l => !excluidos.has(l.codProduto + '|' + String(l.lote).trim())).sort((a, b) => b.score - a.score),
-    })).filter(p => p.lotes.length > 0);
-    // Os 5 produtos de maior risco da linha
-    arr.sort((a, b) => b.maxScore - a.maxScore);
-    resultado[linha] = arr.slice(0, 5);
+      lotesDisp: lotes.filter(l => !excluidos.has(l.codProduto + '|' + String(l.lote).trim())).sort((a, b) => b.score - a.score),
+    })).filter(p => p.lotesDisp.length > 0);
+    todosProdutos.sort((a, b) => b.maxScore - a.maxScore);
+
+    // Passo 1: preferencialmente 1 lote (o mais crítico) de até 5 produtos distintos
+    const escolhidos = []; // { cod, nome, lote }
+    const usados = new Set();
+    for (const p of todosProdutos) {
+      if (escolhidos.length >= MIN_ITENS) break;
+      const lote = p.lotesDisp[0];
+      escolhidos.push({ cod: p.cod, nome: p.nome, lote });
+      usados.add(lote.codProduto + '|' + String(lote.lote).trim());
+    }
+
+    // Passo 2: se a linha não tem 5 produtos distintos, completa com lotes extras
+    // (do mesmo produto ou de outro) por ordem de score, até atingir o mínimo
+    if (escolhidos.length < MIN_ITENS) {
+      const poolExtra = [];
+      for (const p of todosProdutos) {
+        for (const lote of p.lotesDisp) {
+          const key = lote.codProduto + '|' + String(lote.lote).trim();
+          if (!usados.has(key)) poolExtra.push({ cod: p.cod, nome: p.nome, lote });
+        }
+      }
+      poolExtra.sort((a, b) => b.lote.score - a.lote.score);
+      for (const item of poolExtra) {
+        if (escolhidos.length >= MIN_ITENS) break;
+        escolhidos.push(item);
+        usados.add(item.lote.codProduto + '|' + String(item.lote.lote).trim());
+      }
+    }
+
+    // Reagrupa por produto, preservando a ordem de maxScore
+    const porProduto = {};
+    for (const it of escolhidos) {
+      if (!porProduto[it.cod]) {
+        const base = todosProdutos.find(p => p.cod === it.cod);
+        porProduto[it.cod] = { cod: it.cod, nome: it.nome, maxScore: base ? base.maxScore : 0, extra: false, lotes: [] };
+      }
+      porProduto[it.cod].lotes.push(it.lote);
+    }
+    const arr = Object.values(porProduto).sort((a, b) => b.maxScore - a.maxScore);
+    arr.forEach(p => p.lotes.sort((a, b) => b.score - a.score));
+    resultado[linha] = arr;
   }
 
   // Incorpora lotes adicionados manualmente (sempre incluídos, mesmo fora dos top 5)
