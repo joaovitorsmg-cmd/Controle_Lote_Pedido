@@ -2504,10 +2504,10 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
 <!-- ABAS -->
 <div id="ped-abas">
   <div class="aba ativa" onclick="PED_mudarAba(0)">📊 Resumo</div>
-  <div class="aba" onclick="PED_mudarAba(1)">📋 Pedidos de Venda</div>
+  <div class="aba" onclick="PED_mudarAba(1)">📋 Pedido / Vendedor</div>
   <div class="aba" onclick="PED_mudarAba(2)">🌱 Sementes</div>
   <div class="aba" onclick="PED_mudarAba(3)">📄 Canhotos / Mês</div>
-  <div class="aba" onclick="PED_mudarAba(4)">👤 Pedido / Vendedor</div>
+  <div class="aba" onclick="PED_mudarAba(4)">👤 Canhoto / Vendedor</div>
   <div class="aba" onclick="PED_mudarAba(5)">🎯 Diagnóstico & Ação</div>
   <div class="aba" onclick="PED_mudarAba(6)">📌 Apresentação</div>
   <div class="aba aba-historico" onclick="PED_mudarAba(7)" title="Acumulador de auditorias — uso exclusivo da Auditoria Interna">🗂 Histórico</div>
@@ -2881,7 +2881,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <div class="guia-card">
             <div class="gc-num">4</div>
             <div class="gc-titulo">Analisar pedidos por Representante</div>
-            <div class="gc-desc">Na aba <b>📋 Pedidos de Venda</b>, clique em <b>▶ Detalhar</b> nos representantes com pendências.<br><br>
+            <div class="gc-desc">Na aba <b>📋 Pedido / Vendedor</b>, clique em <b>▶ Detalhar</b> nos representantes com pendências.<br><br>
               Itens em <span style="color:var(--text3)">cinza</span> com "Não conta" são informativos — <b>não afetam o indicador</b> (ex.: VENDA A VISTA).
             </div>
             <div class="gc-nota">Meta: ≥ 95% dos pedidos assinados.</div>
@@ -2889,13 +2889,13 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <div class="guia-card">
             <div class="gc-num">5</div>
             <div class="gc-titulo">Verificar canhotos</div>
-            <div class="gc-desc">Nas abas <b>📄 Canhotos / Mês</b> e <b>👤 Pedido / Vendedor</b>, identifique as notas sem assinatura e encaminhe para cobrança.</div>
+            <div class="gc-desc">Nas abas <b>📄 Canhotos / Mês</b> e <b>👤 Canhoto / Vendedor</b>, identifique as notas sem assinatura e encaminhe para cobrança.</div>
             <div class="gc-nota">Meta: ≥ 95% dos canhotos assinados.</div>
           </div>
           <div class="guia-card verde">
             <div class="gc-num">6</div>
             <div class="gc-titulo">Exportar o relatório</div>
-            <div class="gc-desc">Na aba <b>📋 Pedidos de Venda</b>, clique em <b>📋 Conferência (Supervisor)</b>.<br><br>
+            <div class="gc-desc">Na aba <b>📋 Pedido / Vendedor</b>, clique em <b>📋 Conferência (Supervisor)</b>.<br><br>
               Será gerada uma planilha Excel com:<br>
               • Aba <b>Resumo</b>: indicadores + desempenho por representante<br>
               • Aba <b>Pendências</b>: lista detalhada para cobrar
@@ -6313,6 +6313,12 @@ function PED_ehEscritorio(v){
   return /^ESC[\s.]/i.test(nome) || nome.toUpperCase()==='ESC';
 }
 function PED_nomeLimpo(v){return String(v||'').replace(/^\d+\s*-\s*/,'').trim();}
+function PED_fmtDt(d){
+  if(!d) return '';
+  const dt=d instanceof Date?d:new Date(d);
+  if(isNaN(dt)) return '';
+  return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+}
 
 function PED_stPedido(row,copiaIds,semIds){
   // Status de UMA linha de pedido (antes do agrupamento).
@@ -6590,7 +6596,7 @@ function PED_agPedidosVend(){
     else{
       map[vend].pend++;
       if(isSem) map[vend].semPend++;
-      map[vend].dets.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||r['NT_FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||''),sem:isSem});
+      map[vend].dets.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||r['NT_FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||''),sem:isSem,cliente:String(r['CLIENTE  ']||r['CLIENTE']||'').trim(),dtEmissao:PED_fmtDt(r['DT EMISSAO NF']||r['DT EMISSAO NF '])});
     }
     const d=r['DT EMISSAO NF']||r['DT EMISSAO NF '];
     if(d){const dt=d instanceof Date?d:new Date(d);if(!isNaN(dt)){if(!dtMin||dt<dtMin)dtMin=dt;if(!dtMax||dt>dtMax)dtMax=dt;}}
@@ -6610,7 +6616,7 @@ function PED_agSementesVend(){
     const vend=String(r.VENDEDOR||r['VENDEDOR']||'').trim();
     if(!map[vend]) map[vend]={vend,ass:0,pend:0,dets:[]};
     if(p.status==='ASSINADO') map[vend].ass++;
-    else{map[vend].pend++;map[vend].dets.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||'')});}
+    else{map[vend].pend++;map[vend].dets.push({ped:p.num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||''),cliente:String(r['CLIENTE  ']||r['CLIENTE']||'').trim(),dtEmissao:PED_fmtDt(r['DT EMISSAO NF']||r['DT EMISSAO NF '])});}
   });
   return Object.values(map);
 }
@@ -6622,7 +6628,7 @@ function PED_agCanMes(){
     const mes=r._mes||'Desconhecido';
     if(!map[mes]) map[mes]={mes,ass:0,pend:0,dets:[]};
     if(st==='ASSINADO') map[mes].ass++;
-    else{map[mes].pend++;map[mes].dets.push({ped:r._num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||'')});}
+    else{map[mes].pend++;map[mes].dets.push({ped:r._num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||''),cliente:String(r['CLIENTE  ']||r['CLIENTE']||'').trim(),dtEmissao:PED_fmtDt(r['DT EMISSAO NF']||r['DT EMISSAO NF '])});}
   });
   return Object.values(map).sort((a,b)=>a.mes.localeCompare(b.mes));
 }
@@ -6634,7 +6640,7 @@ function PED_agCanVend(){
     const vend=String(r.VENDEDOR||r['VENDEDOR']||'').trim();
     if(!map[vend]) map[vend]={vend,ass:0,pend:0,dets:[]};
     if(st==='ASSINADO') map[vend].ass++;
-    else{map[vend].pend++;map[vend].dets.push({ped:r._num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||'')});}
+    else{map[vend].pend++;map[vend].dets.push({ped:r._num,tipo:String(r['TIPO PEDIDO']||'').trim(),nf:String(r['NT FISCAL']||'').trim(),cfop:PED_exCfop(r.CFOP||''),cliente:String(r['CLIENTE  ']||r['CLIENTE']||'').trim(),dtEmissao:PED_fmtDt(r['DT EMISSAO NF']||r['DT EMISSAO NF '])});}
   });
   return Object.values(map);
 }
@@ -6855,7 +6861,9 @@ function PED_agRiscoSementes(){
       ped:p.num,
       tipo:String(r['TIPO PEDIDO']||'').trim(),
       vend:PED_nomeLimpo(String(r.VENDEDOR||r['VENDEDOR']||'')),
-      valor:(Number(APP_PED.semValor[p.num])||0)
+      valor:(Number(APP_PED.semValor[p.num])||0),
+      cliente:String(r['CLIENTE  ']||r['CLIENTE']||'').trim(),
+      dtEmissao:PED_fmtDt(r['DT EMISSAO NF']||r['DT EMISSAO NF '])
     });
   });
   const total=itens.reduce((s,i)=>s+(Number(i.valor)||0),0);
@@ -7208,7 +7216,7 @@ function PED_renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr){
   const pPed=PED_pct(tPA,tPC),pCan=PED_pct(tCA,tCC);
   document.getElementById('ped-ap-blocos').innerHTML=`
     <div class="apres-bloco">
-      <div class="apb-titulo">📋 Pedidos de Venda</div>
+      <div class="apb-titulo">📋 Pedido / Vendedor</div>
       <div class="apb-num ${tPP>0?'verm':'verde'}">${tPP}</div>
       <div class="apb-sub">pedidos pendentes de assinatura</div>
       <div class="apb-linha"><span style="color:var(--c3)">Total conferidos</span><span class="apb-lv">${tPC}</span></div>
@@ -7336,12 +7344,12 @@ function PED_expConferencia(tipo){
     ws1['!cols']=[{wch:32},{wch:12},{wch:12},{wch:12},{wch:13}];
     XLSX.utils.book_append_sheet(wb,ws1,'Resumo');
     // Aba Pendências
-    const p=[['CANHOTOS PENDENTES — '+(fi.loja||'')],['Período',APP_PED.periodo||'—'],[],['Vendedor','Nº Pedido','Tipo','NT Fiscal','CFOP']];
+    const p=[['CANHOTOS PENDENTES — '+(fi.loja||'')],['Período',APP_PED.periodo||'—'],[],['Vendedor','Nº Pedido','Cliente','Tipo','NT Fiscal','CFOP','Data Emissão NF']];
     let tem=false;
-    cv.forEach(v=>v.dets.forEach(d=>{tem=true;p.push([PED_nomeLimpo(v.vend),d.ped,d.tipo,d.nf,d.cfop]);}));
+    cv.forEach(v=>v.dets.forEach(d=>{tem=true;p.push([PED_nomeLimpo(v.vend),d.ped,d.cliente||'',d.tipo,d.nf,d.cfop,d.dtEmissao||'']);}));
     if(!tem) p.push(['— Nenhuma pendência —']);
     const ws2=XLSX.utils.aoa_to_sheet(p);
-    ws2['!cols']=[{wch:28},{wch:14},{wch:22},{wch:12},{wch:10}];
+    ws2['!cols']=[{wch:28},{wch:14},{wch:30},{wch:22},{wch:12},{wch:10},{wch:16}];
     XLSX.utils.book_append_sheet(wb,ws2,'Pendências');
     XLSX.writeFile(wb,`Conferencia_Canhotos_${(fi.sigla||'Filial')}_${dt}.xlsx`);
     return;
@@ -7370,12 +7378,12 @@ function PED_expConferencia(tipo){
     ws1['!cols']=[{wch:32},{wch:14},{wch:12},{wch:12},{wch:13}];
     XLSX.utils.book_append_sheet(wb,ws1,'Resumo');
     // Aba Pendências (com valor)
-    const p=[['SEMENTES PENDENTES — '+(fi.loja||'')],['Período',APP_PED.periodo||'—'],[],['Vendedor','Nº Pedido','Tipo','NT Fiscal','CFOP','Valor (R$)']];
+    const p=[['SEMENTES PENDENTES — '+(fi.loja||'')],['Período',APP_PED.periodo||'—'],[],['Vendedor','Nº Pedido','Cliente','Tipo','NT Fiscal','CFOP','Valor (R$)','Data Emissão NF']];
     let tem=false;
-    risco.itens.forEach(i=>{tem=true;p.push([i.vend,i.ped,i.tipo,'','',i.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})]);});
+    risco.itens.forEach(i=>{tem=true;p.push([i.vend,i.ped,i.cliente||'',i.tipo,'','',i.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),i.dtEmissao||'']);});
     if(!tem) p.push(['— Nenhuma pendência de semente —']);
     const ws2=XLSX.utils.aoa_to_sheet(p);
-    ws2['!cols']=[{wch:28},{wch:14},{wch:22},{wch:12},{wch:10},{wch:14}];
+    ws2['!cols']=[{wch:28},{wch:14},{wch:30},{wch:22},{wch:12},{wch:10},{wch:14},{wch:16}];
     XLSX.utils.book_append_sheet(wb,ws2,'Pendências');
     XLSX.writeFile(wb,`Conferencia_Sementes_${(fi.sigla||'Filial')}_${dt}.xlsx`);
     return;
@@ -7400,12 +7408,12 @@ function PED_expConferencia(tipo){
   const ws1=XLSX.utils.aoa_to_sheet(resumo);
   ws1['!cols']=[{wch:32},{wch:12},{wch:12},{wch:12},{wch:13},{wch:11}];
   XLSX.utils.book_append_sheet(wb,ws1,'Resumo');
-  const pend=[['RELAÇÃO DE PENDÊNCIAS — '+(fi.loja||'')],['Período',APP_PED.periodo||'—'],[],['Vendedor','Nº Pedido','Tipo','NT Fiscal','CFOP','Semente?']];
+  const pend=[['RELAÇÃO DE PENDÊNCIAS — '+(fi.loja||'')],['Período',APP_PED.periodo||'—'],[],['Vendedor','Nº Pedido','Cliente','Tipo','NT Fiscal','CFOP','Semente?','Data Emissão NF']];
   let temPend=false;
-  pv.forEach(v=>v.dets.forEach(d=>{temPend=true;pend.push([PED_nomeLimpo(v.vend),d.ped,d.tipo,d.nf,d.cfop,d.sem?'SIM':'']);}));
+  pv.forEach(v=>v.dets.forEach(d=>{temPend=true;pend.push([PED_nomeLimpo(v.vend),d.ped,d.cliente||'',d.tipo,d.nf,d.cfop,d.sem?'SIM':'',d.dtEmissao||'']);}));
   if(!temPend) pend.push(['— Nenhuma pendência —']);
   const ws2=XLSX.utils.aoa_to_sheet(pend);
-  ws2['!cols']=[{wch:28},{wch:14},{wch:22},{wch:12},{wch:10},{wch:10}];
+  ws2['!cols']=[{wch:28},{wch:14},{wch:30},{wch:22},{wch:12},{wch:10},{wch:10},{wch:16}];
   XLSX.utils.book_append_sheet(wb,ws2,'Pendências');
   XLSX.writeFile(wb,`Conferencia_Pedidos_${(fi.sigla||'Filial')}_${dt}.xlsx`);
 }
