@@ -506,7 +506,8 @@
   }
 
   table {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     border-collapse: collapse;
     font-size: 12px;
   }
@@ -1663,7 +1664,7 @@ body{font-family:var(--fonte);background:var(--bg);color:var(--text);font-size:1
   border:1px solid var(--border2);background:var(--bg);color:var(--gray);
   border-radius:var(--r-sm);font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap;}
 .btn-limpar:hover{background:var(--red-lt);border-color:var(--red);color:var(--red-dk);}
-table{width:100%;border-collapse:collapse;}
+table{width:max-content;min-width:100%;border-collapse:collapse;}
 thead th{position:sticky;top:0;background:var(--bg3);color:var(--text2);padding:10px 13px;
   text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
   border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;z-index:2;}
