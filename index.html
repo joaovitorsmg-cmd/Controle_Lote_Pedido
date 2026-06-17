@@ -2671,15 +2671,11 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
       </div>
     </div>
 
-    <!-- ABA 5: DIAGNÓSTICO & AÇÃO -->
     <!-- ABA 5: DIAGNÓSTICO & SUPERVISÃO (unificada) -->
     <div id="ped-aba-5" class="hidden">
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-        <button class="btn-topo" onclick="document.getElementById('ped-fi').click()">⬆ Importar Arquivos</button>
-        <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
         <button class="btn-exp" onclick="PED_expPNG('ped-diag-wrap')">PNG</button>
         <button class="btn-exp" onclick="PED_expPDF('ped-diag-wrap','pedidos')">PDF</button>
-        <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
       </div>
       <div id="ped-diag-wrap">
         <!-- Cabeçalho compacto da filial / responsáveis -->
