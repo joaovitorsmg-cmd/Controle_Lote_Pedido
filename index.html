@@ -2507,7 +2507,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
   <div class="aba" onclick="PED_mudarAba(1)">📋 Pedidos de Venda</div>
   <div class="aba" onclick="PED_mudarAba(2)">🌱 Sementes</div>
   <div class="aba" onclick="PED_mudarAba(3)">📄 Canhotos / Mês</div>
-  <div class="aba" onclick="PED_mudarAba(4)">👤 Canhotos / Vendedor</div>
+  <div class="aba" onclick="PED_mudarAba(4)">👤 Pedido / Vendedor</div>
   <div class="aba" onclick="PED_mudarAba(5)">🎯 Diagnóstico & Ação</div>
   <div class="aba" onclick="PED_mudarAba(6)">📌 Apresentação</div>
   <div class="aba aba-historico" onclick="PED_mudarAba(7)" title="Acumulador de auditorias — uso exclusivo da Auditoria Interna">🗂 Histórico</div>
@@ -2564,8 +2564,8 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
         <div class="tab-top">
           <span class="tab-titulo">Conferência de Pedidos de Venda — por Vendedor</span>
           <div class="tab-acoes">
-            <button class="btn-exp small" onclick="PED_expandirTodos('tb-ped')">Expandir todos</button>
-            <button class="btn-exp small" onclick="PED_recolherTodos('tb-ped')">Recolher todos</button>
+            <button class="btn-exp small" onclick="PED_expandirTodos('ped-tb-ped')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('ped-tb-ped')">Recolher todos</button>
             <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor — resumo + pendências">📋 Conferência (Supervisor)</button>
             <button class="btn-exp" onclick="PED_expPNG('ped-wrap-ped')">PNG</button>
             <button class="btn-exp" onclick="PED_expPDF('ped-wrap-ped','pedidos')">PDF</button>
@@ -2598,8 +2598,8 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
         <div class="tab-top">
           <span class="tab-titulo">Conferência de Pedidos — Sementes — por Vendedor</span>
           <div class="tab-acoes">
-            <button class="btn-exp small" onclick="PED_expandirTodos('tb-sem')">Expandir todos</button>
-            <button class="btn-exp small" onclick="PED_recolherTodos('tb-sem')">Recolher todos</button>
+            <button class="btn-exp small" onclick="PED_expandirTodos('ped-tb-sem')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('ped-tb-sem')">Recolher todos</button>
             <button class="btn-exp primary" onclick="PED_expConferencia('sementes')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
             <button class="btn-exp" onclick="PED_expPNG('ped-wrap-sem')">PNG</button>
             <button class="btn-exp" onclick="PED_expPDF('ped-wrap-sem','sementes')">PDF</button>
@@ -2630,8 +2630,8 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
         <div class="tab-top">
           <span class="tab-titulo">Conferência de Canhotos — por Mês</span>
           <div class="tab-acoes">
-            <button class="btn-exp small" onclick="PED_expandirTodos('tb-cm')">Expandir todos</button>
-            <button class="btn-exp small" onclick="PED_recolherTodos('tb-cm')">Recolher todos</button>
+            <button class="btn-exp small" onclick="PED_expandirTodos('ped-tb-cm')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('ped-tb-cm')">Recolher todos</button>
             <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
             <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cm')">PNG</button>
             <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cm','canhotos')">PDF</button>
@@ -2659,10 +2659,10 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
     <div id="ped-aba-4" class="hidden">
       <div class="tab-wrap">
         <div class="tab-top">
-          <span class="tab-titulo">Conferência de Canhotos — por Vendedor</span>
+          <span class="tab-titulo">Conferência de Pedido — por Vendedor</span>
           <div class="tab-acoes">
-            <button class="btn-exp small" onclick="PED_expandirTodos('tb-cv')">Expandir todos</button>
-            <button class="btn-exp small" onclick="PED_recolherTodos('tb-cv')">Recolher todos</button>
+            <button class="btn-exp small" onclick="PED_expandirTodos('ped-tb-cv')">Expandir todos</button>
+            <button class="btn-exp small" onclick="PED_recolherTodos('ped-tb-cv')">Recolher todos</button>
             <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
             <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cv')">PNG</button>
             <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cv','canhotos')">PDF</button>
@@ -2714,12 +2714,15 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
         <div id="ped-risco-box"></div>
 
         <!-- Ranking de clientes -->
-        <div class="secao-titulo">Clientes com Mais Pendências</div>
+        <div class="secao-titulo">Clientes para Cobrar — Priorizado por Urgência</div>
         <div class="tab-wrap">
           <table id="ped-tb-clientes">
             <thead><tr>
               <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',0,this)">Cliente<span class="si"></span></th>
-              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',1,this)">Pendências<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',1,this)">Vendedor<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',2,this)">Pendências<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',3,this)">Há Quanto Tempo<span class="si"></span></th>
+              <th class="sortable" onclick="PED_sortTab('ped-tb-clientes',4,this)">Urgência<span class="si"></span></th>
             </tr></thead>
             <tbody id="ped-body-clientes"></tbody>
           </table>
@@ -2886,7 +2889,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <div class="guia-card">
             <div class="gc-num">5</div>
             <div class="gc-titulo">Verificar canhotos</div>
-            <div class="gc-desc">Nas abas <b>📄 Canhotos / Mês</b> e <b>👤 Canhotos / Vendedor</b>, identifique as notas sem assinatura e encaminhe para cobrança.</div>
+            <div class="gc-desc">Nas abas <b>📄 Canhotos / Mês</b> e <b>👤 Pedido / Vendedor</b>, identifique as notas sem assinatura e encaminhe para cobrança.</div>
             <div class="gc-nota">Meta: ≥ 95% dos canhotos assinados.</div>
           </div>
           <div class="guia-card verde">
@@ -6811,16 +6814,35 @@ function PED_agTendenciaMes(){
     .map(m=>({...m,total:m.ass+m.pend,PED_pct:PED_pct(m.ass,m.ass+m.pend)}));
 }
 function PED_agClientesPendentes(){
+  const hoje=new Date();
   const map={};
   PED_agruparPedidos().forEach(p=>{
     if(p.status!=='PENDENTE') return;
     const r=p.repr;
     const cli=String(r['CLIENTE  ']||r['CLIENTE']||'').trim();
     if(!cli) return;
-    map[cli]=(map[cli]||0)+1;
+    if(!map[cli]) map[cli]={cli,n:0,vendedores:new Set(),maxDias:0,temSemente:false};
+    const e=map[cli];
+    e.n++;
+    e.vendedores.add(PED_nomeLimpo(String(r.VENDEDOR||r['VENDEDOR']||'')));
+    if(p.isSem) e.temSemente=true;
+    const d=r['DT EMISSAO NF']||r['DT EMISSAO NF '];
+    if(d){
+      const dt=d instanceof Date?d:new Date(d);
+      if(!isNaN(dt)){
+        const dias=Math.round((hoje-dt)/86400000);
+        if(dias>e.maxDias) e.maxDias=dias;
+      }
+    }
   });
-  return Object.entries(map).map(([cli,n])=>({cli,n}))
-    .sort((a,b)=>b.n-a.n).slice(0,15);
+  return Object.values(map).map(e=>({
+    cli:e.cli, n:e.n, vend:[...e.vendedores].filter(Boolean).join(', ')||'—',
+    maxDias:e.maxDias, temSemente:e.temSemente,
+  })).sort((a,b)=>{
+    if(b.temSemente!==a.temSemente) return b.temSemente-a.temSemente;
+    if(b.maxDias!==a.maxDias) return b.maxDias-a.maxDias;
+    return b.n-a.n;
+  }).slice(0,15);
 }
 function PED_agRiscoSementes(){
   // Pedidos semente pendentes + valor em R$ (agrupados)
@@ -7089,8 +7111,17 @@ function PED_renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano){
 
   // Clientes
   document.getElementById('ped-body-clientes').innerHTML=clientes.length
-    ? clientes.map(c=>`<tr><td>${c.cli}</td><td><span class="badge br">${c.n}</span></td></tr>`).join('')
-    : '<tr><td colspan="2" class="empty">Nenhuma pendência de pedido</td></tr>';
+    ? clientes.map(c=>{
+        const urg=c.temSemente
+          ? '<span class="badge ba">🌱 Semente pendente</span>'
+          : c.maxDias>=30
+            ? '<span class="badge br">Crítico</span>'
+            : c.maxDias>=15
+              ? '<span class="badge ba">Atenção</span>'
+              : '<span class="badge bg">Recente</span>';
+        return `<tr><td>${c.cli}</td><td>${c.vend}</td><td><span class="badge baz">${c.n}</span></td><td>${c.maxDias>0?c.maxDias+' dias':'—'}</td><td>${urg}</td></tr>`;
+      }).join('')
+    : '<tr><td colspan="5" class="empty">Nenhuma pendência de pedido</td></tr>';
 
   // Plano de ação
   document.getElementById('ped-body-plano').innerHTML=plano.map((p,i)=>{
@@ -7379,7 +7410,7 @@ function PED_expConferencia(tipo){
   XLSX.writeFile(wb,`Conferencia_Pedidos_${(fi.sigla||'Filial')}_${dt}.xlsx`);
 }
 function PED_expPNG(wrId){
-  html2canvas(document.getElementById(wrId),{scale:2,backgroundColor:'#ffffff'}).then(c=>{
+  html2canvas(document.getElementById(wrId),{scale:2,backgroundColor:'#0a1322'}).then(c=>{
     const a=document.createElement('a');a.href=c.toDataURL('image/png');
     a.download=`Conferencia_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`;a.click();
   });
