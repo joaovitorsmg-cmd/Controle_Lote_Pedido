@@ -3961,10 +3961,10 @@ function computarCacaErros() {
       const fils = [...new Set(recs.map(r => r.sigla))];
       const prodNome = recs[0].nomeProduto || cod;
       findings.push({
-        tipo: 'verificar', cat: 'fabricante', catLabel: 'Fabricante divergente',
+        tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante divergente',
         codProduto: cod, produto: prodNome, lote: '',
         filiais: fils,
-        titulo: `${prodNome}: a maioria das lojas usa o fabricante "${dom}", mas ${fils.map(lojaNome).join(', ')} está com "${f}". Conferir se o fabricante foi cadastrado certo.`,
+        titulo: `<strong>Provável erro de cadastro na entrada da nota:</strong> ${prodNome} — a maioria das lojas usa o fabricante "${dom}", mas ${fils.map(lojaNome).join(', ')} está com "${f}". Confira a nota fiscal e corrija o fabricante na origem.`,
         cols: [{ h: 'LOJA', k: 'loja' }, { h: 'FABRICANTE', k: 'fab' }, { h: 'VENC', k: 'vencimento' }],
         rows: recs.slice(0, 8).map(r => ({ sigla: r.sigla, loja: lojaNome(r.sigla), fab: r.fabricante || '—', vencimento: r.dtVencimento || '—', flag: 'erro' }))
       });
@@ -4026,7 +4026,7 @@ function renderCacaErros() {
   const verificar = APP.cacaErros.filter(f => f.tipo === 'verificar').length;
   const total = (APP.allLotes || []).length;
   document.getElementById('summary-cacaerros').innerHTML = `
-    <div class="summary-card red"><div class="summary-label">Inconsistências Graves</div><div class="summary-value">${graves}</div><div class="summary-sub">Datas impossíveis ou lote divergente</div><i class="ti ti-alert-octagon summary-icon"></i></div>
+    <div class="summary-card red"><div class="summary-label">Inconsistências Graves</div><div class="summary-value">${graves}</div><div class="summary-sub">Datas impossíveis, lote ou fabricante divergente</div><i class="ti ti-alert-octagon summary-icon"></i></div>
     <div class="summary-card ${verificar ? 'orange' : 'green'}"><div class="summary-label">A Verificar</div><div class="summary-value">${verificar}</div><div class="summary-sub">Validade fora do padrão</div><i class="ti ti-help-circle summary-icon"></i></div>
     <div class="summary-card blue"><div class="summary-label">Registros Analisados</div><div class="summary-value">${total.toLocaleString('pt-BR')}</div><div class="summary-sub">Total da importação</div><i class="ti ti-database summary-icon"></i></div>`;
   const banner = document.getElementById('cacaerros-banner');
@@ -4298,7 +4298,7 @@ function renderChecklist() {
             <div class="checklist-item">
               <div class="check-num">${++n}</div>
               <div class="check-info">
-                <div class="check-detail">Lote: <strong style="color:var(--branco);">${String(l.lote).trim()}</strong> · Vence: ${l.dtVencimento} · Qtd: ${(l.quantidade||0).toLocaleString('pt-BR')}</div>
+                <div class="check-detail">Lote: <strong style="color:var(--branco);">${String(l.lote).trim()}</strong> · Vence: ${l.dtVencimento} · Qtd: ${(l.quantidade||0).toLocaleString('pt-BR')}${l.fabricante ? ' · Fabricante: <strong style="color:var(--branco);">' + l.fabricante.replace(/^\d+\s*-\s*/,'') + '</strong>' : ''}</div>
                 <div class="check-badge">
                   <span class="badge ${l.nivel === 'CRÍTICO' ? 'critico' : l.nivel === 'ALERTA' ? 'alerta' : l.nivel === 'ATENÇÃO' ? 'atencao' : 'atencao'}">${l.nivel || 'MANUAL'}</span>
                   <span style="font-size:11px; color:var(--texto-muted); margin-left:8px;">Score: ${l.score ?? '—'}${l.valorRisco != null ? ' · Risco: ' + formatValor(l.valorRisco) : ''}</span>
@@ -4619,7 +4619,7 @@ function abrirModalImpressao() {
               <td class="print-check-col"><div class="print-check-box"></div></td>
               <td style="text-align:center; font-weight:700; color:#1a4a8a;">${i+1}</td>
               <td style="text-align:center; font-family:monospace; font-size:10px; font-weight:700; color:#1a4a8a;">${l.codProduto}</td>
-              <td style="font-weight:500;">${l.nomeProduto.trim()}</td>
+              <td style="font-weight:500;">${l.nomeProduto.trim()}${l.fabricante ? `<div style="font-size:9px;font-weight:400;color:#475569;margin-top:1px;">Fab: ${l.fabricante.replace(/^\d+\s*-\s*/,'')}</div>` : ''}</td>
               <td style="font-family:monospace; font-size:10px;">${l.lote.trim()}</td>
               <td style="text-align:center; color:${l.nivel==='CRÍTICO'?'#dc2626':'#d97706'}; font-weight:700;">${l.dtVencimento}</td>
               <td style="text-align:center; font-weight:700;">${l.quantidade.toLocaleString('pt-BR')}</td>
