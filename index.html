@@ -2484,9 +2484,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
     <div id="ped-topo-sub">Nenhum arquivo importado</div>
   </div>
   <div class="topo-btns">
-    <button class="btn-topo primary" onclick="document.getElementById('ped-fi').click()">⬆ Importar Arquivos</button>
-    <button class="btn-topo" onclick="PED_resetarFiltros()" title="Zera ordenações e filtros, mantém os dados">↺ Resetar</button>
-    <button class="btn-topo danger" onclick="PED_descarregarDados()" title="Remove os dados e volta à tela de importação">✕ Descarregar</button>
+    <button class="btn-topo" onclick="document.getElementById('ped-fi').click()">⬆ Importar Arquivos</button>
     <input type="file" id="ped-fi" multiple accept=".xls,.xlsx" onchange="PED_handleFiles(this.files)" style="display:none"/>
   </div>
 </div>
@@ -2558,7 +2556,6 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
             <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor — resumo + pendências">📋 Conferência (Supervisor)</button>
             <button class="btn-exp" onclick="PED_expPNG('ped-wrap-ped')">PNG</button>
             <button class="btn-exp" onclick="PED_expPDF('ped-wrap-ped','pedidos')">PDF</button>
-            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
         <div id="ped-wrap-ped">
@@ -2592,7 +2589,6 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
             <button class="btn-exp primary" onclick="PED_expConferencia('sementes')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
             <button class="btn-exp" onclick="PED_expPNG('ped-wrap-sem')">PNG</button>
             <button class="btn-exp" onclick="PED_expPDF('ped-wrap-sem','sementes')">PDF</button>
-            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
         <div id="ped-wrap-sem">
@@ -2624,7 +2620,6 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
             <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
             <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cm')">PNG</button>
             <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cm','canhotos')">PDF</button>
-            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
         <div id="ped-wrap-cm">
@@ -2655,7 +2650,6 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
             <button class="btn-exp primary" onclick="PED_expConferencia('canhotos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
             <button class="btn-exp" onclick="PED_expPNG('ped-wrap-cv')">PNG</button>
             <button class="btn-exp" onclick="PED_expPDF('ped-wrap-cv','canhotos')">PDF</button>
-            <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
           </div>
         </div>
         <div id="ped-wrap-cv">
@@ -7487,39 +7481,8 @@ function PED_expPDF(wrId,tipo){
 }
 
 // ============================================================
-// RESET FILTROS / DESCARREGAR / NAVEGAÇÃO
+// NAVEGAÇÃO
 // ============================================================
-
-// Reseta apenas filtros/ordenações — dados permanecem, rerenderiza tudo
-function PED_resetarFiltros(){
-  if(!APP_PED.pedidos.length && !APP_PED.canhoto.length) return;
-  // Limpar classes de ordenação em todos os cabeçalhos
-  document.querySelectorAll('thead th').forEach(t=>t.classList.remove('asc','desc'));
-  // Recolher todos os detalhes abertos
-  document.querySelectorAll('.tr-det').forEach(r=>{
-    r.classList.add('hidden');
-    const btn=r.previousElementSibling?.querySelector('.btn-det');
-    if(btn) btn.textContent='▶ Detalhar';
-  });
-  // Rerenderizar todas as tabelas na ordem padrão
-  PED_renderTudo();
-}
-
-// Descarrega completamente os dados e volta à tela de importação
-function PED_descarregarDados(){
-  if(!confirm('Descarregar todos os dados e voltar ao início?')) return;
-  // Destruir gráficos para evitar vazamento
-  Object.values(_charts).forEach(c=>{try{c.destroy();}catch(e){}});
-  _charts={};
-  S={pedidos:[],canhoto:[],semIds:new Set(),copiaIds:new Set(),semValor:{},fi:null,periodo:''};
-  document.getElementById('ped-tela-import').classList.remove('hidden');
-  document.getElementById('ped-painel').classList.add('hidden');
-  document.getElementById('ped-arq-status').innerHTML='';
-  document.getElementById('ped-fi').value='';
-  document.getElementById('ped-topo-titulo').textContent='—';
-  document.getElementById('ped-topo-sub').textContent='Nenhum arquivo importado';
-  PED_mudarAba(0);
-}
 let _aba=0;
 function PED_mudarAba(i){
   _aba=i;
