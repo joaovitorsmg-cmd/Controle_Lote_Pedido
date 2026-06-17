@@ -4803,8 +4803,9 @@ function baixarHTMLMobile() {
             <div class="item-info">
               <div class="item-nome">${l.nomeProduto.trim()}</div>
               <div class="item-meta">Cód: <strong style="color:#1a4a8a;font-family:monospace;">${l.codProduto}</strong> · Lote: <strong>${l.lote.trim()}</strong> · Vence: <strong style="color:${l.nivel==='CRÍTICO'?'#ef4444':'#f59e0b'}">${l.dtVencimento}</strong></div>
+              ${l.fabricante ? `<div class="item-meta" style="margin-top:2px;">Fabricante: <strong>${l.fabricante.replace(/^\d+\s*-\s*/,'')}</strong></div>` : ''}
             </div>
-            <span class="nivel nivel-${l.nivel.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}">${l.nivel}</span>
+            <span class="nivel nivel-${(l.nivel||'OK').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}">${l.nivel||'OK'}</span>
           </div>
           <div class="item-body">
             <div class="campo-row">
@@ -4872,6 +4873,7 @@ function baixarHTMLMobile() {
   .nivel-critico { background: #fee2e2; color: #991b1b; }
   .nivel-alerta { background: #fef3c7; color: #92400e; }
   .nivel-atencao { background: #fef9c3; color: #854d0e; }
+  .nivel-ok { background: #e0f2fe; color: #075985; }
   .item-body { padding: 0 14px 14px; }
   .campo-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .campo label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; display: block; margin-bottom: 4px; }
@@ -5389,7 +5391,7 @@ function getChecklistSelecao() {
       for (const lote of poolGeral) {
         if (escolhidos.length >= MIN_ITENS) break;
         const key = lote.codProduto + '|' + String(lote.lote).trim();
-        escolhidos.push({ cod: lote.codProduto, nome: lote.nomeProduto, lote });
+        escolhidos.push({ cod: lote.codProduto, nome: lote.nomeProduto, lote: { ...lote, nivel: lote.nivel || 'OK', score: lote.score || 0 } });
         usados.add(key);
       }
     }
