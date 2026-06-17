@@ -7752,11 +7752,14 @@ function exportarHistoricoUnificado() {
   if (!VENC_HIST.length && !H_DADOS.length) { alert('Nenhuma auditoria registrada ainda.'); return; }
   const payload = { versao: 1, tipo: 'HISTORICO_AUDITORIA_UNIFICADO', vencidos: VENC_HIST, pedidos: H_DADOS };
   const dt = new Date().toLocaleDateString('pt-BR').split('/').join('-');
+  const sigla = APP.sigla || APP_PED.fi?.sigla || '';
+  const loja = APP.lotes[0]?.descricao?.split('(')[0]?.trim() || APP_PED.fi?.loja || '';
+  const filial = normalizarFilialArq(sigla, loja);
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Historico_Auditoria_Agroquima_${dt}.json`;
+  a.download = `Historico_Auditoria_Agroquima_${filial}_${dt}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
