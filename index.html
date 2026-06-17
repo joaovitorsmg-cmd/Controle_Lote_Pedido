@@ -5362,8 +5362,8 @@ function getChecklistSelecao() {
       usados.add(lote.codProduto + '|' + String(lote.lote).trim());
     }
 
-    // Passo 2: se a linha não tem 5 produtos distintos, completa com lotes extras
-    // (do mesmo produto ou de outro) por ordem de score, até atingir o mínimo
+    // Passo 2: se a linha não tem 5 produtos distintos em risco, completa com
+    // lotes extras (do mesmo produto ou de outro, ainda em risco) por ordem de score
     if (escolhidos.length < MIN_ITENS) {
       const poolExtra = [];
       for (const p of todosProdutos) {
@@ -5380,12 +5380,26 @@ function getChecklistSelecao() {
       }
     }
 
+    // Passo 3: se a linha não tem nem 5 lotes em risco, completa com os demais
+    // lotes da linha (fora de risco), priorizando os que vencem mais perto
+    if (escolhidos.length < MIN_ITENS) {
+      const poolGeral = (APP.lotes || [])
+        .filter(l => l.linha === linha && !excluidos.has(l.codProduto + '|' + String(l.lote).trim()) && !usados.has(l.codProduto + '|' + String(l.lote).trim()))
+        .sort((a, b) => a.diasVencimento - b.diasVencimento);
+      for (const lote of poolGeral) {
+        if (escolhidos.length >= MIN_ITENS) break;
+        const key = lote.codProduto + '|' + String(lote.lote).trim();
+        escolhidos.push({ cod: lote.codProduto, nome: lote.nomeProduto, lote });
+        usados.add(key);
+      }
+    }
+
     // Reagrupa por produto, preservando a ordem de maxScore
     const porProduto = {};
     for (const it of escolhidos) {
       if (!porProduto[it.cod]) {
         const base = todosProdutos.find(p => p.cod === it.cod);
-        porProduto[it.cod] = { cod: it.cod, nome: it.nome, maxScore: base ? base.maxScore : 0, extra: false, lotes: [] };
+        porProduto[it.cod] = { cod: it.cod, nome: it.nome, maxScore: base ? base.maxScore : (it.lote.score || 0), extra: false, lotes: [] };
       }
       porProduto[it.cod].lotes.push(it.lote);
     }
