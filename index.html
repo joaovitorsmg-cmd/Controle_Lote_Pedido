@@ -1720,40 +1720,26 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
   border:1px solid var(--amber);border-radius:10px;font-size:9px;font-weight:700;
   color:var(--amber-dk);margin-left:4px;}
 
-/* ===== ABA APRESENTAÇÃO ===== */
-.apres{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);
-  padding:28px 32px;box-shadow:var(--sh-md);}
-.apres-filial{font-size:26px;font-weight:900;color:var(--text);letter-spacing:.5px;}
-.apres-periodo{font-size:12px;color:var(--text3);margin-top:2px;margin-bottom:20px;}
-.apres-resp{display:flex;flex-wrap:wrap;gap:16px;padding:12px 16px;
-  background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-bottom:24px;}
-.ar-item{display:flex;flex-direction:column;}
-.ar-l{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.5px;}
-.ar-v{font-size:13px;font-weight:700;color:var(--text);}
-.apres-blocos{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;}
-.apres-bloco{border:1px solid var(--border);background:var(--bg3);border-radius:var(--r);padding:20px;}
-.apb-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
-  color:var(--text3);margin-bottom:14px;}
-.apb-num{font-size:48px;font-weight:900;line-height:1;letter-spacing:-.5px;
-  font-variant-numeric:tabular-nums;}
-.apb-num.verm{color:var(--red-dk);}
-.apb-num.verde{color:var(--green-dk);}
-.apb-num.amar{color:var(--amber-dk);}
-.apb-sub{font-size:12px;color:var(--text3);margin-top:2px;margin-bottom:14px;}
-.apb-linha{display:flex;justify-content:space-between;align-items:center;
-  padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;}
-.apb-linha:last-child{border-bottom:none;}
-.apb-lv{font-weight:700;color:var(--text);}
-.apb-lv.pend{color:var(--red-dk);}
-.apb-lv.ok{color:var(--green-dk);}
-.apb-alert-r{background:var(--red-lt);border:1px solid var(--red);color:var(--red-dk);
-  border-radius:var(--r-sm);padding:8px 12px;font-size:12px;font-weight:700;margin-top:10px;text-align:center;}
-.apb-alert-g{background:var(--green-lt);border:1px solid var(--green);color:var(--green-dk);
-  border-radius:var(--r-sm);padding:8px 12px;font-size:12px;font-weight:700;margin-top:10px;text-align:center;}
-.apb-tmes{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px;}
-.apb-tmes th{background:var(--bg);color:var(--text2);padding:6px 8px;font-weight:700;
-  text-align:left;border-bottom:1px solid var(--border);}
-.apb-tmes td{padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text);}
+/* ===== ABA DIAGNÓSTICO & SUPERVISÃO — cabeçalho compacto ===== */
+.diag-cab{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
+  padding:14px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--sh-md);margin-bottom:16px;}
+.diag-cab .dc-filial{font-size:20px;font-weight:900;color:var(--text);letter-spacing:.3px;}
+.diag-cab .dc-periodo{font-size:11px;color:var(--text3);margin-top:2px;}
+.diag-cab .dc-resp{display:flex;flex-wrap:wrap;gap:14px;}
+.diag-cab .dc-resp div{display:flex;flex-direction:column;}
+.diag-cab .dc-resp span{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.5px;}
+.diag-cab .dc-resp b{font-size:12px;font-weight:700;color:var(--text);}
+.diag-cab .dc-risco{display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 16px;border-radius:var(--r);font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text3);}
+.diag-cab .dc-risco b{font-size:15px;letter-spacing:.5px;}
+.diag-cab .dc-risco-g{background:var(--green-lt);border:1px solid var(--green);}
+.diag-cab .dc-risco-g b{color:var(--green-dk);}
+.diag-cab .dc-risco-a{background:var(--amber-lt);border:1px solid var(--amber);}
+.diag-cab .dc-risco-a b{color:var(--amber-dk);}
+.diag-cab .dc-risco-r{background:var(--red-lt);border:1px solid var(--red);}
+.diag-cab .dc-risco-r b{color:var(--red-dk);}
 
 /* ===== UTILS ===== */
 .hidden{display:none!important;}
@@ -2508,10 +2494,9 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
   <div class="aba" onclick="PED_mudarAba(2)">🌱 Sementes</div>
   <div class="aba" onclick="PED_mudarAba(3)">📄 Canhotos / Mês</div>
   <div class="aba" onclick="PED_mudarAba(4)">👤 Canhoto / Vendedor</div>
-  <div class="aba" onclick="PED_mudarAba(5)">🎯 Diagnóstico & Ação</div>
-  <div class="aba" onclick="PED_mudarAba(6)">📌 Apresentação</div>
-  <div class="aba aba-historico" onclick="PED_mudarAba(7)" title="Acumulador de auditorias — uso exclusivo da Auditoria Interna">🗂 Histórico</div>
-  <div class="aba aba-guia" onclick="PED_mudarAba(8)" title="Passo a passo de uso do painel">📖 Guia</div>
+  <div class="aba" onclick="PED_mudarAba(5)">🎯 Diagnóstico & Supervisão</div>
+  <div class="aba aba-historico" onclick="PED_mudarAba(6)" title="Acumulador de auditorias — uso exclusivo da Auditoria Interna">🗂 Histórico</div>
+  <div class="aba aba-guia" onclick="PED_mudarAba(7)" title="Passo a passo de uso do painel">📖 Guia</div>
 </div>
 
 <!-- CONTEÚDO -->
@@ -2687,14 +2672,20 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
     </div>
 
     <!-- ABA 5: DIAGNÓSTICO & AÇÃO -->
+    <!-- ABA 5: DIAGNÓSTICO & SUPERVISÃO (unificada) -->
     <div id="ped-aba-5" class="hidden">
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="btn-topo" onclick="document.getElementById('ped-fi').click()">⬆ Importar Arquivos</button>
         <button class="btn-exp primary" onclick="PED_expConferencia('pedidos')" title="Planilha organizada para o supervisor">📋 Conferência (Supervisor)</button>
-        <button class="btn-exp" onclick="PED_expPNG('ped-diag-wrap')">PNG (com gráficos)</button>
+        <button class="btn-exp" onclick="PED_expPNG('ped-diag-wrap')">PNG</button>
+        <button class="btn-exp" onclick="PED_expPDF('ped-diag-wrap','pedidos')">PDF</button>
         <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
       </div>
       <div id="ped-diag-wrap">
-        <!-- Narrativa automática -->
+        <!-- Cabeçalho compacto da filial / responsáveis -->
+        <div class="diag-cab" id="ped-diag-cabecalho"></div>
+
+        <!-- Narrativa automática crítica -->
         <div id="ped-narrativa" class="narrativa"></div>
 
         <!-- Gráficos -->
@@ -2746,26 +2737,10 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
       </div>
     </div>
 
-    <!-- ABA 6: APRESENTAÇÃO -->
-    <div id="ped-aba-6" class="hidden">
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
-        <button class="btn-exp" onclick="PED_expPNG('ped-apres-wrap')">PNG</button>
-        <button class="btn-exp" onclick="PED_expPDF('ped-apres-wrap','pedidos')">PDF</button>
-        <button class="btn-limpar" onclick="PED_resetarFiltros()">↺ Resetar</button>
-      </div>
-      <div id="ped-apres-wrap" class="apres">
-        <div class="apres-filial" id="ped-ap-filial">—</div>
-        <div class="apres-periodo" id="ped-ap-periodo">—</div>
-        <div class="apres-resp" id="ped-ap-resp"></div>
-        <div id="ped-ap-narrativa" class="narrativa" style="margin:18px 0;"></div>
-        <div class="apres-blocos" id="ped-ap-blocos"></div>
-      </div>
-    </div>
-
   </div><!-- /painel -->
 
   <!-- ABA 7: HISTÓRICO — USO EXCLUSIVO AUDITORIA INTERNA -->
-  <div id="ped-aba-7" class="hidden">
+  <div id="ped-aba-6" class="hidden">
     <div class="tab-wrap">
       <div class="tab-top" style="align-items:flex-start;flex-direction:column;gap:6px;">
         <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
@@ -2834,7 +2809,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
   </div>
 
   <!-- ABA 8: GUIA DE USO -->
-  <div id="ped-aba-8" class="hidden">
+  <div id="ped-aba-7" class="hidden">
     <div class="tab-wrap">
       <div class="tab-top">
         <span class="tab-titulo">📖 Guia de Uso — Painel de Conferência Agroquima</span>
@@ -6792,8 +6767,7 @@ function PED_renderTudo(){
   PED_renderSementes(semVend,tSC,tSA,tSPend);
   PED_renderCanMes(canMes,tCC,tCA,tCP);
   PED_renderCanVend(canVend,tCC,tCA,tCP);
-  PED_renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano);
-  PED_renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr);
+  PED_renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano,tSP);
 
   document.getElementById('ped-topo-titulo').textContent='CONFERÊNCIA — '+(APP_PED.fi?.loja||'');
   document.getElementById('ped-topo-sub').textContent=APP_PED.periodo?'Período: '+APP_PED.periodo:'';
@@ -6901,11 +6875,18 @@ function PED_gerarNarrativa(tPC,tPA,tPP,tSP,tCC,tCA,tCP,tendMes,plano,risco){
   const piorTxt=pior?`O ponto de maior atenção é <b>${pior.vend}</b> (${pior.PED_pct.toFixed(1)}% assinados, ${pior.pend} pendentes${pior.semPend>0?`, <span class="nv-pend">${pior.semPend} semente pendente</span>`:''}).`:'';
   // Risco
   const riscoTxt=risco.total>0?`Há <span class="nv-pend">R$ ${risco.total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})} em sementes pendentes</span> — risco direto que deve ser zerado.`:`<span class="nv-ok">Nenhuma semente pendente</span> — situação ideal nesse ponto crítico.`;
+  // Veredito final — leitura crítica e direta, sem inflar nem suavizar o resultado
+  const urgentes=plano.filter(p=>p.nivel==='urg').length;
+  const veredito=tSP>0
+    ? 'Veredito: <b class="nv-pend">situação crítica</b> — pendência de semente é falha grave de processo e deve ser resolvida antes de qualquer outra ação.'
+    : urgentes>0
+      ? `Veredito: <b class="nv-pend">atenção necessária</b> — ${urgentes} vendedor(es) concentram a maior parte das pendências; ação direcionada a eles resolve a maior parte do problema.`
+      : 'Veredito: <b class="nv-ok">situação sob controle</b> — manter a rotina de acompanhamento, sem necessidade de escalonamento.';
 
   return {
     pPed,pCan,
     html:`<h4>Diagnóstico Automático — ${APP_PED.fi?.loja||''}</h4>
-      A filial fechou o período com <b>${pPed.toFixed(1)}%</b> de pedidos assinados e <b>${pCan.toFixed(1)}%</b> de canhotos assinados, totalizando <span class="nv-pend">${tPP} pedidos</span> e <span class="nv-pend">${tCP} canhotos</span> pendentes. ${tendTxt} ${piorTxt} ${riscoTxt}`
+      A filial fechou o período com <b>${pPed.toFixed(1)}%</b> de pedidos assinados e <b>${pCan.toFixed(1)}%</b> de canhotos assinados, totalizando <span class="nv-pend">${tPP} pedidos</span> e <span class="nv-pend">${tCP} canhotos</span> pendentes. ${tendTxt} ${piorTxt} ${riscoTxt}<br><br>${veredito}`
   };
 }
 
@@ -7090,7 +7071,24 @@ function PED_renderCanVend(dados,tC,tA,tP){
 // ============================================================
 // RENDER DIAGNÓSTICO & AÇÃO
 // ============================================================
-function PED_renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano){
+function PED_renderDiagnostico(narr,tendMes,pedVend,clientes,risco,plano,tSP){
+  // Cabeçalho compacto: filial / período / responsáveis (identificação para supervisão)
+  const fi=APP_PED.fi||{};
+  const urgentes=plano.filter(p=>p.nivel==='urg').length;
+  const nivel=tSP>0?{r:'ALTO',c:'r'}:urgentes>0?{r:'MÉDIO',c:'a'}:{r:'BAIXO',c:'g'};
+  document.getElementById('ped-diag-cabecalho').innerHTML=`
+    <div class="dc-id">
+      <div class="dc-filial">${fi.loja||'—'}</div>
+      <div class="dc-periodo">Período de auditoria: ${APP_PED.periodo||'—'}</div>
+    </div>
+    <div class="dc-resp">
+      <div><span>Gerente</span><b>${fi.gerente||'—'}</b></div>
+      <div><span>Supervisor</span><b>${fi.supervisor||'—'}</b></div>
+      <div><span>Regional</span><b>${fi.regional||'—'}</b></div>
+      <div><span>Auditor</span><b>${fi.auditor||'—'}</b></div>
+    </div>
+    <div class="dc-risco dc-risco-${nivel.c}">Risco da filial<b>${nivel.r}</b></div>`;
+
   // Narrativa
   document.getElementById('ped-narrativa').innerHTML=narr.html;
 
@@ -7200,52 +7198,6 @@ function PED_desenharGraficoVendedores(pedVend){
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'% assinados'}}}
     }
   });
-}
-
-function PED_renderApres(tPC,tPA,tPP,tSP,semVend,tCC,tCA,tCP,canMes,narr){
-  const fi=APP_PED.fi||{};
-  document.getElementById('ped-ap-filial').textContent=fi.loja||'—';
-  document.getElementById('ped-ap-periodo').textContent='Período de auditoria: '+(APP_PED.periodo||'—');
-  document.getElementById('ped-ap-resp').innerHTML=`
-    <div class="ar-item"><div class="ar-l">Gerente</div><div class="ar-v">${fi.gerente||'—'}</div></div>
-    <div class="ar-item"><div class="ar-l">Supervisor</div><div class="ar-v">${fi.supervisor||'—'}</div></div>
-    <div class="ar-item"><div class="ar-l">Regional</div><div class="ar-v">${fi.regional||'—'}</div></div>
-    <div class="ar-item"><div class="ar-l">Auditor</div><div class="ar-v">${fi.auditor||'—'}</div></div>`;
-  // Narrativa na apresentação também
-  if(narr) document.getElementById('ped-ap-narrativa').innerHTML=narr.html;
-  const pPed=PED_pct(tPA,tPC),pCan=PED_pct(tCA,tCC);
-  document.getElementById('ped-ap-blocos').innerHTML=`
-    <div class="apres-bloco">
-      <div class="apb-titulo">📋 Pedido / Vendedor</div>
-      <div class="apb-num ${tPP>0?'verm':'verde'}">${tPP}</div>
-      <div class="apb-sub">pedidos pendentes de assinatura</div>
-      <div class="apb-linha"><span style="color:var(--c3)">Total conferidos</span><span class="apb-lv">${tPC}</span></div>
-      <div class="apb-linha"><span style="color:var(--c3)">Assinados</span><span class="apb-lv ok">${tPA}</span></div>
-      <div class="apb-linha"><span style="color:var(--c3)">Pendentes</span><span class="apb-lv pend">${tPP}</span></div>
-      <div class="apb-linha"><span style="color:var(--c3)">% Assinados</span><span class="apb-lv">${PED_fp(pPed)}</span></div>
-      <div class="apb-linha"><span style="color:var(--c3)">% Inconsistente</span><span class="apb-lv ${tPP>0?'pend':''}">${PED_fp(PED_pct(tPP,tPC))}</span></div>
-    </div>
-    <div class="apres-bloco">
-      <div class="apb-titulo">🌱 Sementes — ZERO TOLERÂNCIA</div>
-      <div class="apb-num ${tSP>0?'r':'g'}">${tSP}</div>
-      <div class="apb-sub">${tSP===0?'nenhuma pendência de semente':'pedidos semente pendentes'}</div>
-      ${tSP===0?'<div class="apb-alert-g">✔ Sem pendências de semente</div>':
-      '<div class="apb-alert-r">⚠ PENDÊNCIAS CRÍTICAS DE SEMENTE</div>'+
-      semVend.filter(v=>v.pend>0).map(v=>`<div class="apb-linha"><span style="color:var(--c3)">${PED_nomeLimpo(v.vend)}</span><span class="apb-lv pend">${v.pend} pend.</span></div>`).join('')}
-    </div>
-    <div class="apres-bloco">
-      <div class="apb-titulo">📄 Canhotos (Notas Fiscais)</div>
-      <div class="apb-num ${tCP>0?'verm':'verde'}">${tCP}</div>
-      <div class="apb-sub">canhotos pendentes</div>
-      <div class="apb-linha"><span style="color:var(--c3)">Total conferidos</span><span class="apb-lv">${tCC}</span></div>
-      <div class="apb-linha"><span style="color:var(--c3)">Assinados</span><span class="apb-lv ok">${tCA}</span></div>
-      <div class="apb-linha"><span style="color:var(--c3)">Pendentes</span><span class="apb-lv pend">${tCP}</span></div>
-      <div class="apb-linha"><span style="color:var(--c3)">% Assinados</span><span class="apb-lv">${PED_fp(pCan)}</span></div>
-      <br/>
-      <div style="font-size:10px;font-weight:800;color:var(--c3);margin-bottom:6px;text-transform:uppercase">Por Mês</div>
-      <table class="apb-tmes"><thead><tr><th>Mês</th><th>Total</th><th>Assinados</th><th>Pendentes</th><th>%Pend</th></tr></thead>
-      <tbody>${canMes.map(m=>{const t=m.ass+m.pend;return`<tr><td>${PED_mesNome(m.mes)}</td><td>${t}</td><td>${m.ass}</td><td style="color:var(--verm);font-weight:700">${m.pend}</td><td>${PED_fp(PED_pct(m.pend,t))}</td></tr>`;}).join('')}</tbody></table>
-    </div>`;
 }
 
 // ============================================================
@@ -7572,8 +7524,8 @@ let _aba=0;
 function PED_mudarAba(i){
   _aba=i;
   document.querySelectorAll('#ped-abas .aba').forEach((a,j)=>a.classList.toggle('ativa',j===i));
-  for(let j=0;j<9;j++) document.getElementById('ped-aba-'+j)?.classList.toggle('hidden',j!==i);
-  if(i===7) PED_renderHistorico();
+  for(let j=0;j<8;j++) document.getElementById('ped-aba-'+j)?.classList.toggle('hidden',j!==i);
+  if(i===6) PED_renderHistorico();
 }
 
 
