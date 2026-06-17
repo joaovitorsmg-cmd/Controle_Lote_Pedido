@@ -6537,6 +6537,7 @@ function PED_agPedidosVend(){
   });
   const PED_fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
   APP_PED.periodo=dtMin?`${PED_fmt(dtMin)} a ${PED_fmt(dtMax)}`:'';
+  APP_PED.dtPeriodoMax=dtMax||null;
   return Object.values(map);
 }
 function PED_agSementesVend(){
@@ -7517,7 +7518,8 @@ function _gravarRegistroPedidos() {
   const semPend = risco.itens.length;
 
   // Período a partir do período calculado
-  const periodo = APP_PED.periodo || new Date().toLocaleDateString('pt-BR');
+  const dPeriodo = APP_PED.dtPeriodoMax || new Date();
+  const periodo = `${String(dPeriodo.getMonth()+1).padStart(2,'0')}/${dPeriodo.getFullYear()}`;
 
   const registro = {
     id: Date.now(),
