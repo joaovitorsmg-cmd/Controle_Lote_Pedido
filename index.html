@@ -1664,19 +1664,19 @@ body{font-family:var(--fonte);background:var(--bg);color:var(--text);font-size:1
   border:1px solid var(--border2);background:var(--bg);color:var(--gray);
   border-radius:var(--r-sm);font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap;}
 .btn-limpar:hover{background:var(--red-lt);border-color:var(--red);color:var(--red-dk);}
-table{width:max-content;min-width:100%;border-collapse:collapse;}
-thead th{position:sticky;top:0;background:var(--bg3);color:var(--text2);padding:10px 13px;
+#mod-pedidos table{width:max-content;min-width:100%;border-collapse:collapse;}
+#mod-pedidos thead th{position:sticky;top:0;background:var(--bg3);color:var(--text2);padding:10px 13px;
   text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
   border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;z-index:2;}
-thead th.sortable{cursor:pointer;transition:.12s;}
-thead th.sortable:hover{background:var(--brand-lt);color:var(--brand);}
-thead th .si{margin-left:4px;opacity:.7;font-size:9px;}
-thead th.asc .si::after{content:'▲';}
-thead th.desc .si::after{content:'▼';}
-thead th:not(.asc):not(.desc) .si::after{content:'⇅';}
-tbody tr{border-bottom:1px solid var(--border);transition:.1s;}
-tbody tr:hover:not(.tr-det):not(.tr-tot){background:var(--bg3);}
-tbody td{padding:9px 13px;font-size:13px;color:var(--text);font-variant-numeric:tabular-nums;}
+#mod-pedidos thead th.sortable{cursor:pointer;transition:.12s;}
+#mod-pedidos thead th.sortable:hover{background:var(--brand-lt);color:var(--brand);}
+#mod-pedidos thead th .si{margin-left:4px;opacity:.7;font-size:9px;}
+#mod-pedidos thead th.asc .si::after{content:'▲';}
+#mod-pedidos thead th.desc .si::after{content:'▼';}
+#mod-pedidos thead th:not(.asc):not(.desc) .si::after{content:'⇅';}
+#mod-pedidos tbody tr{border-bottom:1px solid var(--border);transition:.1s;}
+#mod-pedidos tbody tr:hover:not(.tr-det):not(.tr-tot){background:var(--bg3);}
+#mod-pedidos tbody td{padding:9px 13px;font-size:13px;color:var(--text);font-variant-numeric:tabular-nums;}
 .tr-det{background:var(--bg)!important;}
 .tr-det td{padding:0!important;}
 .det-inner{padding:10px 18px 14px 32px;}
@@ -1995,7 +1995,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           </div>
         </div>
       </div>
-      <div id="export-wrap-risco" style="background:var(--bg2,#0d1b2a);padding:4px 0;">
+      <div id="export-wrap-risco" style="background:var(--bg);padding:4px 0;">
       <div class="summary-grid" id="summary-risco"></div>
       <div class="table-container" id="tc-risco">
         <div class="table-header">
@@ -2060,7 +2060,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           Esses produtos precisam de baixa contábil, descarte conforme legislação MAPA/ANVISA e registro no sistema.
         </div>
       </div>
-      <div id="export-wrap-vencidos" style="background:var(--bg2,#0d1b2a);padding:4px 0;">
+      <div id="export-wrap-vencidos" style="background:var(--bg);padding:4px 0;">
       <div class="summary-grid" id="summary-vencidos"></div>
       <div class="table-container" id="tc-vencidos">
         <div class="table-header">
@@ -2119,7 +2119,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
         </div>
       </div>
       <div id="alerta-responsavel" style="margin-bottom:14px;"></div>
-      <div id="export-wrap-alerta" style="background:var(--bg2,#0d1b2a);padding:4px 0;">
+      <div id="export-wrap-alerta" style="background:var(--bg);padding:4px 0;">
       <div class="summary-grid" id="summary-alerta"></div>
       <div id="alerta-cobranca" style="margin-bottom:16px;"></div>
       <div class="table-container" id="tc-alerta">
@@ -2188,7 +2188,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <em>Valor Parado = Quantidade × Custo Unitário.</em> Passe o mouse na recomendação para ver a justificativa.
         </div>
       </div>
-      <div id="export-wrap-semgiro" style="background:var(--bg2,#0d1b2a);padding:4px 0;">
+      <div id="export-wrap-semgiro" style="background:var(--bg);padding:4px 0;">
       <div class="summary-grid" id="summary-semgiro"></div>
       <div id="semgiro-rotas"></div>
       <div class="table-container" id="tc-semgiro">
