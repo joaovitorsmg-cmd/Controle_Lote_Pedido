@@ -1362,6 +1362,8 @@
   .btn-hist.primary:hover { filter:brightness(1.08); }
   .btn-hist.danger { color:var(--gray); }
   .btn-hist.danger:hover { background:var(--red-lt);border-color:var(--red);color:var(--red-dk); }
+  .btn-hist.discreto { padding:6px 10px;font-size:11px;font-weight:500;opacity:.75; }
+  .btn-hist.discreto:hover { opacity:1; }
   .hist-kpi-card { background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;border-top:3px solid var(--verde);min-width:150px;flex:1; }
   .hist-kpi-card .kl { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px; }
   .hist-kpi-card .kv { font-size:22px;font-weight:800; }
@@ -2392,19 +2394,19 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
       <div style="font-size:13px;font-weight:800;color:#8ecfaa;letter-spacing:.3px;">🗂 Histórico de Auditorias de Vencidos</div>
       <div style="font-size:11px;color:rgba(142,207,170,.6);margin-top:2px;">Uso exclusivo da Auditoria Interna</div>
     </div>
-    <button class="btn-hist primary" id="btn-reg-hist" onclick="registrarAuditoriaVencidos()" title="Registra os resultados da auditoria atual (filial e vencidos) no histórico">
-      ✚ Registrar esta Auditoria
+    <button class="btn-hist primary btn-reg-unificado" onclick="registrarAuditoriaUnificada()" title="Registra a auditoria atual (lotes + pedidos/canhoto) no histórico unificado">
+      ✚ Registrar Auditoria
     </button>
-    <button class="btn-hist" onclick="expHistoricoVencXLS()" title="Exporta todo o histórico para o Acumulador Excel (.xlsx)">📥 Exportar Acumulador (.xlsx)</button>
-    <button class="btn-hist" onclick="expHistoricoVencJSON()" title="Exporta o histórico como arquivo .json para reimportar">💾 Salvar Histórico (.json)</button>
-    <button class="btn-hist" onclick="importarHistoricoVenc()" title="Carrega histórico do arquivo .xlsx ou .json exportado anteriormente">📂 Carregar Histórico (.xlsx/.json)</button>
-    <button class="btn-hist danger" onclick="limparHistoricoVenc()" title="Remove todo o histórico desta sessão">🗑 Limpar</button>
-    <input type="file" id="inp-hist-venc" accept=".json,.xlsx" style="display:none;" onchange="lerArquivoHistVenc(this)">
+    <button class="btn-hist discreto" onclick="expHistoricoVencXLS()" title="Exporta o acumulador de vencidos para Excel (.xlsx)">📥 .xlsx</button>
+    <button class="btn-hist discreto" onclick="exportarHistoricoUnificado()" title="Exporta o histórico unificado (vencidos + pedidos) como um único arquivo .json">💾 Salvar (.json)</button>
+    <button class="btn-hist discreto" onclick="importarHistoricoUnificado()" title="Carrega um histórico unificado (.json) exportado anteriormente">📂 Carregar</button>
+    <button class="btn-hist discreto danger" onclick="limparHistoricoUnificado()" title="Remove todo o histórico unificado (vencidos + pedidos) desta sessão">🗑</button>
+    <input type="file" id="inp-hist-unif" accept=".json" style="display:none;" onchange="lerArquivoHistUnificado(this)">
   </div>
 
   <!-- Aviso sem auditoria -->
-  <div id="hist-venc-aviso" style="background:rgba(224,167,58,.12);border:1px solid var(--amber);border-radius:8px;padding:10px 16px;color:var(--amber-dk);font-size:13px;font-weight:600;margin-bottom:16px;display:none;">
-    ⚠ Importe o relatório de lotes, processe os dados e clique em "Registrar esta Auditoria".
+  <div id="hist-venc-aviso" class="aviso-aud-unif" style="background:rgba(224,167,58,.12);border:1px solid var(--amber);border-radius:8px;padding:10px 16px;color:var(--amber-dk);font-size:13px;font-weight:600;margin-bottom:16px;display:none;">
+    ⚠ Para registrar, importe os dados de Lotes e de Pedidos/Canhoto, depois clique em "Registrar Auditoria".
   </div>
 
 
@@ -2772,18 +2774,17 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
             <span style="font-size:11px;color:var(--text3);margin-left:10px;">Uso exclusivo da Auditoria Interna</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn-exp primary" onclick="PED_registrarAuditoria()" id="ped-btn-registrar" title="Registra os resultados da auditoria atual no histórico">
-              ✚ Registrar esta Auditoria
+            <button class="btn-exp primary btn-reg-unificado" onclick="registrarAuditoriaUnificada()" title="Registra a auditoria atual (lotes + pedidos/canhoto) no histórico unificado">
+              ✚ Registrar Auditoria
             </button>
-            <button class="btn-exp" onclick="PED_expHistoricoXLS()" title="Exporta todo o histórico para o Acumulador Excel (.xlsx)">📥 Exportar Acumulador (.xlsx)</button>
-            <button class="btn-exp" onclick="PED_expHistoricoJSON()" title="Exporta o histórico como arquivo .json para reimportar no painel">💾 Salvar Histórico (.json)</button>
-            <button class="btn-exp" onclick="PED_importarHistoricoJSON()" title="Carrega histórico do arquivo .xlsx ou .json gerado por 'Exportar Acumulador'">📂 Carregar Histórico (.xlsx/.json)</button>
-            <button class="btn-exp small" onclick="if(confirm('Limpar TODO o histórico salvo?')){localStorage.removeItem('aqHistorico');H_DADOS=[];PED_renderHistorico();}">🗑 Limpar</button>
-            <input type="file" id="ped-inp-hist-json" accept=".json,.xlsx,.xls" style="display:none" onchange="PED_lerArquivoHistorico(this)">
+            <button class="btn-exp small" onclick="PED_expHistoricoXLS()" title="Exporta o acumulador de pedidos/canhoto para Excel (.xlsx)">📥 .xlsx</button>
+            <button class="btn-exp small" onclick="exportarHistoricoUnificado()" title="Exporta o histórico unificado (vencidos + pedidos) como um único arquivo .json">💾 Salvar (.json)</button>
+            <button class="btn-exp small" onclick="importarHistoricoUnificado()" title="Carrega um histórico unificado (.json) exportado anteriormente">📂 Carregar</button>
+            <button class="btn-exp small" onclick="limparHistoricoUnificado()" title="Remove todo o histórico unificado (vencidos + pedidos) desta sessão">🗑</button>
           </div>
         </div>
-        <div id="ped-hist-aviso" style="font-size:12px;color:var(--verm);display:none;padding:4px 8px;background:var(--verm-bg);border-radius:6px;border-left:3px solid var(--verm);">
-          ⚠ Nenhuma auditoria carregada. Importe os arquivos e clique em "Registrar esta Auditoria".
+        <div id="ped-hist-aviso" class="aviso-aud-unif" style="font-size:12px;color:var(--verm);display:none;padding:4px 8px;background:var(--verm-bg);border-radius:6px;border-left:3px solid var(--verm);">
+          ⚠ Para registrar, importe os dados de Lotes e de Pedidos/Canhoto, depois clique em "Registrar Auditoria".
         </div>
       </div>
 
@@ -5836,16 +5837,6 @@ function normalizarFilialArq(sigla, loja) {
 }
 
 // Botão Registrar: vai direto ao registro (faturamento é gerenciado no Ranking Geral)
-function registrarAuditoriaVencidos() {
-  if (!APP.lotes.length) {
-    const av = document.getElementById('hist-venc-aviso');
-    av.style.display = 'flex';
-    setTimeout(() => av.style.display = 'none', 3000);
-    return;
-  }
-  _gravarRegistroVencidos();
-}
-
 function _gravarRegistroVencidos() {
   const filialNome = (APP.lotes[0]?.descricao?.split('(')[0]?.trim() || APP.sigla || '—');
   const gerente = APP.lotes[0]?.gerente || '—';
@@ -5890,26 +5881,11 @@ function _gravarRegistroVencidos() {
 
   _salvarVencHist();
   renderHistoricoVenc();
-
-  // Feedback visual
-  const btn = document.getElementById('btn-reg-hist');
-  const orig = btn.textContent;
-  btn.textContent = '✔ Registrado!';
-  btn.style.background = '#14693a';
-  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2500);
 }
 
 function removerRegistroVenc(id) {
   if (!confirm('Remover este registro do histórico?')) return;
   VENC_HIST = VENC_HIST.filter(d => d.id !== id);
-  _salvarVencHist();
-  renderHistoricoVenc();
-}
-
-function limparHistoricoVenc() {
-  if (!VENC_HIST.length) return;
-  if (!confirm('Limpar TODO o histórico de vencidos? Esta ação não pode ser desfeita.')) return;
-  VENC_HIST = [];
   _salvarVencHist();
   renderHistoricoVenc();
 }
@@ -5967,19 +5943,6 @@ function renderHistoricoVenc() {
       <td style="padding:9px 12px;text-align:center;"><button class="btn-del-hist" onclick="removerRegistroVenc(${d.id})" title="Remover">✕</button></td>
     </tr>`;
   }).join('');
-}
-
-// ---- Exportar como JSON (.json) ----
-function expHistoricoVencJSON() {
-  if (!VENC_HIST.length) { alert('Nenhuma auditoria registrada ainda.'); return; }
-  const dt = new Date().toLocaleDateString('pt-BR').split('/').join('-');
-  const blob = new Blob([JSON.stringify(VENC_HIST, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Historico_Vencidos_Agroquima_${dt}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 // ---- Exportar como XLSX com nome padrão por filial ----
@@ -6081,76 +6044,15 @@ function exportarArquivoVencidosPadrao() {
   URL.revokeObjectURL(url);
 }
 
-// ---- Importar histórico de arquivo (.json ou .xlsx) ----
-function importarHistoricoVenc() {
-  document.getElementById('inp-hist-venc').click();
-}
-
-function lerArquivoHistVenc(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const nome = file.name.toLowerCase();
-
-  if (nome.endsWith('.xlsx') || nome.endsWith('.xls')) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-        if (wb.SheetNames.includes('Backup JSON')) {
-          const ws = wb.Sheets['Backup JSON'];
-          const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-          const json = rows[1] && rows[1][0];
-          if (json && String(json).trim().startsWith('[')) {
-            _processarHistVencImportado(JSON.parse(json)); return;
-          }
-        }
-        if (wb.SheetNames.includes('Lançamentos')) {
-          const ws = wb.Sheets['Lançamentos'];
-          const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-          const dados = [];
-          for (let i=1; i<rows.length; i++) {
-            const r = rows[i];
-            if (!r[0]) continue;
-            dados.push({
-              id: Date.now()+i, filial:String(r[0]||''), filialNome:String(r[1]||''),
-              gerente:String(r[2]||''), periodo:String(r[3]||''), dataAuditoria:String(r[4]||''),
-              totalLotes:parseInt(r[5])||0, totalVencidos:parseInt(r[6])||0,
-              valorVencidos:parseFloat(r[7])||0, faturamento:null,
-              pctVencFat:null, semGiroProd:parseInt(r[8])||0,
-              scoreVenc:null, dataReg:String(r[9]||''),
-            });
-          }
-          if (dados.length) { _processarHistVencImportado(dados); return; }
-        }
-        alert('Arquivo não reconhecido. Use o arquivo gerado pelo botão "📥 Exportar Acumulador".');
-      } catch(err) { alert('Erro ao ler: ' + err.message); }
-    };
-    reader.readAsArrayBuffer(file);
-    input.value = '';
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const d = JSON.parse(e.target.result);
-      if (!Array.isArray(d)) throw new Error('Formato inválido');
-      _processarHistVencImportado(d);
-    } catch(err) { alert('Arquivo inválido: ' + err.message); }
-  };
-  reader.readAsText(file);
-  input.value = '';
-}
-
+// ---- Mescla um histórico de vencidos importado (usado pelo importador unificado) ----
 function _processarHistVencImportado(dados) {
   const idsExist = new Set(VENC_HIST.map(d => d.id));
   let adicionados = 0;
   dados.forEach(d => {
     if (!idsExist.has(d.id)) { VENC_HIST.push(d); adicionados++; }
   });
-  _salvarVencHist();
-  renderHistoricoVenc();
-  alert(`Histórico carregado: ${dados.length} registro(s) — ${adicionados} novo(s) adicionado(s).`);
+  if (adicionados) { _salvarVencHist(); renderHistoricoVenc(); }
+  return adicionados;
 }
 
 // Renderiza histórico ao carregar se já houver dados salvos
@@ -7598,14 +7500,7 @@ function PED_calcScore(d) {
   return Math.round((sSem + sPed + sVenc + sCan) * 100) / 100;
 }
 
-function PED_registrarAuditoria() {
-  if(!APP_PED.pedidos.length && !APP_PED.canhoto.length) {
-    document.getElementById('ped-hist-aviso').style.display = 'flex';
-    document.getElementById('ped-hist-aviso').textContent = '⚠ Importe os arquivos antes de registrar.';
-    return;
-  }
-  document.getElementById('ped-hist-aviso').style.display = 'none';
-
+function _gravarRegistroPedidos() {
   // Coletar dados da auditoria atual
   const fi = APP_PED.fi || {};
   const pv = PED_agPedidosVend();
@@ -7651,13 +7546,6 @@ function PED_registrarAuditoria() {
   try { localStorage.setItem('aqHistorico', JSON.stringify(H_DADOS)); } catch(e) {}
 
   PED_renderHistorico();
-
-  // Feedback visual no botão
-  const btn = document.getElementById('ped-btn-registrar');
-  const orig = btn.textContent;
-  btn.textContent = '✔ Registrado!';
-  btn.style.background = '#14693a';
-  setTimeout(()=>{ btn.textContent = orig; btn.style.background = ''; }, 2500);
 }
 
 function PED_removerRegistro(id) {
@@ -7739,18 +7627,6 @@ function PED_renderHistorico() {
   }).join('');
 }
 
-function PED_expHistoricoJSON() {
-  if(!H_DADOS.length) { alert('Nenhuma auditoria registrada ainda.'); return; }
-  const dt  = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-  const blob = new Blob([JSON.stringify(H_DADOS, null, 2)], {type:'application/json'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `Historico_Agroquima_${dt}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 function PED_expHistoricoXLS() {
   if(!H_DADOS.length) { alert('Nenhuma auditoria registrada ainda.'); return; }
 
@@ -7822,110 +7698,106 @@ function PED_expHistoricoXLS() {
   XLSX.writeFile(wb, `Acumulador_Agroquima_${dt}.xlsx`);
 }
 
-function PED_importarHistoricoJSON() {
-  document.getElementById('ped-inp-hist-json').click();
-}
-
-function PED_lerArquivoHistorico(input) {
-  const file = input.files[0];
-  if(!file) return;
-
-  const nome = file.name.toLowerCase();
-
-  // Aceita XLSX (arquivo gerado pelo "Exportar Acumulador") ou JSON puro
-  if(nome.endsWith('.xlsx') || nome.endsWith('.xls')) {
-    // Ler xlsx via SheetJS — extrair aba "Backup JSON" ou "Lançamentos"
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-
-        // Estratégia 1: ler do Backup JSON (formato preferencial)
-        if(wb.SheetNames.includes('Backup JSON')) {
-          const ws  = wb.Sheets['Backup JSON'];
-          const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-          // Linha 2 (índice 1) contém o JSON
-          const jsonStr = rows[1] && rows[1][0];
-          if(jsonStr && String(jsonStr).trim().startsWith('[')) {
-            PED__processarHistoricoImportado(JSON.parse(jsonStr));
-            return;
-          }
-        }
-
-        // Estratégia 2: ler da aba Lançamentos e reconstruir os registros
-        if(wb.SheetNames.includes('Lançamentos')) {
-          const ws   = wb.Sheets['Lançamentos'];
-          const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-          // Linha 5 em diante são dados (índice 4)
-          // Colunas: 0=#, 1=Filial, 2=Loja, 3=Período, 4=Gerente,
-          //          5=%Ped, 6=PedConf, 7=PedAss, 8=PedPend, 9=SemPend,
-          //          10=%Can, 11=CanConf, 12=CanAss, 13=CanPend,
-          //          14=ScoreVenc, 15=ScoreFinal, 16=DataReg
-          const dados = [];
-          for(let i=4; i<rows.length; i++) {
-            const r = rows[i];
-            if(!r[1] || !r[3]) continue; // sem filial ou período
-            dados.push({
-              id: Date.now() + i,
-              filial:    String(r[1]||''),
-              loja:      String(r[2]||''),
-              gerente:   String(r[4]||''),
-              periodo:   String(r[3]||''),
-              pctPed:    parseFloat(r[5])||0,
-              pedConf:   parseInt(r[6])||0,
-              pedAss:    parseInt(r[7])||0,
-              pedPend:   parseInt(r[8])||0,
-              semPend:   parseInt(r[9])||0,
-              pctCan:    parseFloat(r[10])||0,
-              canConf:   parseInt(r[11])||0,
-              canAss:    parseInt(r[12])||0,
-              canPend:   parseInt(r[13])||0,
-              scoreVenc: r[14]!==''&&r[14]!=null ? parseFloat(r[14]) : null,
-              score:     parseFloat(r[15])||0,
-              dataReg:   String(r[16]||''),
-            });
-          }
-          if(dados.length) { PED__processarHistoricoImportado(dados); return; }
-        }
-        alert('Arquivo não reconhecido. Use o arquivo gerado pelo botão "📥 Exportar Acumulador".');
-      } catch(err) {
-        alert('Erro ao ler o arquivo: ' + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-    input.value = '';
-    return;
-  }
-
-  // JSON puro
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const dados = JSON.parse(e.target.result);
-      if(!Array.isArray(dados)) throw new Error('Formato inválido');
-      PED__processarHistoricoImportado(dados);
-    } catch(err) {
-      alert('Arquivo inválido. Use o arquivo .xlsx ou .json exportado pelo botão "📥 Exportar Acumulador".');
-    }
-  };
-  reader.readAsText(file);
-  input.value = '';
-}
-
+// ---- Mescla um histórico de pedidos importado (usado pelo importador unificado) ----
 function PED__processarHistoricoImportado(dados) {
   const idsExistentes = new Set(H_DADOS.map(d=>d.id));
   let adicionados = 0;
   dados.forEach(d => {
     if(!idsExistentes.has(d.id)) {
-      // Recalcular score se não tiver
       if(!d.score) d.score = PED_calcScore(d);
       H_DADOS.push(d);
       adicionados++;
     }
   });
-  try { localStorage.setItem('aqHistorico', JSON.stringify(H_DADOS)); } catch(e) {}
+  if (adicionados) {
+    try { localStorage.setItem('aqHistorico', JSON.stringify(H_DADOS)); } catch(e) {}
+    PED_renderHistorico();
+  }
+  return adicionados;
+}
+
+// ============================================================
+// HISTÓRICO UNIFICADO — registro/exportação/importação únicos
+// para os módulos Lotes (vencidos) e Pedidos (canhoto)
+// ============================================================
+
+function registrarAuditoriaUnificada() {
+  const temLotes = APP.lotes.length > 0;
+  const temPedidos = APP_PED.pedidos.length > 0 || APP_PED.canhoto.length > 0;
+  if (!temLotes || !temPedidos) {
+    document.querySelectorAll('.aviso-aud-unif').forEach(el => el.style.display = 'flex');
+    return;
+  }
+  document.querySelectorAll('.aviso-aud-unif').forEach(el => el.style.display = 'none');
+
+  _gravarRegistroVencidos();
+  _gravarRegistroPedidos();
+
+  document.querySelectorAll('.btn-reg-unificado').forEach(btn => {
+    if (!btn.dataset.orig) btn.dataset.orig = btn.innerHTML;
+    btn.innerHTML = '✔ Registrado!';
+    btn.style.background = '#14693a';
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.btn-reg-unificado').forEach(btn => {
+      btn.innerHTML = btn.dataset.orig;
+      btn.style.background = '';
+    });
+  }, 2500);
+}
+
+function exportarHistoricoUnificado() {
+  if (!VENC_HIST.length && !H_DADOS.length) { alert('Nenhuma auditoria registrada ainda.'); return; }
+  const payload = { versao: 1, tipo: 'HISTORICO_AUDITORIA_UNIFICADO', vencidos: VENC_HIST, pedidos: H_DADOS };
+  const dt = new Date().toLocaleDateString('pt-BR').split('/').join('-');
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Historico_Auditoria_Agroquima_${dt}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarHistoricoUnificado() {
+  document.getElementById('inp-hist-unif').click();
+}
+
+function lerArquivoHistUnificado(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      let vencidos = [], pedidos = [];
+      if (Array.isArray(d)) {
+        if (d.length && d[0].totalVencidos !== undefined) vencidos = d;
+        else if (d.length && d[0].pedConf !== undefined) pedidos = d;
+      } else if (d && typeof d === 'object') {
+        if (Array.isArray(d.vencidos)) vencidos = d.vencidos;
+        if (Array.isArray(d.pedidos)) pedidos = d.pedidos;
+      }
+      if (!vencidos.length && !pedidos.length) throw new Error('Nenhum dado de auditoria reconhecido no arquivo.');
+
+      const addVenc = vencidos.length ? _processarHistVencImportado(vencidos) : 0;
+      const addPed = pedidos.length ? PED__processarHistoricoImportado(pedidos) : 0;
+      alert(`Histórico carregado: ${addVenc} registro(s) de vencidos e ${addPed} de pedidos adicionados.`);
+    } catch(err) { alert('Arquivo inválido: ' + err.message); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function limparHistoricoUnificado() {
+  if (!VENC_HIST.length && !H_DADOS.length) return;
+  if (!confirm('Limpar TODO o histórico de auditorias (vencidos e pedidos)? Esta ação não pode ser desfeita.')) return;
+  VENC_HIST = [];
+  H_DADOS = [];
+  _salvarVencHist();
+  try { localStorage.removeItem('aqHistorico'); } catch(e) {}
+  renderHistoricoVenc();
   PED_renderHistorico();
-  alert(`Histórico carregado: ${dados.length} registro(s) — ${adicionados} novo(s) adicionado(s).`);
 }
 
 // Renderiza histórico ao carregar se já houver dados salvos
