@@ -5986,8 +5986,28 @@ function _gravarRegistroVencidos() {
 }
 
 function removerRegistroVenc(id) {
-  if (!confirm('Remover este registro do histórico?')) return;
+  if (!confirm('Remover este registro do histórico (vencidos e pedidos)?')) return;
+  const reg = VENC_HIST.find(d => d.id === id);
   VENC_HIST = VENC_HIST.filter(d => d.id !== id);
+  _salvarVencHist();
+  renderHistoricoVenc();
+  if (reg) _removerRegistroPedidosVinculado(reg);
+}
+
+// Remove do histórico de Pedidos o registro gravado junto com o de Vencidos (mesma filial e mesmo horário de registro)
+function _removerRegistroPedidosVinculado(regVenc) {
+  const idx = H_DADOS.findIndex(d => d.filial === regVenc.filial && d.dataReg === regVenc.dataReg);
+  if (idx < 0) return;
+  H_DADOS.splice(idx, 1);
+  try { localStorage.setItem('aqHistorico', JSON.stringify(H_DADOS)); } catch(e) {}
+  PED_renderHistorico();
+}
+
+// Remove do histórico de Vencidos o registro gravado junto com o de Pedidos (mesma filial e mesmo horário de registro)
+function _removerRegistroVencVinculado(regPed) {
+  const idx = VENC_HIST.findIndex(d => d.filial === regPed.filial && d.dataReg === regPed.dataReg);
+  if (idx < 0) return;
+  VENC_HIST.splice(idx, 1);
   _salvarVencHist();
   renderHistoricoVenc();
 }
@@ -7635,10 +7655,12 @@ function _gravarRegistroPedidos() {
 }
 
 function PED_removerRegistro(id) {
-  if(!confirm('Remover este registro do histórico?')) return;
+  if(!confirm('Remover este registro do histórico (vencidos e pedidos)?')) return;
+  const reg = H_DADOS.find(d => d.id === id);
   H_DADOS = H_DADOS.filter(d => d.id !== id);
   try { localStorage.setItem('aqHistorico', JSON.stringify(H_DADOS)); } catch(e) {}
   PED_renderHistorico();
+  if (reg) _removerRegistroVencVinculado(reg);
 }
 
 function PED_scoreClass(s) {
