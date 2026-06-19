@@ -3782,6 +3782,8 @@ function lojaNome(sig) { return (BASE_FILIAIS[sig] && BASE_FILIAIS[sig].loja) ||
 function mediana(a) { const s = [...a].sort((x, y) => x - y); const n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : 0; }
 // Normaliza fabricante ("11523 - ALBAUGH AGRO BRASIL LTDA" -> "ALBAUGH AGRO BRASIL LTDA")
 function normFab(s) { return String(s || '').replace(/^\s*\d+\s*-\s*/, '').toUpperCase().replace(/\s+/g, ' ').trim(); }
+// Extrai só o código do fabricante ("9025 - AGROQUIMA..." -> "9025")
+function codFab(s) { const m = String(s || '').match(/^\s*(\d+)\s*-/); return m ? m[1] : ''; }
 // Assinatura estrutural do lote ("053-22-03000" -> "9-9-9"; "ABC12" -> "A9") para comparar formatos
 function loteSig(s) { return String(s).toUpperCase().replace(/[0-9]+/g, '9').replace(/[A-Z]+/g, 'A').replace(/\s+/g, ' ').trim(); }
 
@@ -3907,39 +3909,111 @@ function computarCacaErros() {
     }
   }
 
-  // (5) Fabricante divergente para o mesmo produto — usa a MAIORIA das lojas como referência.
-  // Como multi-fornecedor é realidade, só sinaliza o fabricante MINORITÁRIO (provável cadastro errado).
+  // (5) Fabricante — regras fixas de negócio da Agroquima (zero tolerância, sem heurística de maioria):
+  //   • Linha 1  (Nutrição Animal): só 9024 ou 9025. Nome terminado em "CB" → 9025; senão → 9024.
+  //   • Linha 18 (Semente de Pastagem): fabricação própria, só 9013.
+  //   • Linha 15 (Vetoquinol): só 70.
+  //   • Demais linhas: o mesmo código+nome de produto NUNCA pode ter fabricantes diferentes entre lojas.
+  //   • Qualquer fabricante "90xx" que não seja 9013/9024/9025 é, por definição, um código inválido da Agroquima.
+  const CODIGOS_AGROQUIMA = new Set(['9013', '9024', '9025']);
+  const terminaEmCB = nome => /\bCB\s*(\/|$)/i.test(String(nome || '').trim());
+
+  for (const l of lotes) {
+    const cod = codFab(l.fabricante);
+    if (!cod) continue;
+    if (/^90/.test(cod) && !CODIGOS_AGROQUIMA.has(cod)) {
+      findings.push({
+        tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante Agroquima inválido',
+        codProduto: l.codProduto, produto: l.nomeProduto || l.codProduto, lote: String(l.lote || '').trim(),
+        filiais: [l.sigla],
+        titulo: `<strong>Código de fabricante inválido:</strong> ${l.nomeProduto || l.codProduto} na loja ${lojaNome(l.sigla)} está cadastrado com o fabricante "${l.fabricante}" — a Agroquima só possui 3 unidades de fabricação (9013, 9024 e 9025). Corrija o cadastro na origem.`,
+        cols: [{ h: 'LOJA', k: 'loja' }, { h: 'FABRICANTE', k: 'fab' }, { h: 'VENC', k: 'vencimento' }],
+        rows: [{ sigla: l.sigla, loja: lojaNome(l.sigla), fab: l.fabricante || '—', vencimento: l.dtVencimento || '—', flag: 'erro' }]
+      });
+    }
+  }
+
   const fabPorProd = {};
   for (const l of lotes) {
-    const fab = normFab(l.fabricante);
-    if (!fab) continue;
+    const cod = codFab(l.fabricante);
+    if (!cod) continue;
     const p = fabPorProd[l.codProduto] = fabPorProd[l.codProduto] || {};
-    (p[fab] = p[fab] || []).push(l);
+    (p[cod] = p[cod] || []).push(l);
   }
   for (const cod in fabPorProd) {
     const fabs = fabPorProd[cod];
-    const nomes = Object.keys(fabs);
-    if (nomes.length < 2) continue;
-    const total = nomes.reduce((s, f) => s + fabs[f].length, 0);
-    nomes.sort((a, b) => fabs[b].length - fabs[a].length);
-    const dom = nomes[0];
-    const domFiliais = new Set(fabs[dom].map(r => r.sigla)).size;
-    if (domFiliais < 2) continue;                 // sem referência forte da maioria
-    for (let i = 1; i < nomes.length; i++) {
-      const f = nomes[i], recs = fabs[f];
-      const share = recs.length / total;
-      if (share > 0.25 || fabs[dom].length < recs.length * 2) continue;   // multi-fornecedor equilibrado → não sinaliza
-      const fils = [...new Set(recs.map(r => r.sigla))];
-      const prodNome = recs[0].nomeProduto || cod;
-      findings.push({
-        tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante divergente',
-        codProduto: cod, produto: prodNome, lote: '',
-        filiais: fils,
-        titulo: `<strong>Provável erro de cadastro na entrada da nota:</strong> ${prodNome} — a maioria das lojas usa o fabricante "${dom}", mas ${fils.map(lojaNome).join(', ')} está com "${f}". Confira a nota fiscal e corrija o fabricante na origem.`,
-        cols: [{ h: 'LOJA', k: 'loja' }, { h: 'FABRICANTE', k: 'fab' }, { h: 'VENC', k: 'vencimento' }],
-        rows: recs.slice(0, 8).map(r => ({ sigla: r.sigla, loja: lojaNome(r.sigla), fab: r.fabricante || '—', vencimento: r.dtVencimento || '—', flag: 'erro' }))
-      });
+    const codigos = Object.keys(fabs);
+    const recsTodos = codigos.flatMap(c => fabs[c]);
+    const linha = String(recsTodos[0]?.linha ?? '');
+    const prodNome = recsTodos[0]?.nomeProduto || cod;
+
+    if (linha === '1') {
+      // Nutrição Animal: nome com "CB" deve ser 9025; sem "CB" deve ser 9024.
+      for (const c of codigos) {
+        const recs = fabs[c];
+        const corretoPorNome = terminaEmCB(recs[0]?.nomeProduto) ? '9025' : '9024';
+        if (c === corretoPorNome) continue;
+        const fils = [...new Set(recs.map(r => r.sigla))];
+        findings.push({
+          tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante divergente — Nutrição Animal',
+          codProduto: cod, produto: prodNome, lote: '',
+          filiais: fils,
+          titulo: `<strong>Fabricante incorreto (Nutrição Animal):</strong> ${prodNome} deveria ser fabricado por "${corretoPorNome}" (regra: nome ${terminaEmCB(recs[0]?.nomeProduto) ? 'com' : 'sem'} sufixo "CB"), mas ${fils.map(lojaNome).join(', ')} está com o fabricante "${c} - ${normFab(recs[0]?.fabricante)}".`,
+          cols: [{ h: 'LOJA', k: 'loja' }, { h: 'FABRICANTE', k: 'fab' }, { h: 'VENC', k: 'vencimento' }],
+          rows: recs.slice(0, 8).map(r => ({ sigla: r.sigla, loja: lojaNome(r.sigla), fab: r.fabricante || '—', vencimento: r.dtVencimento || '—', flag: 'erro' }))
+        });
+      }
+      continue;
     }
+
+    if (linha === '18') {
+      // Semente de Pastagem: fabricação própria, só 9013.
+      for (const c of codigos) {
+        if (c === '9013') continue;
+        const recs = fabs[c];
+        const fils = [...new Set(recs.map(r => r.sigla))];
+        findings.push({
+          tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante divergente — Semente de Pastagem',
+          codProduto: cod, produto: prodNome, lote: '',
+          filiais: fils,
+          titulo: `<strong>Fabricante incorreto (Semente de Pastagem):</strong> ${prodNome} é fabricação própria (9013), mas ${fils.map(lojaNome).join(', ')} está com o fabricante "${c} - ${normFab(recs[0]?.fabricante)}".`,
+          cols: [{ h: 'LOJA', k: 'loja' }, { h: 'FABRICANTE', k: 'fab' }, { h: 'VENC', k: 'vencimento' }],
+          rows: recs.slice(0, 8).map(r => ({ sigla: r.sigla, loja: lojaNome(r.sigla), fab: r.fabricante || '—', vencimento: r.dtVencimento || '—', flag: 'erro' }))
+        });
+      }
+      continue;
+    }
+
+    if (linha === '15') {
+      // Vetoquinol: só fabricante 70.
+      for (const c of codigos) {
+        if (c === '70') continue;
+        const recs = fabs[c];
+        const fils = [...new Set(recs.map(r => r.sigla))];
+        findings.push({
+          tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante divergente — Vetoquinol',
+          codProduto: cod, produto: prodNome, lote: '',
+          filiais: fils,
+          titulo: `<strong>Fabricante incorreto (Vetoquinol):</strong> ${prodNome} só pode ser fabricado por "70 - Vetoquinol", mas ${fils.map(lojaNome).join(', ')} está com o fabricante "${c} - ${normFab(recs[0]?.fabricante)}".`,
+          cols: [{ h: 'LOJA', k: 'loja' }, { h: 'FABRICANTE', k: 'fab' }, { h: 'VENC', k: 'vencimento' }],
+          rows: recs.slice(0, 8).map(r => ({ sigla: r.sigla, loja: lojaNome(r.sigla), fab: r.fabricante || '—', vencimento: r.dtVencimento || '—', flag: 'erro' }))
+        });
+      }
+      continue;
+    }
+
+    // Demais linhas: zero tolerância — mesmo código+nome de produto não pode ter mais de um fabricante.
+    if (codigos.length < 2) continue;
+    const fils = [...new Set(recsTodos.map(r => r.sigla))];
+    const resumo = codigos.map(c => `"${c} - ${normFab(fabs[c][0]?.fabricante)}" (${lojaNome(fabs[c][0]?.sigla)}${fabs[c].length > 1 ? ' e outras' : ''})`).join(' vs. ');
+    findings.push({
+      tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante divergente',
+      codProduto: cod, produto: prodNome, lote: '',
+      filiais: fils,
+      titulo: `<strong>Provável erro de cadastro na entrada da nota:</strong> ${prodNome} (código ${cod}) está com fabricantes diferentes entre lojas: ${resumo}. Esse produto só pode ter um fornecedor — confira a nota fiscal e corrija o fabricante na origem.`,
+      cols: [{ h: 'LOJA', k: 'loja' }, { h: 'FABRICANTE', k: 'fab' }, { h: 'VENC', k: 'vencimento' }],
+      rows: recsTodos.slice(0, 8).map(r => ({ sigla: r.sigla, loja: lojaNome(r.sigla), fab: r.fabricante || '—', vencimento: r.dtVencimento || '—', flag: 'erro' }))
+    });
   }
 
   // (6) Formato de lote fora do padrão do produto — compara a assinatura do lote com a dominante do produto.
