@@ -2364,16 +2364,20 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <i class="ti ti-info-circle met-icon"></i>
           <div class="met-texto">
             <strong>Como ler esta aba:</strong> agrupamos os produtos da filial pelo mesmo <strong>princípio ativo</strong> e <strong>concentração</strong> — ou seja, produtos quimicamente equivalentes, ainda que tenham nomes comerciais e códigos diferentes.
-            Quando um produto está perto do vencimento (<strong>Dias p/ Venc.</strong> baixo) e existe outro produto <strong>equivalente</strong> no grupo com vencimento bem mais distante, o sistema marca uma <strong style="color:var(--red-dk);">⚠ Cobrar Venda</strong> no item mais urgente.
-            A ideia é simples: <strong>o cliente não percebe diferença entre os dois</strong> — o foco de venda deve ser sempre no que vence primeiro.
+            O objetivo não é só apontar o lote que vence primeiro: é mostrar quando a <strong>equipe de vendas já está vendendo o equivalente que tem folga</strong> e esqueceu do que está perto de vencer.
+            Quando isso acontece, o grupo recebe a marca <strong style="color:var(--red-dk);">⚠ VENDA NO PRODUTO ERRADO</strong> — sinal de que dá pra agir <strong>antes</strong> de virar perda, redirecionando a equipe para o lote certo.
             <br><br>
             <strong>Legenda das colunas:</strong>
             <strong>Produto/Código</strong> = item do estoque · <strong>Fabricante</strong> = fornecedor cadastrado no lote · <strong>Linha</strong> = categoria do produto ·
             <strong>Lote</strong> = identificador do lote físico · <strong>Vencimento / Dias p/ Venc.</strong> = data e prazo restante · <strong>Qtd</strong> = quantidade disponível em estoque ·
-            <strong>Valor</strong> = valor de custo total do lote · <strong style="color:var(--red-dk);">⚠ Cobrar Venda</strong> = este lote deve ter prioridade de venda/giro porque um equivalente dele vence bem depois.
+            <strong>Valor</strong> = valor de custo total do lote · <strong>Giro aqui</strong> = indica se este código já tem histórico de venda nesta filial ·
+            <strong>Ação recomendada</strong> = orientação direta para o supervisor/gerente sobre o que fazer com este lote.
           </div>
         </div>
       </div>
+      <div id="pa-responsavel" style="margin-bottom:14px;"></div>
+      <div id="summary-pa" class="summary-grid" style="margin-bottom:14px;"></div>
+      <div id="pa-callout" style="margin-bottom:18px;"></div>
       <div id="pa-container"></div>
     </div>
 
@@ -3202,6 +3206,7 @@ function computarPrincipioAtivo() {
       fabricante: l.fabricante || '—', linha: l.linha,
       lote: String(l.lote || '').trim(), dtVencimento: l.dtVencimento,
       diasVencimento: l.diasVencimento, quantidade: l.quantidade, vlrCustoTotal: l.vlrCustoTotal,
+      giroAqui: vendeNestaFilial(l.codProduto, APP.sigla),
     });
   }
 
@@ -3211,24 +3216,43 @@ function computarPrincipioAtivo() {
     const produtosDistintos = new Set(g.rows.map(r => r.codProduto));
     g.nProdutos = produtosDistintos.size;
     g.alerta = false;
-    if (g.nProdutos > 1) {
-      const maisUrgente = g.rows[0];
-      if (maisUrgente.diasVencimento <= 90) {
-        const temFolga = g.rows.some(r => r.codProduto !== maisUrgente.codProduto && (r.diasVencimento - maisUrgente.diasVencimento) >= 60);
-        if (temFolga) g.alerta = true;
+    g.giroErrado = false;
+    const maisUrgente = g.rows[0];
+    if (g.nProdutos > 1 && maisUrgente.diasVencimento <= 90) {
+      const comFolga = g.rows.filter(r => r.codProduto !== maisUrgente.codProduto && (r.diasVencimento - maisUrgente.diasVencimento) >= 60);
+      if (comFolga.length) {
+        g.alerta = true;
+        // O sinal mais grave: a equipe está vendendo (giroAqui) o produto que tem folga,
+        // enquanto o que vence primeiro não tem giro — ou seja, "esqueceram" do urgente.
+        g.giroErrado = !maisUrgente.giroAqui && comFolga.some(r => r.giroAqui);
       }
     }
     if (g.alerta) {
-      const limiteUrgente = g.rows[0].diasVencimento + 30;
-      g.rows.forEach(r => { r.prioridade = r.diasVencimento <= limiteUrgente; });
+      const limiteUrgente = maisUrgente.diasVencimento + 30;
+      g.rows.forEach(r => {
+        r.prioridade = r.diasVencimento <= limiteUrgente;
+        if (r.prioridade) {
+          r.acao = g.giroErrado
+            ? '⚠ Direcionar venda AGORA — equivalente com mais prazo está sendo vendido, este lote ficou parado'
+            : '⚠ Cobrar venda — equivalente vence bem mais tarde';
+        } else if (g.giroErrado) {
+          r.acao = 'Tem folga e está vendendo bem — não acelerar mais; foco deve ir para o lote que vence primeiro';
+        } else {
+          r.acao = 'Tem folga — pode aguardar';
+        }
+      });
+      g.valorRisco = g.rows.filter(r => r.prioridade).reduce((s, r) => s + (r.vlrCustoTotal || 0), 0);
     } else {
-      g.rows.forEach(r => { r.prioridade = false; });
+      g.rows.forEach(r => { r.prioridade = false; r.acao = '—'; });
+      g.valorRisco = 0;
     }
   }
-  lista.sort((a, b) => (b.alerta - a.alerta) || a.ingrediente.localeCompare(b.ingrediente));
+  lista.sort((a, b) => (b.giroErrado - a.giroErrado) || (b.alerta - a.alerta) || a.ingrediente.localeCompare(b.ingrediente));
 
   APP.paGrupos = lista;
   APP.paAlertas = lista.filter(g => g.alerta).length;
+  APP.paGiroErrado = lista.filter(g => g.giroErrado).length;
+  APP.paValorRisco = lista.reduce((s, g) => s + (g.valorRisco || 0), 0);
 }
 
 // ==================== UPLOAD ====================
@@ -4559,6 +4583,79 @@ function renderPrincipioAtivo() {
   const linhas = [...new Set((APP.paGrupos || []).flatMap(g => g.rows.map(r => r.linha)))].sort();
   const sel = document.getElementById('filtro-linha-pa');
   if (sel) sel.innerHTML = '<option value="">Todas as Linhas</option>' + linhas.map(l => `<option value="${l}">${getNomeLinha(l)}</option>`).join('');
+
+  const grupos = APP.paGrupos || [];
+  const info = BASE_FILIAIS[APP.sigla] || {};
+  const filialNome = info.loja || APP.sigla;
+  const respEl = document.getElementById('pa-responsavel');
+  if (respEl) respEl.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; gap:18px; align-items:center; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:12px 16px;">
+      <div><div style="font-size:10px; color:var(--texto-muted); text-transform:uppercase; letter-spacing:.5px;">Filial</div><div style="font-weight:700;">${APP.sigla} — ${filialNome}</div></div>
+      <div style="width:1px; align-self:stretch; background:var(--border);"></div>
+      <div><div style="font-size:10px; color:var(--texto-muted); text-transform:uppercase; letter-spacing:.5px;">Gerente (direciona a equipe)</div><div style="font-weight:700;">${info.gerente || '—'}</div></div>
+      <div style="width:1px; align-self:stretch; background:var(--border);"></div>
+      <div><div style="font-size:10px; color:var(--texto-muted); text-transform:uppercase; letter-spacing:.5px;">Supervisor (acompanha/cobra)</div><div style="font-weight:700;">${info.supervisor || '—'}</div></div>
+      <div style="margin-left:auto; font-size:11px; color:var(--texto-muted);">Atualizado em ${(APP.dataAuditoria||new Date()).toLocaleDateString('pt-BR')}</div>
+    </div>`;
+
+  const giroErrado = grupos.filter(g => g.giroErrado);
+  const valorGiroErrado = giroErrado.reduce((s, g) => s + (g.valorRisco || 0), 0);
+  const valorTotalRisco = grupos.reduce((s, g) => s + (g.valorRisco || 0), 0);
+
+  const sumEl = document.getElementById('summary-pa');
+  if (sumEl) sumEl.innerHTML = `
+    <div class="summary-card" style="border-left:4px solid var(--azul-royal);">
+      <div class="summary-label">Grupos equivalentes</div>
+      <div class="summary-value" style="color:var(--azul-royal);">${grupos.length}</div>
+      <div class="summary-sub">princípios ativos com mais de 1 produto em estoque</div>
+      <i class="ti ti-flask summary-icon"></i>
+    </div>
+    <div class="summary-card" style="border-left:4px solid #f59e0b;">
+      <div class="summary-label">Com risco de cruzamento</div>
+      <div class="summary-value" style="color:#f59e0b;">${grupos.filter(g=>g.alerta).length}</div>
+      <div class="summary-sub">${formatValor(valorTotalRisco)} em lotes que precisam de prioridade</div>
+      <i class="ti ti-alert-triangle summary-icon"></i>
+    </div>
+    <div class="summary-card" style="border-left:4px solid #ef4444; background:rgba(239,68,68,0.06);">
+      <div class="summary-label">Venda no produto errado</div>
+      <div class="summary-value" style="color:#ef4444;">${giroErrado.length}</div>
+      <div class="summary-sub">equipe vendendo o equivalente com folga · ${formatValor(valorGiroErrado)} em risco</div>
+      <i class="ti ti-alert-octagon summary-icon"></i>
+    </div>`;
+
+  const cob = document.getElementById('pa-callout');
+  if (cob) {
+    if (giroErrado.length) {
+      const exemplo = giroErrado[0];
+      const urgente = exemplo.rows.find(r => r.prioridade);
+      const folgado = exemplo.rows.find(r => r.giroAqui && !r.prioridade);
+      cob.innerHTML = `
+      <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start;">
+        <i class="ti ti-message-report" style="color:#ef4444; font-size:20px; margin-top:1px;"></i>
+        <div style="font-size:13px; line-height:1.6;">
+          <strong>Ação preventiva de hoje:</strong> ${info.gerente ? `<strong>${info.gerente}</strong>` : 'O gerente'} deve direcionar a equipe de vendas
+          ${giroErrado.length === 1 ? 'no grupo' : `em <strong>${giroErrado.length} grupos</strong>`} de <strong>${exemplo.ingrediente}</strong>${giroErrado.length>1?' (e outros)':''}:
+          a equipe está vendendo bem o ${folgado ? `<strong>${folgado.nomeProduto}</strong>` : 'produto com mais prazo'} (${folgado ? folgado.diasVencimento+'d para vencer' : 'folga maior'}),
+          enquanto o <strong>${urgente ? urgente.nomeProduto : 'equivalente que vence primeiro'}</strong> (${urgente ? urgente.diasVencimento+'d' : '≤90d'}) ficou parado.
+          ${info.supervisor ? `<strong>${info.supervisor}</strong> deve cobrar essa correção de rota com o time` : 'O supervisor deve cobrar essa correção de rota com o time'} antes que vire perda —
+          risco atual de <strong style="color:#ef4444;">${formatValor(valorGiroErrado)}</strong>.
+        </div>
+      </div>`;
+    } else if (grupos.some(g => g.alerta)) {
+      cob.innerHTML = `
+      <div style="background:rgba(234,179,8,0.07); border:1px solid rgba(234,179,8,0.25); border-radius:10px; padding:14px 16px; display:flex; gap:12px; align-items:center;">
+        <i class="ti ti-info-circle" style="color:var(--amber); font-size:20px;"></i>
+        <div style="font-size:13px; line-height:1.6;">Há equivalentes vencendo em momentos diferentes, mas <strong>sem sinal de venda no produto errado</strong> — oriente a equipe a priorizar os lotes marcados na tabela abaixo, de forma preventiva.</div>
+      </div>`;
+    } else {
+      cob.innerHTML = `
+      <div style="background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.25); border-radius:10px; padding:14px 16px; display:flex; gap:12px; align-items:center;">
+        <i class="ti ti-circle-check" style="color:var(--verde); font-size:20px;"></i>
+        <div style="font-size:13px; line-height:1.6;">Nenhum risco de cruzamento entre equivalentes identificado nesta filial.</div>
+      </div>`;
+    }
+  }
+
   filtrarPrincipioAtivo();
 }
 
@@ -4600,7 +4697,8 @@ function filtrarPrincipioAtivo() {
       <td style="padding:7px 10px;text-align:right;${r.diasVencimento <= 90 ? 'color:var(--red-dk);font-weight:700;' : ''}">${r.diasVencimento}</td>
       <td style="padding:7px 10px;text-align:right;">${(r.quantidade || 0).toLocaleString('pt-BR')}</td>
       <td style="padding:7px 10px;text-align:right;">${formatValor(r.vlrCustoTotal)}</td>
-      <td style="padding:7px 10px;text-align:center;">${r.prioridade ? '<span style="background:var(--red-dk);color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap;">⚠ COBRAR VENDA</span>' : ''}</td>
+      <td style="padding:7px 10px;text-align:center;">${r.giroAqui ? '<span style="color:var(--verde);font-weight:600;">Sim</span>' : '<span style="color:var(--texto-muted);">Não</span>'}</td>
+      <td style="padding:7px 10px;font-size:11px;color:${r.prioridade ? 'var(--red-dk)' : 'var(--texto-muted)'};max-width:260px;">${r.acao || '—'}</td>
     </tr>`;
 
     return `
@@ -4609,9 +4707,9 @@ function filtrarPrincipioAtivo() {
         <i class="ti ti-flask" style="font-size:18px; color:${g.alerta ? 'var(--red-dk)' : 'var(--azul-royal)'};"></i>
         <div>
           <div style="font-weight:700; font-size:13px;">${g.ingrediente}${g.multiAtivo ? ' <span style="font-size:10px; font-weight:700; color:var(--azul-royal); background:rgba(59,130,246,.15); border-radius:4px; padding:2px 6px; margin-left:4px;">COMBINAÇÃO DE 2 ATIVOS</span>' : ''}</div>
-          <div style="font-size:11px; color:var(--texto-muted);">${g.concentracao} · ${g.nProdutos} produtos diferentes · ${g.rows.length} lotes</div>
+          <div style="font-size:11px; color:var(--texto-muted);">${g.concentracao} · ${g.nProdutos} produtos diferentes · ${g.rows.length} lotes${g.valorRisco ? ` · ${formatValor(g.valorRisco)} em risco` : ''}</div>
         </div>
-        ${g.alerta ? '<span style="margin-left:auto; background:var(--red-dk); color:#fff; border-radius:5px; padding:3px 10px; font-size:11px; font-weight:700;">⚠ RISCO DE VENDA CRUZADA</span>' : ''}
+        ${g.giroErrado ? '<span style="margin-left:auto; background:var(--red-dk); color:#fff; border-radius:5px; padding:3px 10px; font-size:11px; font-weight:700;">⚠ VENDA NO PRODUTO ERRADO</span>' : (g.alerta ? '<span style="margin-left:auto; background:var(--amber); color:#1a1a1a; border-radius:5px; padding:3px 10px; font-size:11px; font-weight:700;">RISCO DE CRUZAMENTO</span>' : '')}
       </div>
       <table style="width:100%; border-collapse:collapse; font-size:12px;">
         <thead>
@@ -4625,7 +4723,8 @@ function filtrarPrincipioAtivo() {
             <th style="padding:7px 10px;text-align:right;">Dias p/ Venc.</th>
             <th style="padding:7px 10px;text-align:right;">Qtd</th>
             <th style="padding:7px 10px;text-align:right;">Valor</th>
-            <th style="padding:7px 10px;text-align:center;">Ação</th>
+            <th style="padding:7px 10px;text-align:center;">Giro aqui</th>
+            <th style="padding:7px 10px;">Ação recomendada</th>
           </tr>
         </thead>
         <tbody>${g.rows.map(linhasFmt).join('')}</tbody>
