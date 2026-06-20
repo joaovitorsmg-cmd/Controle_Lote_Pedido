@@ -1984,7 +1984,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <div class="met-tags">
             <span class="met-tag"><span class="dot" style="background:#dc2626;"></span> CRÍTICO: vence em ≤90 dias, saldo &gt;20%</span>
             <span class="met-tag"><span class="dot" style="background:#d97706;"></span> ALERTA: vence em ≤90 dias, saldo &gt;0</span>
-            <span class="met-tag"><span class="dot" style="background:#b45309;"></span> ATENÇÃO: vence em ≤180 dias, saldo &gt;0</span>
+            <span class="met-tag"><span class="dot" style="background:#b45309;"></span> ATENÇÃO: vence em ≤18 meses, saldo &gt;0 (pode não vender dentro da safra e ficar sem nova janela de venda até vencer)</span>
             <span class="met-tag"><span class="dot" style="background:#16a34a;"></span> OK: projeção indica venda total antes do vencimento</span>
           </div>
         </div>
@@ -3460,9 +3460,13 @@ function processarDados() {
         
         // Nível de risco
         let nivel = 'OK';
+        // Janela de controle ampliada para 18 meses (540 dias): produtos sazonais que não
+        // venderem nesta safra podem não ter validade suficiente para esperar a próxima.
+        // A projeção acima já usa a sazonalidade real até o vencimento, então o saldo em
+        // risco já reflete corretamente se há ou não uma próxima safra dentro do prazo.
         if (diasVenc <= 90 && saldoRisco > 0 && pctRisco > 0.20) nivel = 'CRÍTICO';
         else if (diasVenc <= 90 && saldoRisco > 0) nivel = 'ALERTA';
-        else if (diasVenc <= 180 && saldoRisco > 0) nivel = 'ATENÇÃO';
+        else if (diasVenc <= 540 && saldoRisco > 0) nivel = 'ATENÇÃO';
         else if (saldoRisco <= 0) nivel = 'OK';
         
         if (nivel !== 'OK') {
