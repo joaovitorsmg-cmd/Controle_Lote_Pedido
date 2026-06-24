@@ -39,3 +39,7 @@ no topo do script com o nome **exato** da coluna do seu arquivo.
 - **Exclui** remessa de entrega futura (não é venda): `5116 5117 6116 6117`.
 - Mantém o período **Jan/2024 a Jun/2026** (configurável no topo do script).
 - Sazonalidade em **unidades** (soma da quantidade), por mês e por filial.
+- CFOP `5116 5117 6116 6117` (remessa de entrega futura) **não conta como venda**, mas é
+  registrado num campo separado (`remessa`) no `sazonal_base.json` — serve para o app avisar
+  na aba **Produtos sem Giro** quando um "dead stock" teve remessa registrada e por isso
+  precisa de checagem manual antes de confirmar que o produto não movimentou estoque.

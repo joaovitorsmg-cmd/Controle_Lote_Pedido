@@ -57,6 +57,10 @@ from datetime import datetime, date
 CFOPS_VENDA   = {"5101", "5102", "5120", "5405", "6101", "6102", "5922", "6922"}
 # REMESSA de entrega futura: MOVIMENTA estoque, mas NÃO é venda (a venda já foi no 5922/6922).
 # Excluída da sazonalidade para não contar "entrega" como "venda" nem duplicar.
+# Mesmo assim, é registrada separadamente (campo "remessa" no JSON de saída): um produto que
+# só aparece em remessa (sem 5922/6922 correspondente nos dados, ex. erro de faturamento, ou
+# fora do período de venda analisado) MOVIMENTOU estoque e não pode ser tratado como "nunca
+# vendeu" (dead stock) sem checar esse CFOP manualmente.
 CFOPS_EXCLUIR = {"5116", "5117", "6116", "6117"}
 
 # Janela de histórico mantida (ano, mês) inclusive
@@ -346,6 +350,9 @@ def main():
     # base[cod] = { idx_filial: [12 meses de float] }; nomes[cod] = nome
     base = {}
     nomes = {}
+    # remessa[cod] = qtde total movimentada via CFOP 5116/5117/6116/6117 (não é venda, mas
+    # comprova que o produto SAIU do estoque — usado para alertar "sem giro" suspeito).
+    remessa = {}
 
     tot_linhas = tot_venda = tot_excluidas = tot_fora_periodo = tot_sem_data = tot_sem_prod = 0
     cfops_ignorados = {}
@@ -400,6 +407,13 @@ def main():
             cfop = parse_cfop(rd.get(ccfop))
             if cfop in CFOPS_EXCLUIR:
                 tot_excluidas += 1
+                am_r = parse_ano_mes(rd.get(cdata))
+                if am_r and no_periodo(*am_r):
+                    cod_r = re.sub(r"\.0$", "", str(rd.get(cprod) or "").strip())
+                    if cod_r and cod_r.lower() != "nan":
+                        qtd_r = parse_qtd(rd.get(cqtd))
+                        if qtd_r > 0:
+                            remessa[cod_r] = remessa.get(cod_r, 0.0) + qtd_r
                 continue
             if cfop not in CFOPS_VENDA:
                 cfops_ignorados[cfop] = cfops_ignorados.get(cfop, 0) + 1
@@ -450,6 +464,8 @@ def main():
                 fil_sparse[str(idx)] = sp
         sazonal[cod] = [sparse(geral), fil_sparse]
 
+    remessa_saida = {cod: int(round(v)) for cod, v in remessa.items() if round(v) != 0}
+
     saida = {
         "siglas": siglas,
         "ate": f"{PERIODO_FIM[0]:04d}-{PERIODO_FIM[1]:02d}",
@@ -457,6 +473,7 @@ def main():
         "gerado_em": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "base": sazonal,
         "nomes": nomes,
+        "remessa": remessa_saida,
     }
 
     with open(args.saida, "w", encoding="utf-8") as f:
@@ -468,6 +485,7 @@ def main():
     print(f"  Linhas lidas .............: {tot_linhas:,}".replace(",", "."))
     print(f"  Vendas contadas ..........: {tot_venda:,}".replace(",", "."))
     print(f"  Remessa entrega futura ...: {tot_excluidas:,} (excluídas)".replace(",", "."))
+    print(f"  Produtos c/ remessa (CFOP 5116/5117/6116/6117): {len(remessa_saida):,}".replace(",", "."))
     print(f"  Fora do período ..........: {tot_fora_periodo:,}".replace(",", "."))
     print(f"  Sem data válida ..........: {tot_sem_data:,}".replace(",", "."))
     print(f"  Sem código de produto ....: {tot_sem_prod:,}".replace(",", "."))
