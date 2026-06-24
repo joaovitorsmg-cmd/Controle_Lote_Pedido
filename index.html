@@ -1097,6 +1097,14 @@
   }
   .safra-ok { background: rgba(34,197,94,0.15); color: #22c55e; }
   .safra-zero { background: rgba(239,68,68,0.15); color: var(--vermelho); }
+  .safra-parcial { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .safra-neutro { background: rgba(148,163,184,0.15); color: var(--texto-muted); }
+  .janela-sub { font-size: 9px; color: var(--texto-muted); }
+  .janela-fonte-tag {
+    display: inline-block; font-size: 8px; font-weight: 700; padding: 1px 5px;
+    border-radius: 6px; background: rgba(148,163,184,0.15); color: var(--texto-muted);
+    margin-left: 3px; vertical-align: middle;
+  }
 
   /* AVISO CFOP REMESSA (aba Sem Giro) */
   .semgiro-cfop-note {
@@ -2055,7 +2063,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
                 <th onclick="sortTable('risco',3)">Lote</th>
                 <th onclick="sortTable('risco',4)">Vencimento</th>
                 <th onclick="sortTable('risco',5)">Dias p/ Venc.</th>
-                <th onclick="sortTable('risco',6)" title="Janelas de alta venda histórica entre hoje e o vencimento">Janela até Venc.</th>
+                <th onclick="sortTable('risco',6)" title="Pastagem/Agrícola: safra agronômica das águas (ref. CONAB por estado). Nutrição Animal: validade/fabricação do lote. Venda histórica aparece só como comparação.">Janela até Venc.</th>
                 <th onclick="sortTable('risco',7)">Estoque</th>
                 <th onclick="sortTable('risco',8)">Venda Proj.</th>
                 <th onclick="sortTable('risco',9)">Saldo Risco</th>
@@ -3116,37 +3124,132 @@ function temRemessaNaoVenda(cod) {
   return !!(REMESSA_BASE && REMESSA_BASE[cod]);
 }
 
-// ===== Janela de safra até o vencimento (visualização rápida p/ aba Lotes em Risco) =====
-// Mostra, mês a mês, a curva histórica de venda do produto na filial entre HOJE e o
-// VENCIMENTO do lote — para responder de cara "ainda dá tempo de vender numa safra, ou o
-// produto vai vencer fora da janela de venda?" (ex.: pastagem/agrícola com 1 safra/ano).
-function janelaSafraInfo(codProduto, sigla, diasVenc) {
-  const mesesNomes = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-  const fonte = getSazonalFilial(codProduto, sigla);
-  if (!fonte || fonte.every(v => !v)) {
-    return { html: '<span style="font-size:10px;color:var(--texto-muted);">sem histórico</span>', safrasRestantes: 0 };
-  }
-  const max = Math.max(...fonte, 1);
+// ===== Calendário agronômico de safra "das águas" por estado (referência CONAB) =====
+// Aproximação dos calendários regionais de plantio/colheita publicados pela CONAB
+// (Calendário de Plantio e Colheita de Grãos do Brasil) para a safra de verão ("das águas"),
+// que é o período de chuvas que sustenta tanto o plantio agrícola quanto a formação/
+// rebrota de pastagens. Varia por estado: no Centro-Oeste (GO/MT) as chuvas começam e
+// terminam antes; no Norte/Nordeste (PA/MA/TO) o período chuvoso é mais longo e tardio.
+// Isto é uma referência regional fixa — não deriva da venda histórica do produto.
+const CONAB_SAFRA_ESTADO = {
+  GO: { aguasIni: 9,  aguasFim: 3, label: 'GO — águas: set a mar' },
+  MT: { aguasIni: 9,  aguasFim: 3, label: 'MT — águas: set a mar' },
+  MS: { aguasIni: 9,  aguasFim: 3, label: 'MS — águas: set a mar' },
+  MG: { aguasIni: 9,  aguasFim: 3, label: 'MG — águas: set a mar' },
+  TO: { aguasIni: 10, aguasFim: 4, label: 'TO — águas: out a abr' },
+  MA: { aguasIni: 10, aguasFim: 5, label: 'MA — águas: out a mai' },
+  PA: { aguasIni: 10, aguasFim: 5, label: 'PA — águas: out a mai' },
+  _default: { aguasIni: 9, aguasFim: 3, label: 'águas: set a mar (padrão Centro-Oeste)' },
+};
+
+// Linhas cujo "tem janela de venda antes de vencer" é regido por SAFRA AGRONÔMICA
+// (águas): Pastagem(2), Agrícola(4), Agrícola Dist.(5), Semente de Pastagem(18).
+const LINHAS_SAFRA_AGRONOMICA = new Set(['2', '4', '5', '18']);
+// Nutrição Animal: regida por validade/fabricação, não por safra.
+const LINHAS_SHELF_LIFE = new Set(['1']);
+
+function estadoDaFilial(sigla) {
+  const f = BASE_FILIAIS[sigla];
+  return f ? f.estado : null;
+}
+
+function calendarioSafraEstado(sigla) {
+  const estado = estadoDaFilial(sigla);
+  return CONAB_SAFRA_ESTADO[estado] || CONAB_SAFRA_ESTADO._default;
+}
+
+// Conta quantas janelas "das águas" (CONAB) cabem inteiras ou parcialmente entre hoje e o
+// vencimento do lote, percorrendo mês a mês e contando cada entrada num período chuvoso.
+function contarJanelasAguas(diasVenc, cal) {
   const mesAtual = (APP.dataAuditoria || new Date()).getMonth() + 1;
   const totalMeses = Math.max(1, Math.ceil(diasVenc / 30));
-  const capMeses = Math.min(totalMeses, 24);
-
-  let blocos = 0, dentroSafra = false, cells = '';
+  const capMeses = Math.min(totalMeses, 36);
+  const dentroAguas = mes => {
+    if (cal.aguasIni <= cal.aguasFim) return mes >= cal.aguasIni && mes <= cal.aguasFim;
+    return mes >= cal.aguasIni || mes <= cal.aguasFim; // janela cruza virada de ano
+  };
+  let blocos = 0, dentro = false, meses = [];
   for (let i = 0; i < capMeses; i++) {
     const mes = ((mesAtual - 1 + i) % 12) + 1;
-    const val = fonte[mes - 1] || 0;
-    const pct = val / max;
-    const nivel = val < 0.5 ? 0 : pct < 0.3 ? 1 : pct < 0.6 ? 2 : pct < 0.85 ? 3 : 4;
-    const safra = nivel >= 3;
-    if (safra && !dentroSafra) blocos++;
-    dentroSafra = safra;
-    cells += `<div class="heat-mini heat-mini-${nivel}" title="${mesesNomes[mes-1]} (mês ${i+1}) — méd. ${Math.round(val)} un/ano hist.">${mesesNomes[mes-1]}</div>`;
+    const safra = dentroAguas(mes);
+    if (safra && !dentro) blocos++;
+    dentro = safra;
+    meses.push({ mes, safra });
   }
-  const extra = totalMeses > capMeses ? `<span style="font-size:9px;color:var(--texto-muted);margin-left:3px;white-space:nowrap;">+${totalMeses - capMeses}m</span>` : '';
-  const label = blocos === 0
-    ? '<span class="safra-badge safra-zero" title="Nenhum mês de alta venda histórica antes do vencimento">Sem safra até vencer</span>'
-    : `<span class="safra-badge safra-ok" title="Quantidade de janelas de alta venda histórica até o vencimento">${blocos} safra${blocos > 1 ? 's' : ''} até vencer</span>`;
-  return { html: `<div class="janela-safra-wrap"><div class="heat-mini-row">${cells}${extra}</div>${label}</div>`, safrasRestantes: blocos };
+  return { blocos, meses, totalMeses, capMeses };
+}
+
+// ===== Janela de venda até o vencimento (visualização rápida p/ aba Lotes em Risco) =====
+// Responde "ainda dá tempo de vender antes do vencimento, ou o produto vai vencer fora da
+// janela?" — mas com a régua CERTA para cada tipo de produto:
+//  - Pastagem / Semente de Pastagem / Agrícola: régua é a SAFRA AGRONÔMICA real (período das
+//    águas, por estado da filial — referência CONAB), não o pico de venda do produto.
+//  - Nutrição Animal (linha mineral etc.): régua é a VALIDADE/FABRICAÇÃO do lote (shelf-life),
+//    não há "safra" nesse caso.
+//  - Demais linhas: não se aplica régua de safra/validade — mostra neutro.
+// Em qualquer caso, a curva histórica de venda (SAZONAL_BASE) aparece só como um mini-heatmap
+// de COMPARAÇÃO ao lado — nunca é ela quem decide se "há safra ou não".
+function janelaSafraInfo(codProduto, sigla, diasVenc, linha, dtFabricacao, dtVencimento) {
+  const mesesNomes = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const linhaStr = String(linha);
+
+  // ---- Nutrição Animal: shelf-life por fabricação/validade, não por safra ----
+  if (LINHAS_SHELF_LIFE.has(linhaStr)) {
+    const fab = parseDataBR(dtFabricacao);
+    const venc = parseDataBR(dtVencimento);
+    if (!fab || !venc) {
+      return { html: '<span class="safra-badge safra-neutro" title="Sem data de fabricação válida para calcular validade">validade n/d</span>', safrasRestantes: null };
+    }
+    const validadeTotalDias = Math.round((venc - fab) / 86400000);
+    const decorridosDias = Math.max(0, validadeTotalDias - Math.max(0, diasVenc));
+    const pctConsumido = validadeTotalDias > 0 ? decorridosDias / validadeTotalDias : 1;
+    const meses = Math.round(validadeTotalDias / 30);
+    let cls, txt;
+    if (diasVenc < 0) { cls = 'safra-zero'; txt = 'Vencido'; }
+    else if (pctConsumido >= 0.8) { cls = 'safra-zero'; txt = `Validade ${meses}m — fim do prazo`; }
+    else if (pctConsumido >= 0.5) { cls = 'safra-parcial'; txt = `Validade ${meses}m — ${diasVenc}d restantes`; }
+    else { cls = 'safra-ok'; txt = `Validade ${meses}m — ${diasVenc}d restantes`; }
+    return {
+      html: `<div class="janela-safra-wrap"><span class="safra-badge ${cls}" title="Produto de Nutrição Animal: avaliado por fabricação/validade do lote (${meses} meses), não por safra agronômica.">${txt}</span><span class="janela-sub">fabricação/validade · não-safra</span></div>`,
+      safrasRestantes: null,
+    };
+  }
+
+  // ---- Pastagem / Semente de Pastagem / Agrícola: safra agronômica (águas, ref. CONAB) ----
+  if (LINHAS_SAFRA_AGRONOMICA.has(linhaStr)) {
+    const cal = calendarioSafraEstado(sigla);
+    const { blocos, meses, totalMeses, capMeses } = contarJanelasAguas(diasVenc, cal);
+
+    // Heatmap de venda histórica — exibido só como referência de COMPARAÇÃO, não decide a safra.
+    const fonte = getSazonalFilial(codProduto, sigla);
+    const temHistorico = fonte && fonte.some(v => v > 0);
+    const max = temHistorico ? Math.max(...fonte, 1) : 1;
+
+    let cells = '';
+    for (let i = 0; i < capMeses; i++) {
+      const { mes, safra } = meses[i];
+      const val = temHistorico ? (fonte[mes - 1] || 0) : 0;
+      const pct = val / max;
+      const nivelVenda = !temHistorico ? -1 : val < 0.5 ? 0 : pct < 0.3 ? 1 : pct < 0.6 ? 2 : pct < 0.85 ? 3 : 4;
+      const corSafra = safra ? 'heat-mini-3' : 'heat-mini-0';
+      const tituloVenda = temHistorico ? ` · venda hist.: ${Math.round(val)} un/ano (comparação)` : '';
+      cells += `<div class="heat-mini ${corSafra}" title="${mesesNomes[mes-1]} (mês ${i+1}) — ${safra ? 'dentro' : 'fora'} da safra das águas (${cal.label})${tituloVenda}">${mesesNomes[mes-1]}</div>`;
+    }
+    const extra = totalMeses > capMeses ? `<span style="font-size:9px;color:var(--texto-muted);margin-left:3px;white-space:nowrap;">+${totalMeses - capMeses}m</span>` : '';
+    const label = blocos === 0
+      ? `<span class="safra-badge safra-zero" title="Nenhuma safra das águas (${cal.label}) cabe entre hoje e o vencimento">Sem safra até vencer</span>`
+      : `<span class="safra-badge safra-ok" title="Janelas de safra das águas (${cal.label}) até o vencimento">${blocos} safra${blocos > 1 ? 's' : ''} até vencer</span>`;
+    const fonteTag = temHistorico
+      ? '<span class="janela-fonte-tag" title="Faixas azuis = dentro da safra agronômica (CONAB). A venda histórica do produto aparece só no tooltip, como comparação — não define a safra.">CONAB + hist. (comparação)</span>'
+      : '<span class="janela-fonte-tag" title="Sem venda histórica nesta filial — safra calculada só pelo calendário agronômico (CONAB) do estado.">CONAB (sem hist.)</span>';
+    return {
+      html: `<div class="janela-safra-wrap"><div class="heat-mini-row">${cells}${extra}</div>${label}${fonteTag}</div>`,
+      safrasRestantes: blocos,
+    };
+  }
+
+  // ---- Demais linhas: não há régua de safra/validade aplicável ----
+  return { html: '<span class="safra-badge safra-neutro" title="Linha sem régua de safra agronômica ou validade aplicável">não se aplica</span>', safrasRestantes: null };
 }
 
 // Recomendação de destinação por linha/fornecedor (regras Agroquima)
@@ -3583,7 +3686,7 @@ function processarDados() {
         else if (saldoRisco <= 0) nivel = 'OK';
         
         if (nivel !== 'OK') {
-          const janela = janelaSafraInfo(lote.codProduto, APP.sigla, diasVenc);
+          const janela = janelaSafraInfo(lote.codProduto, APP.sigla, diasVenc, lote.linha, lote.dtFabricacao, lote.dtVencimento);
           APP.emRisco.push({
             ...lote,
             projecao: Math.round(projecao),
