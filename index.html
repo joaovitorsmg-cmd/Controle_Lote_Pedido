@@ -2063,7 +2063,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
                 <th onclick="sortTable('risco',3)">Lote</th>
                 <th onclick="sortTable('risco',4)">Vencimento</th>
                 <th onclick="sortTable('risco',5)">Dias p/ Venc.</th>
-                <th onclick="sortTable('risco',6)" title="Pastagem/Agrícola: safra agronômica das águas (ref. CONAB por estado). Nutrição Animal: validade/fabricação do lote. Venda histórica aparece só como comparação.">Janela até Venc.</th>
+                <th onclick="sortTable('risco',6)" title="Pastagem/Agrícola: safra agronômica das águas (ref. CONAB por estado). Nutrição Animal/Vetoquinol: validade/fabricação do lote, com calendário sanitário/de uso como comparação. Venda histórica aparece só como comparação.">Janela até Venc.</th>
                 <th onclick="sortTable('risco',7)">Estoque</th>
                 <th onclick="sortTable('risco',8)">Venda Proj.</th>
                 <th onclick="sortTable('risco',9)">Saldo Risco</th>
@@ -3145,8 +3145,37 @@ const CONAB_SAFRA_ESTADO = {
 // Linhas cujo "tem janela de venda antes de vencer" é regido por SAFRA AGRONÔMICA
 // (águas): Pastagem(2), Agrícola(4), Agrícola Dist.(5), Semente de Pastagem(18).
 const LINHAS_SAFRA_AGRONOMICA = new Set(['2', '4', '5', '18']);
-// Nutrição Animal: regida por validade/fabricação, não por safra.
-const LINHAS_SHELF_LIFE = new Set(['1']);
+// Nutrição Animal e Vetoquinol (saúde animal): regidas por validade/fabricação do lote
+// (prazo de validade do medicamento/suplemento), não por safra agronômica.
+const LINHAS_SHELF_LIFE = new Set(['1', '15']);
+
+// ===== Calendário sanitário/nutricional bovino (referência: site Vetoquinol Brasil,
+// site Agroquima — linha Nutrição Animal própria — e calendários sanitários de bovinos de
+// corte/leite usados no setor — ex.: campanha nacional de vacinação contra Febre Aftosa,
+// vermifugação estratégica trimestral, controle estratégico de carrapato com endectocidas
+// de efeito residual como Altis/Bullmax/Novatack/Contratack/Acura Max) =====
+// Tal como o calendário CONAB, isto é só uma referência de COMPARAÇÃO — indica a janela em
+// que a aplicação do produto é mais usual no manejo do rebanho; não é usado para decidir se o
+// lote "venceu" ou não (isso continua sendo regido pela validade real do lote).
+const CALENDARIO_SANITARIO_BOVINO = [
+  { mes: 4,  evento: '1ª vermifugação estratégica (2ª quinz./abr a 1ª quinz./mai) + Campanha Febre Aftosa (maio)' },
+  { mes: 7,  evento: '2ª vermifugação estratégica (1ª quinz./jul)' },
+  { mes: 8,  evento: '3ª vermifugação estratégica + controle de carrapato no fim das águas (2ª quinz./ago a set)' },
+  { mes: 11, evento: 'Campanha Febre Aftosa — 2ª etapa (novembro, conforme estado)' },
+  { mes: 12, evento: '4ª vermifugação estratégica (1ª quinz./dez)' },
+];
+// Mineral/suplementos da própria linha Nutrição Animal (Fosquima): conforme o site da
+// Agroquima, a indicação de uso é o período das águas (chuvas) — quando o pasto está em
+// crescimento e o sal mineral complementa melhor a dieta a pasto.
+const NUTRICAO_MINERAL_EPOCA = 'Indicação Agroquima: uso no período das águas (chuvas)';
+
+function proximaJanelaSanitaria(mesAtual) {
+  const ordenado = [...CALENDARIO_SANITARIO_BOVINO].sort((a, b) => a.mes - b.mes);
+  const proxima = ordenado.find(e => e.mes >= mesAtual) || ordenado[0];
+  const distancia = ((proxima.mes - mesAtual) + 12) % 12;
+  const mesesNomesLongo = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  return { ...proxima, mesNome: mesesNomesLongo[proxima.mes - 1], distancia };
+}
 
 function estadoDaFilial(sigla) {
   const f = BASE_FILIAIS[sigla];
@@ -3209,8 +3238,22 @@ function janelaSafraInfo(codProduto, sigla, diasVenc, linha, dtFabricacao, dtVen
     else if (pctConsumido >= 0.8) { cls = 'safra-zero'; txt = `Validade ${meses}m — fim do prazo`; }
     else if (pctConsumido >= 0.5) { cls = 'safra-parcial'; txt = `Validade ${meses}m — ${diasVenc}d restantes`; }
     else { cls = 'safra-ok'; txt = `Validade ${meses}m — ${diasVenc}d restantes`; }
+
+    // Nota de comparação (não decide nada): época usual de uso/aplicação no rebanho.
+    let notaUso = '', tituloNota = '';
+    if (linhaStr === '1') {
+      notaUso = 'período das águas (comparação)';
+      tituloNota = `${NUTRICAO_MINERAL_EPOCA} — referência de quando o produto costuma ser mais consumido a pasto; não altera a validade real do lote.`;
+    } else if (linhaStr === '15') {
+      const mesAtual = (APP.dataAuditoria || new Date()).getMonth() + 1;
+      const prox = proximaJanelaSanitaria(mesAtual);
+      notaUso = prox.distancia === 0 ? `janela sanitária: ${prox.mesNome} (agora)` : `próx. janela sanitária: ${prox.mesNome} (em ${prox.distancia}m)`;
+      tituloNota = `Calendário sanitário bovino de referência (vacinação/vermifugação/controle de carrapato — Vetoquinol): ${prox.evento}. É só uma referência de comparação de quando a aplicação costuma ocorrer no manejo do rebanho; não altera a validade real do lote.`;
+    }
+    const tagNota = notaUso ? `<span class="janela-fonte-tag" title="${tituloNota}">${notaUso}</span>` : '';
+
     return {
-      html: `<div class="janela-safra-wrap"><span class="safra-badge ${cls}" title="Produto de Nutrição Animal: avaliado por fabricação/validade do lote (${meses} meses), não por safra agronômica.">${txt}</span><span class="janela-sub">fabricação/validade · não-safra</span></div>`,
+      html: `<div class="janela-safra-wrap"><span class="safra-badge ${cls}" title="Produto de ${linhaStr === '15' ? 'saúde animal (Vetoquinol)' : 'Nutrição Animal'}: avaliado por fabricação/validade do lote (${meses} meses), não por safra agronômica.">${txt}</span><span class="janela-sub">fabricação/validade · não-safra</span>${tagNota}</div>`,
       safrasRestantes: null,
     };
   }
