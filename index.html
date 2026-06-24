@@ -2042,6 +2042,17 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
               <option value="ALERTA">Alerta</option>
               <option value="ATENÇÃO">Atenção</option>
             </select>
+            <select class="select-sm" id="filtro-janela" onchange="filtrarTabela()" title="Filtra pela coluna Janela até Venc. (safra agronômica, validade, ou não aplicável)">
+              <option value="">Janela até Venc.: Todas</option>
+              <option value="sem_safra">Sem safra até vencer</option>
+              <option value="com_safra">Com safra até vencer</option>
+              <option value="vencido">Validade: vencido</option>
+              <option value="validade_fim">Validade: fim do prazo (≥80%)</option>
+              <option value="validade_meio">Validade: meio do prazo (50–80%)</option>
+              <option value="validade_ok">Validade: início do prazo (&lt;50%)</option>
+              <option value="validade_nd">Validade: sem data válida</option>
+              <option value="nao_aplica">Não se aplica</option>
+            </select>
             <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-risco" oninput="filtrarTabela()">
             <button class="btn-limpar" onclick="limparFiltros('risco')"><i class="ti ti-x"></i> Limpar</button>
             <div class="export-dropdown" id="dd-risco">
@@ -3227,17 +3238,17 @@ function janelaSafraInfo(codProduto, sigla, diasVenc, linha, dtFabricacao, dtVen
     const fab = parseDataBR(dtFabricacao);
     const venc = parseDataBR(dtVencimento);
     if (!fab || !venc) {
-      return { html: '<span class="safra-badge safra-neutro" title="Sem data de fabricação válida para calcular validade">validade n/d</span>', safrasRestantes: null };
+      return { html: '<span class="safra-badge safra-neutro" title="Sem data de fabricação válida para calcular validade">validade n/d</span>', safrasRestantes: null, status: 'validade_nd' };
     }
     const validadeTotalDias = Math.round((venc - fab) / 86400000);
     const decorridosDias = Math.max(0, validadeTotalDias - Math.max(0, diasVenc));
     const pctConsumido = validadeTotalDias > 0 ? decorridosDias / validadeTotalDias : 1;
     const meses = Math.round(validadeTotalDias / 30);
-    let cls, txt;
-    if (diasVenc < 0) { cls = 'safra-zero'; txt = 'Vencido'; }
-    else if (pctConsumido >= 0.8) { cls = 'safra-zero'; txt = `Validade ${meses}m — fim do prazo`; }
-    else if (pctConsumido >= 0.5) { cls = 'safra-parcial'; txt = `Validade ${meses}m — ${diasVenc}d restantes`; }
-    else { cls = 'safra-ok'; txt = `Validade ${meses}m — ${diasVenc}d restantes`; }
+    let cls, txt, status;
+    if (diasVenc < 0) { cls = 'safra-zero'; txt = 'Vencido'; status = 'vencido'; }
+    else if (pctConsumido >= 0.8) { cls = 'safra-zero'; txt = `Validade ${meses}m — fim do prazo`; status = 'validade_fim'; }
+    else if (pctConsumido >= 0.5) { cls = 'safra-parcial'; txt = `Validade ${meses}m — ${diasVenc}d restantes`; status = 'validade_meio'; }
+    else { cls = 'safra-ok'; txt = `Validade ${meses}m — ${diasVenc}d restantes`; status = 'validade_ok'; }
 
     // Nota de comparação (não decide nada): época usual de uso/aplicação no rebanho.
     let notaUso = '', tituloNota = '';
@@ -3255,6 +3266,7 @@ function janelaSafraInfo(codProduto, sigla, diasVenc, linha, dtFabricacao, dtVen
     return {
       html: `<div class="janela-safra-wrap"><span class="safra-badge ${cls}" title="Produto de ${linhaStr === '15' ? 'saúde animal (Vetoquinol)' : 'Nutrição Animal'}: avaliado por fabricação/validade do lote (${meses} meses), não por safra agronômica.">${txt}</span><span class="janela-sub">fabricação/validade · não-safra</span>${tagNota}</div>`,
       safrasRestantes: null,
+      status,
     };
   }
 
@@ -3288,11 +3300,12 @@ function janelaSafraInfo(codProduto, sigla, diasVenc, linha, dtFabricacao, dtVen
     return {
       html: `<div class="janela-safra-wrap"><div class="heat-mini-row">${cells}${extra}</div>${label}${fonteTag}</div>`,
       safrasRestantes: blocos,
+      status: blocos === 0 ? 'sem_safra' : 'com_safra',
     };
   }
 
   // ---- Demais linhas: não há régua de safra/validade aplicável ----
-  return { html: '<span class="safra-badge safra-neutro" title="Linha sem régua de safra agronômica ou validade aplicável">não se aplica</span>', safrasRestantes: null };
+  return { html: '<span class="safra-badge safra-neutro" title="Linha sem régua de safra agronômica ou validade aplicável">não se aplica</span>', safrasRestantes: null, status: 'nao_aplica' };
 }
 
 // Recomendação de destinação por linha/fornecedor (regras Agroquima)
@@ -3740,6 +3753,7 @@ function processarDados() {
             nivel,
             janelaSafraHtml: janela.html,
             safrasRestantes: janela.safrasRestantes,
+            janelaStatus: janela.status,
           });
         }
       }
@@ -5103,6 +5117,7 @@ function limparFiltros(tipo) {
   if (tipo === 'risco') {
     document.getElementById('filtro-linha').value = '';
     document.getElementById('filtro-risco').value = '';
+    document.getElementById('filtro-janela').value = '';
     document.getElementById('busca-risco').value = '';
     filtrarTabela();
   } else if (tipo === 'vencidos') {
@@ -6034,13 +6049,15 @@ function popularFiltrosLinha() {
 function filtrarTabela() {
   const linha = document.getElementById('filtro-linha').value;
   const nivel = document.getElementById('filtro-risco').value;
+  const janela = document.getElementById('filtro-janela').value;
   const busca = document.getElementById('busca-risco').value.toLowerCase();
-  
+
   APP.filteredRisco = APP.emRisco.filter(l => {
     const mLinha = !linha || l.linha === linha;
     const mNivel = !nivel || l.nivel === nivel;
+    const mJanela = !janela || l.janelaStatus === janela;
     const mBusca = !busca || l.nomeProduto.toLowerCase().includes(busca) || l.lote.toLowerCase().includes(busca);
-    return mLinha && mNivel && mBusca;
+    return mLinha && mNivel && mJanela && mBusca;
   });
   renderTabelaRisco(1);
 }
