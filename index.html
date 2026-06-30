@@ -3375,6 +3375,8 @@ const APP = {
   checklistExtras: [],   // lotes adicionados manualmente ao checklist (além dos que o sistema traz)
   checklistExcluidos: [], // lotes auto-adicionados que o auditor optou por remover
   checklistObs: {},      // observações por item { 'codProduto|lote': 'texto' }
+  checklistLinhasExcluidas: [], // linhas inteiras que o auditor optou por tirar do checklist
+  checklistLinhasForcadas: [],  // linhas inteiras adicionadas por completo (todos os lotes em risco, não só top 5)
 };
 
 // ===== CFOP: dois eixos distintos — VENDA (sazonalidade) x MOVIMENTAÇÃO de estoque =====
@@ -3692,6 +3694,8 @@ function processarDados() {
       APP.checklistExtras = [];
       APP.checklistExcluidos = [];
       APP.checklistObs = {};
+      APP.checklistLinhasExcluidas = [];
+      APP.checklistLinhasForcadas = [];
 
       // Meses futuros contados a partir de hoje
       for (const lote of APP.lotes) {
@@ -4559,10 +4563,44 @@ function renderChecklistCorrecoes() {
   return `<div style="display:flex;align-items:center;gap:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;">
     <i class="ti ti-bug" style="color:#ef4444;font-size:16px;flex-shrink:0;"></i>
     <span style="font-size:12px;color:#fca5a5;flex:1;"><strong>${itens.length} inconsistência${itens.length>1?'s':''}</strong> de dados encontrada${itens.length>1?'s':''} para esta filial — ${graves} grave${graves!==1?'s':''}.</span>
+    <button class="btn-sm" onclick="adicionarInconsistenciasChecklist()" title="Adiciona estes lotes à Folha de Contagem para conferência física do que foi identificado como inconsistência" style="background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.4);color:#fca5a5;white-space:nowrap;flex-shrink:0;">
+      <i class="ti ti-clipboard-list"></i> Add. ao checklist
+    </button>
     <button class="btn-sm" onclick="showTab('cacaerros')" style="background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.4);color:#fca5a5;white-space:nowrap;flex-shrink:0;">
       <i class="ti ti-arrow-right"></i> Ver Caça-Erros
     </button>
   </div>`;
+}
+
+// Pega as inconsistências do Caça-Erros relevantes para a filial em auditoria e
+// joga os lotes correspondentes no checklist (como extras), com a observação já
+// preenchida com o motivo da inconsistência, para o auditor ir conferir in loco.
+function adicionarInconsistenciasChecklist() {
+  const sig = APP.sigla;
+  const itens = (APP.cacaErros || []).filter(f => f.filiais.includes(sig));
+  if (!itens.length) return;
+  APP.checklistExtras = APP.checklistExtras || [];
+  APP.checklistObs = APP.checklistObs || {};
+  let adicionados = 0;
+  for (const f of itens) {
+    const lt = APP.lotes.find(l => String(l.codProduto) === String(f.codProduto) && String(l.lote).trim() === String(f.lote).trim());
+    if (!lt) continue; // inconsistência não bate com lote desta filial (ex: só em outra loja)
+    const risco = APP.emRisco.find(l => String(l.codProduto) === String(f.codProduto) && String(l.lote).trim() === String(f.lote).trim());
+    const base = risco || lt;
+    const key = base.codProduto + '|' + String(base.lote).trim();
+    if (!APP.checklistExtras.some(e => String(e.codProduto) === String(f.codProduto) && String(e.lote).trim() === String(f.lote).trim())) {
+      APP.checklistExtras.push({ ...base, nivel: base.nivel || 'MANUAL' });
+      adicionados++;
+    }
+    if (!APP.checklistObs[key]) APP.checklistObs[key] = `Caça-Erros: ${f.catLabel} — ${f.titulo}`;
+  }
+  renderChecklist();
+  renderTabelaRisco(APP.pages.risco);
+  const msg = adicionados
+    ? `${adicionados} lote${adicionados>1?'s':''} de inconsistência adicionado${adicionados>1?'s':''} ao checklist`
+    : 'Nenhum lote novo para adicionar (já estão no checklist ou não encontrados nesta filial)';
+  const t = document.getElementById('toast');
+  if (t) { t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
 }
 
 // Metadados das rotas de destinação (ordem, cor, rótulo executivo)
@@ -4701,8 +4739,15 @@ function renderChecklist() {
   const correcoesWrap = document.getElementById('checklist-correcoes-wrap');
   if (correcoesWrap) correcoesWrap.innerHTML = renderChecklistCorrecoes();
 
+  const linhasExcluidasArr = APP.checklistLinhasExcluidas || [];
+  const bannerExcluidas = linhasExcluidasArr.length ? `
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:rgba(255,255,255,0.04); border:1px solid var(--borda); border-radius:8px; padding:8px 12px; margin-bottom:12px;">
+      <span style="font-size:11px; color:var(--texto-muted);"><i class="ti ti-eye-off"></i> Linhas excluídas do checklist:</span>
+      ${linhasExcluidasArr.map(l => `<span class="prod-extra-tag" style="display:inline-flex; align-items:center; gap:4px;">${getNomeLinha(l)} <i class="ti ti-x" style="cursor:pointer;" title="Restaurar linha" onclick="restaurarLinhaChecklist('${String(l).replace(/'/g,"\\'")}')"></i></span>`).join('')}
+    </div>` : '';
+
   if (Object.keys(sel).length === 0) {
-    container.innerHTML = '<div class="empty"><i class="ti ti-circle-check"></i><p>Nenhum lote de risco encontrado para gerar checklist</p><p style="font-size:11px;margin-top:4px;">Use a busca acima para adicionar lotes manualmente.</p></div>';
+    container.innerHTML = bannerExcluidas + '<div class="empty"><i class="ti ti-circle-check"></i><p>Nenhum lote de risco encontrado para gerar checklist</p><p style="font-size:11px;margin-top:4px;">Use a busca acima para adicionar lotes manualmente.</p></div>';
     return;
   }
 
@@ -4713,14 +4758,21 @@ function renderChecklist() {
     return mb - ma;
   });
 
-  container.innerHTML = linhasOrdenadas.map(([linha, produtos]) => {
+  container.innerHTML = bannerExcluidas + linhasOrdenadas.map(([linha, produtos]) => {
     const totalLotes = produtos.reduce((s, p) => s + p.lotes.length, 0);
+    const forcada = (APP.checklistLinhasForcadas || []).includes(linha);
     let n = 0;
     return `
     <div class="checklist-card">
       <div class="checklist-header">
         <div class="checklist-linha"><i class="ti ti-layers-intersect" style="margin-right:6px; opacity:0.6;"></i>${getNomeLinha(linha)}</div>
         <div class="checklist-count">${produtos.length} produto${produtos.length>1?'s':''} · ${totalLotes} lote${totalLotes>1?'s':''}</div>
+        <div style="display:flex; gap:6px; margin-left:auto;">
+          ${forcada
+            ? `<button class="btn-sm" title="Voltar a usar a seleção automática (top 5) para esta linha" onclick="desforcarLinhaChecklist('${linha.replace(/'/g,"\\'")}')"><i class="ti ti-list-numbers"></i> Top 5</button>`
+            : `<button class="btn-sm" title="Incluir todos os lotes em risco desta linha, não só os top 5" onclick="forcarLinhaChecklist('${linha.replace(/'/g,"\\'")}')"><i class="ti ti-list-details"></i> Linha inteira</button>`}
+          <button class="btn-sm" title="Excluir esta linha inteira do checklist" onclick="excluirLinhaChecklist('${linha.replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Excluir linha</button>
+        </div>
       </div>
       ${produtos.map(p => `
         <div class="checklist-produto">
@@ -4773,6 +4825,33 @@ function removerLoteChecklist(cod, lote, isExtra) {
   renderTabelaRisco(APP.pages.risco);
 }
 
+function excluirLinhaChecklist(linha) {
+  APP.checklistLinhasExcluidas = APP.checklistLinhasExcluidas || [];
+  if (!APP.checklistLinhasExcluidas.includes(linha)) APP.checklistLinhasExcluidas.push(linha);
+  APP.checklistLinhasForcadas = (APP.checklistLinhasForcadas || []).filter(l => l !== linha);
+  renderChecklist();
+  renderTabelaRisco(APP.pages.risco);
+}
+
+function restaurarLinhaChecklist(linha) {
+  APP.checklistLinhasExcluidas = (APP.checklistLinhasExcluidas || []).filter(l => l !== linha);
+  renderChecklist();
+  renderTabelaRisco(APP.pages.risco);
+}
+
+function forcarLinhaChecklist(linha) {
+  APP.checklistLinhasForcadas = APP.checklistLinhasForcadas || [];
+  if (!APP.checklistLinhasForcadas.includes(linha)) APP.checklistLinhasForcadas.push(linha);
+  renderChecklist();
+  renderTabelaRisco(APP.pages.risco);
+}
+
+function desforcarLinhaChecklist(linha) {
+  APP.checklistLinhasForcadas = (APP.checklistLinhasForcadas || []).filter(l => l !== linha);
+  renderChecklist();
+  renderTabelaRisco(APP.pages.risco);
+}
+
 // ---- Busca + adicionar lotes ao checklist ----
 function buscarLotesChecklist() {
   const termo = (document.getElementById('busca-checklist')?.value || '').toLowerCase().trim();
@@ -4820,12 +4899,10 @@ function adicionarLoteChecklist(cod, lote) {
   if (!APP.checklistExtras.some(e => String(e.codProduto) === String(cod) && String(e.lote).trim() === String(lote).trim())) {
     APP.checklistExtras.push({ ...base, nivel: base.nivel || 'MANUAL' });
   }
-  const inp = document.getElementById('busca-checklist');
-  if (inp) inp.value = '';
-  const box = document.getElementById('checklist-busca-resultados');
-  if (box) { box.classList.remove('open'); box.innerHTML = ''; }
   renderChecklist();
   renderTabelaRisco(APP.pages.risco);
+  // Mantém a busca aberta para permitir adicionar vários lotes em sequência
+  buscarLotesChecklist();
 }
 
 function renderPrincipioAtivo() {
@@ -5943,9 +6020,13 @@ function getChecklistSelecao() {
   }
 
   const excluidos = new Set((APP.checklistExcluidos || []).map(e => e.codProduto + '|' + String(e.lote).trim()));
+  const linhasExcluidas = new Set(APP.checklistLinhasExcluidas || []);
+  const linhasForcadas = new Set(APP.checklistLinhasForcadas || []);
   const MIN_ITENS = 5;
   const resultado = {};
   for (const [linha, produtos] of Object.entries(porLinha)) {
+    if (linhasExcluidas.has(linha)) continue;
+    const forcada = linhasForcadas.has(linha);
     const todosProdutos = Object.entries(produtos).map(([cod, lotes]) => ({
       cod,
       nome: lotes[0].nomeProduto,
@@ -5954,45 +6035,59 @@ function getChecklistSelecao() {
     })).filter(p => p.lotesDisp.length > 0);
     todosProdutos.sort((a, b) => b.maxScore - a.maxScore);
 
-    // Passo 1: preferencialmente 1 lote (o mais crítico) de até 5 produtos distintos
     const escolhidos = []; // { cod, nome, lote }
     const usados = new Set();
-    for (const p of todosProdutos) {
-      if (escolhidos.length >= MIN_ITENS) break;
-      const lote = p.lotesDisp[0];
-      escolhidos.push({ cod: p.cod, nome: p.nome, lote });
-      usados.add(lote.codProduto + '|' + String(lote.lote).trim());
-    }
 
-    // Passo 2: se a linha não tem 5 produtos distintos em risco, completa com
-    // lotes extras (do mesmo produto ou de outro, ainda em risco) por ordem de score
-    if (escolhidos.length < MIN_ITENS) {
-      const poolExtra = [];
+    if (forcada) {
+      // Linha forçada: inclui TODOS os lotes em risco de TODOS os produtos da linha
       for (const p of todosProdutos) {
         for (const lote of p.lotesDisp) {
           const key = lote.codProduto + '|' + String(lote.lote).trim();
-          if (!usados.has(key)) poolExtra.push({ cod: p.cod, nome: p.nome, lote });
+          if (!usados.has(key)) {
+            escolhidos.push({ cod: p.cod, nome: p.nome, lote });
+            usados.add(key);
+          }
         }
       }
-      poolExtra.sort((a, b) => b.lote.score - a.lote.score);
-      for (const item of poolExtra) {
+    } else {
+      // Passo 1: preferencialmente 1 lote (o mais crítico) de até 5 produtos distintos
+      for (const p of todosProdutos) {
         if (escolhidos.length >= MIN_ITENS) break;
-        escolhidos.push(item);
-        usados.add(item.lote.codProduto + '|' + String(item.lote.lote).trim());
+        const lote = p.lotesDisp[0];
+        escolhidos.push({ cod: p.cod, nome: p.nome, lote });
+        usados.add(lote.codProduto + '|' + String(lote.lote).trim());
       }
-    }
 
-    // Passo 3: se a linha não tem nem 5 lotes em risco, completa com os demais
-    // lotes da linha (fora de risco), priorizando os que vencem mais perto
-    if (escolhidos.length < MIN_ITENS) {
-      const poolGeral = (APP.lotes || [])
-        .filter(l => l.linha === linha && !excluidos.has(l.codProduto + '|' + String(l.lote).trim()) && !usados.has(l.codProduto + '|' + String(l.lote).trim()))
-        .sort((a, b) => a.diasVencimento - b.diasVencimento);
-      for (const lote of poolGeral) {
-        if (escolhidos.length >= MIN_ITENS) break;
-        const key = lote.codProduto + '|' + String(lote.lote).trim();
-        escolhidos.push({ cod: lote.codProduto, nome: lote.nomeProduto, lote: { ...lote, nivel: lote.nivel || 'OK', score: lote.score || 0 } });
-        usados.add(key);
+      // Passo 2: se a linha não tem 5 produtos distintos em risco, completa com
+      // lotes extras (do mesmo produto ou de outro, ainda em risco) por ordem de score
+      if (escolhidos.length < MIN_ITENS) {
+        const poolExtra = [];
+        for (const p of todosProdutos) {
+          for (const lote of p.lotesDisp) {
+            const key = lote.codProduto + '|' + String(lote.lote).trim();
+            if (!usados.has(key)) poolExtra.push({ cod: p.cod, nome: p.nome, lote });
+          }
+        }
+        poolExtra.sort((a, b) => b.lote.score - a.lote.score);
+        for (const item of poolExtra) {
+          if (escolhidos.length >= MIN_ITENS) break;
+          escolhidos.push(item);
+          usados.add(item.lote.codProduto + '|' + String(item.lote.lote).trim());
+        }
+      }
+
+      // Passo 3: se a linha não tem nem 5 lotes em risco, completa com os demais
+      // lotes da linha (fora de risco), priorizando os que vencem mais perto
+      if (escolhidos.length < MIN_ITENS) {
+        const poolGeral = (APP.lotes || [])
+          .filter(l => l.linha === linha && !excluidos.has(l.codProduto + '|' + String(l.lote).trim()) && !usados.has(l.codProduto + '|' + String(l.lote).trim()))
+          .sort((a, b) => a.diasVencimento - b.diasVencimento);
+        for (const lote of poolGeral) {
+          if (escolhidos.length >= MIN_ITENS) break;
+          const key = lote.codProduto + '|' + String(lote.lote).trim();
+          escolhidos.push({ cod: lote.codProduto, nome: lote.nomeProduto, lote: { ...lote, nivel: lote.nivel || 'OK', score: lote.score || 0 } });
+          usados.add(key);
+        }
       }
     }
 
@@ -6012,6 +6107,7 @@ function getChecklistSelecao() {
 
   // Incorpora lotes adicionados manualmente (sempre incluídos, mesmo fora dos top 5)
   for (const ex of (APP.checklistExtras || [])) {
+    if (linhasExcluidas.has(ex.linha)) continue;
     if (!resultado[ex.linha]) resultado[ex.linha] = [];
     let prod = resultado[ex.linha].find(p => p.cod === ex.codProduto);
     if (!prod) {
