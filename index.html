@@ -6623,12 +6623,12 @@ function normalizarFilialArq(sigla, loja) {
 }
 
 // Botão Registrar: vai direto ao registro (faturamento é gerenciado no Ranking Geral)
-function _gravarRegistroVencidos() {
+function _gravarRegistroVencidos(override = {}) {
   const filialNome = lojaNome(APP.sigla) || '—';
   const gerente = APP.lotes[0]?.gerente || '—';
-  const totalVencidos = APP.vencidos.length;
-  const valorVencidos = APP.vencidos.reduce((s, l) => s + l.vlrCustoTotal, 0);
-  const semGiroProd = new Set(APP.semGiro.map(l => l.codProduto)).size;
+  const totalVencidos = override.totalVencidos !== undefined ? override.totalVencidos : APP.vencidos.length;
+  const valorVencidos = override.valorVencidos !== undefined ? override.valorVencidos : APP.vencidos.reduce((s, l) => s + l.vlrCustoTotal, 0);
+  const semGiroProd = override.semGiroProd !== undefined ? override.semGiroProd : new Set(APP.semGiro.map(l => l.codProduto)).size;
   const faturamento = null; // Faturamento gerenciado no Ranking Geral
   const pctVencFat = null;
   const scoreVenc = null; // Calculado no Ranking após importar faturamento
@@ -8541,13 +8541,20 @@ function registrarAuditoriaUnificada() {
   let _canConf=0, _canAss=0, _canPend=0;
   cv.forEach(v=>{ _canConf+=v.ass+v.pend; _canAss+=v.ass; _canPend+=v.pend; });
 
+  // Valores automáticos de vencidos
+  const _totalVencidos = APP.vencidos.length;
+  const _valorVencidos = APP.vencidos.reduce((s, l) => s + l.vlrCustoTotal, 0);
+  const _semGiroProd = new Set(APP.semGiro.map(l => l.codProduto)).size;
+
   // Guarda no modal para referência e limpa campos
-  window._ajusteAutoVals = { pedConf:_pedConf, pedAss:_pedAss, pedPend:_pedPend, canConf:_canConf, canAss:_canAss, canPend:_canPend };
-  ['pedConf','pedAss','pedPend','canConf','canAss','canPend'].forEach(k => {
+  window._ajusteAutoVals = { pedConf:_pedConf, pedAss:_pedAss, pedPend:_pedPend, canConf:_canConf, canAss:_canAss, canPend:_canPend, totalVencidos:_totalVencidos, valorVencidos:_valorVencidos, semGiroProd:_semGiroProd };
+  const camposPed = ['pedConf','pedAss','pedPend','canConf','canAss','canPend'];
+  const camposVenc = { totalVencidos: _totalVencidos, valorVencidos: _valorVencidos.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}), semGiroProd: _semGiroProd };
+  [...camposPed, 'totalVencidos','valorVencidos','semGiroProd'].forEach(k => {
     const el = document.getElementById('ajp-' + k);
     if (el) el.value = '';
     const lbl = document.getElementById('ajp-auto-' + k);
-    if (lbl) lbl.textContent = 'Sistema: ' + window._ajusteAutoVals[k];
+    if (lbl) lbl.textContent = 'Sistema: ' + (camposVenc[k] !== undefined ? camposVenc[k] : window._ajusteAutoVals[k]);
   });
   ajusteRecalcScore();
   document.getElementById('modal-ajuste-ped').style.display = 'flex';
@@ -8574,14 +8581,18 @@ function ajusteRecalcScore() {
 }
 
 function confirmarAjusteRegistro() {
-  const auto = window._ajusteAutoVals || {};
-  const val = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseInt(el.value) : null; return v !== null && !isNaN(v) ? v : null; };
-  const override = {};
-  ['pedConf','pedAss','pedPend','canConf','canAss','canPend'].forEach(k => { const v = val(k); if (v !== null) override[k] = v; });
+  const valInt = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseInt(el.value) : null; return v !== null && !isNaN(v) ? v : null; };
+  const valFloat = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseFloat(el.value) : null; return v !== null && !isNaN(v) ? v : null; };
+  const overridePed = {};
+  ['pedConf','pedAss','pedPend','canConf','canAss','canPend'].forEach(k => { const v = valInt(k); if (v !== null) overridePed[k] = v; });
+  const overrideVenc = {};
+  const tv = valInt('totalVencidos'); if (tv !== null) overrideVenc.totalVencidos = tv;
+  const vv = valFloat('valorVencidos'); if (vv !== null) overrideVenc.valorVencidos = vv;
+  const sg = valInt('semGiroProd'); if (sg !== null) overrideVenc.semGiroProd = sg;
   document.getElementById('modal-ajuste-ped').style.display = 'none';
 
-  _gravarRegistroVencidos();
-  _gravarRegistroPedidos(override);
+  _gravarRegistroVencidos(overrideVenc);
+  _gravarRegistroPedidos(overridePed);
 
   document.querySelectorAll('.btn-reg-unificado').forEach(btn => {
     if (!btn.dataset.orig) btn.dataset.orig = btn.innerHTML;
@@ -8686,7 +8697,7 @@ function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTr
       </div>
 
       <!-- Grid de campos -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 24px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px 20px;">
 
         <!-- PEDIDOS -->
         <div>
@@ -8733,6 +8744,31 @@ function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTr
               Pendentes
               <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-canPend"></div>
               <input id="ajp-canPend" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+          </div>
+        </div>
+
+        <!-- VENCIDOS -->
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid rgba(248,113,113,.2);">⚠ Vencidos</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Total de lotes vencidos
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-totalVencidos"></div>
+              <input id="ajp-totalVencidos" type="number" min="0" placeholder="auto"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Valor vencidos (R$)
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-valorVencidos"></div>
+              <input id="ajp-valorVencidos" type="number" min="0" step="0.01" placeholder="auto"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Produtos sem giro
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-semGiroProd"></div>
+              <input id="ajp-semGiroProd" type="number" min="0" placeholder="auto"
                 style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
             </label>
           </div>
