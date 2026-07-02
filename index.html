@@ -2497,14 +2497,8 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
       <div style="font-size:13px;font-weight:800;color:#8ecfaa;letter-spacing:.3px;">🗂 Histórico de Auditorias de Vencidos</div>
       <div style="font-size:11px;color:rgba(142,207,170,.6);margin-top:2px;">Uso exclusivo da Auditoria Interna</div>
     </div>
-    <button class="btn-hist primary btn-reg-unificado" onclick="registrarAuditoriaUnificada()" title="Registra a auditoria atual (lotes + pedidos/canhoto) no histórico unificado">
-      ✚ Registrar Auditoria
-    </button>
-    <button class="btn-hist discreto" onclick="expHistoricoVencXLS()" title="Exporta o acumulador de vencidos para Excel (.xlsx)">📥 .xlsx</button>
-    <button class="btn-hist discreto" onclick="exportarHistoricoUnificado()" title="Exporta o histórico unificado (vencidos + pedidos) como um único arquivo .json">💾 Salvar (.json)</button>
-    <button class="btn-hist discreto" onclick="importarHistoricoUnificado()" title="Carrega um histórico unificado (.json) exportado anteriormente">📂 Carregar</button>
-    <button class="btn-hist discreto danger" onclick="limparHistoricoUnificado()" title="Remove todo o histórico unificado (vencidos + pedidos) desta sessão">🗑</button>
-    <input type="file" id="inp-hist-unif" accept=".json" style="display:none;" onchange="lerArquivoHistUnificado(this)">
+    <button class="btn-hist discreto" onclick="expHistoricoVencXLS()" title="Exporta o acumulador de vencidos para Excel (.xlsx)">📥 .xlsx vencidos</button>
+    <span style="font-size:11px;color:rgba(142,207,170,.5);">Para registrar, salvar ou carregar, use a aba <strong style="color:#8ecfaa;">Histórico</strong> no painel de Pedidos/Canhoto.</span>
   </div>
 
   <!-- Aviso sem auditoria -->
@@ -8298,7 +8292,7 @@ function PED_calcScore(d) {
   return Math.round((sSem + sPed + sVenc + sCan) * 100) / 100;
 }
 
-function _gravarRegistroPedidos() {
+function _gravarRegistroPedidos(override = {}) {
   // Coletar dados da auditoria atual
   const fi = APP_PED.fi || {};
   const pv = PED_agPedidosVend();
@@ -8309,6 +8303,14 @@ function _gravarRegistroPedidos() {
   pv.forEach(v=>{ pedConf+=v.ass+v.pend; pedAss+=v.ass; pedPend+=v.pend; });
   let canConf=0, canAss=0, canPend=0;
   cv.forEach(v=>{ canConf+=v.ass+v.pend; canAss+=v.ass; canPend+=v.pend; });
+
+  // Aplica ajustes manuais se fornecidos (override parcial ou total)
+  if (override.pedConf !== undefined) pedConf = override.pedConf;
+  if (override.pedAss  !== undefined) pedAss  = override.pedAss;
+  if (override.pedPend !== undefined) pedPend = override.pedPend;
+  if (override.canConf !== undefined) canConf = override.canConf;
+  if (override.canAss  !== undefined) canAss  = override.canAss;
+  if (override.canPend !== undefined) canPend = override.canPend;
 
   const pctPed = pedConf > 0 ? parseFloat((pedAss/pedConf*100).toFixed(2)) : 0;
   const pctCan = canConf > 0 ? parseFloat((canAss/canConf*100).toFixed(2)) : 0;
@@ -8531,8 +8533,55 @@ function registrarAuditoriaUnificada() {
   }
   document.querySelectorAll('.aviso-aud-unif').forEach(el => el.style.display = 'none');
 
+  // Calcula os valores automáticos do sistema
+  const pv = PED_agPedidosVend();
+  const cv = PED_agCanVend();
+  let _pedConf=0, _pedAss=0, _pedPend=0;
+  pv.forEach(v=>{ _pedConf+=v.ass+v.pend; _pedAss+=v.ass; _pedPend+=v.pend; });
+  let _canConf=0, _canAss=0, _canPend=0;
+  cv.forEach(v=>{ _canConf+=v.ass+v.pend; _canAss+=v.ass; _canPend+=v.pend; });
+
+  // Guarda no modal para referência e limpa campos
+  window._ajusteAutoVals = { pedConf:_pedConf, pedAss:_pedAss, pedPend:_pedPend, canConf:_canConf, canAss:_canAss, canPend:_canPend };
+  ['pedConf','pedAss','pedPend','canConf','canAss','canPend'].forEach(k => {
+    const el = document.getElementById('ajp-' + k);
+    if (el) el.value = '';
+    const lbl = document.getElementById('ajp-auto-' + k);
+    if (lbl) lbl.textContent = 'Sistema: ' + window._ajusteAutoVals[k];
+  });
+  ajusteRecalcScore();
+  document.getElementById('modal-ajuste-ped').style.display = 'flex';
+}
+
+function ajusteRecalcScore() {
+  const auto = window._ajusteAutoVals || {};
+  const val = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseInt(el.value) : null; return v !== null && !isNaN(v) ? v : (auto[k] || 0); };
+  const pedConf = val('pedConf'), pedAss = val('pedAss'), pedPend = val('pedPend');
+  const canConf = val('canConf'), canAss = val('canAss'), canPend = val('canPend');
+  const pctPed = pedConf > 0 ? parseFloat((pedAss/pedConf*100).toFixed(2)) : 0;
+  const pctCan = canConf > 0 ? parseFloat((canAss/canConf*100).toFixed(2)) : 0;
+  const semPend = (PED_agRiscoSementes ? PED_agRiscoSementes() : { itens: [] }).itens.length;
+  const sSem = semPend === 0 ? 40 : 0;
+  const sPed = pedConf > 0 ? Math.min(pctPed / 95, 1) * 30 : 0;
+  const sVenc = 20;
+  const sCan = canConf > 0 ? Math.min(pctCan / 95, 1) * 10 : 0;
+  const score = Math.round((sSem + sPed + sVenc + sCan) * 100) / 100;
+  const cls = score >= 90 ? '#5fd4a0' : score >= 70 ? '#fbbf24' : '#f87171';
+  const prev = document.getElementById('ajp-score-preview');
+  if (prev) { prev.textContent = score.toFixed(2); prev.style.color = cls; }
+  const det = document.getElementById('ajp-score-detalhe');
+  if (det) det.innerHTML = `Sementes: ${sSem.toFixed(0)}/40 · Pedidos: ${sPed.toFixed(2)}/30<br>Vencidos: ${sVenc}/20 · Canhotos: ${sCan.toFixed(2)}/10<br>%Ped: ${pctPed}% · %Can: ${pctCan}%`;
+}
+
+function confirmarAjusteRegistro() {
+  const auto = window._ajusteAutoVals || {};
+  const val = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseInt(el.value) : null; return v !== null && !isNaN(v) ? v : null; };
+  const override = {};
+  ['pedConf','pedAss','pedPend','canConf','canAss','canPend'].forEach(k => { const v = val(k); if (v !== null) override[k] = v; });
+  document.getElementById('modal-ajuste-ped').style.display = 'none';
+
   _gravarRegistroVencidos();
-  _gravarRegistroPedidos();
+  _gravarRegistroPedidos(override);
 
   document.querySelectorAll('.btn-reg-unificado').forEach(btn => {
     if (!btn.dataset.orig) btn.dataset.orig = btn.innerHTML;
@@ -8620,6 +8669,96 @@ function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTr
 
 
 </script>
+
+<!-- Modal de ajuste manual de pedidos/canhoto antes de registrar -->
+<div id="modal-ajuste-ped" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:600; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--azul-navy,#0f2040); border:1px solid var(--borda,#1e3a5f); border-radius:12px; width:100%; max-width:560px; box-shadow:0 24px 60px rgba(0,0,0,.6); font-family:inherit;">
+    <div style="padding:18px 24px; border-bottom:1px solid var(--borda,#1e3a5f); display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <div style="font-size:15px; font-weight:700; color:#fff;">✚ Registrar Auditoria</div>
+        <div style="font-size:11px; color:var(--texto-muted,#6b8fbc); margin-top:2px;">Valores pré-preenchidos pelo sistema. Ajuste apenas o que estiver incorreto.</div>
+      </div>
+      <button onclick="document.getElementById('modal-ajuste-ped').style.display='none'" style="background:none;border:none;color:#6b8fbc;font-size:20px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div style="padding:20px 24px;">
+      <div style="background:rgba(224,167,58,.1); border:1px solid rgba(224,167,58,.35); border-radius:8px; padding:9px 14px; font-size:11.5px; color:#c8941a; margin-bottom:18px; line-height:1.5;">
+        ⚠ <strong>Ajuste temporário:</strong> preencha os campos manualmente apenas se os dados do sistema Intra estiverem incompletos. Deixe em branco para usar o cálculo automático.
+      </div>
+
+      <!-- Grid de campos -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 24px;">
+
+        <!-- PEDIDOS -->
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#5fd4a0; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid rgba(95,212,160,.2);">📋 Pedidos</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Conferidos (total)
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-pedConf"></div>
+              <input id="ajp-pedConf" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Assinados
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-pedAss"></div>
+              <input id="ajp-pedAss" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Pendentes
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-pedPend"></div>
+              <input id="ajp-pedPend" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+          </div>
+        </div>
+
+        <!-- CANHOTOS -->
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#60a5fa; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid rgba(96,165,250,.2);">🗂 Canhotos</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Conferidos (total)
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-canConf"></div>
+              <input id="ajp-canConf" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Assinados
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-canAss"></div>
+              <input id="ajp-canAss" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+            <label style="font-size:11.5px; color:#8ba8c8;">
+              Pendentes
+              <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-canPend"></div>
+              <input id="ajp-canPend" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+                style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview do score -->
+      <div style="margin-top:18px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <div style="font-size:11.5px; color:#6b8fbc; flex:1;">Score resultante:</div>
+        <div id="ajp-score-preview" style="font-size:22px; font-weight:800; color:#5fd4a0;">—</div>
+        <div id="ajp-score-detalhe" style="font-size:10.5px; color:#4a6a8a; line-height:1.6;"></div>
+      </div>
+    </div>
+
+    <div style="padding:14px 24px; border-top:1px solid var(--borda,#1e3a5f); display:flex; justify-content:flex-end; gap:10px;">
+      <button onclick="document.getElementById('modal-ajuste-ped').style.display='none'"
+        style="padding:9px 18px; border-radius:7px; border:1px solid #1e3a5f; background:transparent; color:#8ba8c8; font-size:13px; font-weight:600; cursor:pointer;">
+        Cancelar
+      </button>
+      <button onclick="confirmarAjusteRegistro()"
+        style="padding:9px 20px; border-radius:7px; border:none; background:linear-gradient(135deg,#14693a,#1e9952); color:#fff; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(20,105,58,.4);">
+        ✔ Confirmar e Registrar
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
