@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Auditoria — Agroquima</title>
+<script>
+  // Inicializa o tema antes de renderizar para evitar flash
+  (function() {
+    var stored = localStorage.getItem('agroquima-theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = stored || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -553,10 +562,10 @@
     white-space: nowrap;
   }
 
-  .badge.critico { background: var(--vermelho-soft); color: #991b1b; }
-  .badge.alerta { background: var(--laranja-soft); color: #92400e; }
+  .badge.critico { background: var(--vermelho-soft); color: var(--red-dk); }
+  .badge.alerta { background: var(--laranja-soft); color: var(--amber-dk); }
   .badge.atencao { background: var(--amarelo-soft); color: var(--amarelo); }
-  .badge.ok { background: var(--verde-soft); color: #166534; }
+  .badge.ok { background: var(--verde-soft); color: var(--green-dk); }
   .badge.vencido { background: #3f0000; color: #fca5a5; }
 
   .score-bar {
@@ -958,6 +967,7 @@
   }
   .sit-dead { background: rgba(220,38,38,0.18); color: #f87171; border: 1px solid rgba(220,38,38,0.4); }
   .sit-local { background: rgba(245,158,11,0.16); color: #fbbf24; border: 1px solid rgba(245,158,11,0.38); }
+  .sit-sem-dados { background: rgba(100,116,139,0.18); color: #94a3b8; border: 1px solid rgba(100,116,139,0.35); }
 
   .rota-pill {
     display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 9px;
@@ -1868,6 +1878,156 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
 }
 #mod-lotes,#mod-pedidos{min-height:100vh;width:100%;min-width:0;}
 
+  /* ===== TEMA CLARO/ESCURO ===== */
+  /* Botão de tema */
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    background: var(--azul-medio);
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+    color: var(--texto-muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .theme-toggle-btn:hover {
+    background: var(--azul-royal);
+    border-color: var(--azul-vivo);
+    color: white;
+  }
+  .theme-toggle-btn i { font-size: 14px; }
+
+  /* Tema escuro: variáveis já definidas no :root acima */
+  /* Tema claro */
+  html[data-theme="light"] {
+    --bg:       #f0f4f8;
+    --bg2:      #ffffff;
+    --bg3:      #e8eef5;
+    --text:     #1e293b;
+    --text2:    #475569;
+    --text3:    #94a3b8;
+    --border:   #e2e8f0;
+    --border-2: #cbd5e1;
+    --brand:    #1d4ed8;
+    --brand2:   #2563eb;
+    --brand-lt: #dbeafe;
+    --brand-dk: #1e40af;
+    --brand-glow: rgba(37,99,235,.15);
+    --red:      #dc2626;
+    --red-lt:   #fee2e2;
+    --red-dk:   #991b1b;
+    --green:    #16a34a;
+    --green-lt: #dcfce7;
+    --green-dk: #166534;
+    --amber:    #d97706;
+    --amber-lt: #fef3c7;
+    --amber-dk: #92400e;
+    --r:        10px;
+    --r-sm:     6px;
+    --r-lg:     14px;
+    --sh:       0 1px 3px rgba(0,0,0,.1);
+    --sh-md:    0 6px 18px rgba(0,0,0,.12);
+    --sh-lg:    0 12px 32px rgba(0,0,0,.16);
+    /* aliases */
+    --azul-escuro:   #f0f4f8;
+    --azul-navy:     #ffffff;
+    --azul-medio:    #e8eef5;
+    --azul-royal:    #1d4ed8;
+    --azul-vivo:     #1d4ed8;
+    --azul-claro:    #2563eb;
+    --vermelho:      #dc2626;
+    --vermelho-soft: #fee2e2;
+    --laranja:       #d97706;
+    --laranja-soft:  #fef3c7;
+    --verde:         #16a34a;
+    --verde-soft:    #dcfce7;
+    --branco:        #1e293b;
+    --texto:         #1e293b;
+    --texto-muted:   #475569;
+    --borda:         #e2e8f0;
+    --card-bg:       #ffffff;
+    --card-hover:    #f1f5f9;
+    /* Pedidos module aliases */
+    --az1: #f0f4f8;
+    --az2: #ffffff;
+    --az3: #1d4ed8;
+    --az4: #2563eb;
+    --az5: #dbeafe;
+    --az6: #e8eef5;
+    --gray: #64748b;
+    --gray-lt: #f1f5f9;
+    --vbg: #dcfce7;
+    --vbd: #16a34a;
+    --abg: #fef3c7;
+    --abd: #d97706;
+    --rbg: #fee2e2;
+    --rbd: #dc2626;
+    --c2: #e2e8f0;
+    --c3: #94a3b8;
+    --c4: #475569;
+  }
+
+  html[data-theme="light"] body { background: #f0f4f8; color: #1e293b; }
+
+  /* Scrollbar no tema claro */
+  html[data-theme="light"] ::-webkit-scrollbar-track { background: #f0f4f8; }
+  html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+  html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
+
+  /* Badges no tema claro */
+  html[data-theme="light"] .badge.critico { background: #fee2e2; color: #991b1b; }
+  html[data-theme="light"] .badge.alerta  { background: #fef3c7; color: #92400e; }
+  html[data-theme="light"] .badge.ok      { background: #dcfce7; color: #166534; }
+  html[data-theme="light"] .badge.vencido { background: #fee2e2; color: #991b1b; }
+
+  /* Tabela no tema claro */
+  html[data-theme="light"] thead th { background: #f1f5f9; }
+  html[data-theme="light"] tbody tr { border-bottom-color: #e2e8f0; }
+  html[data-theme="light"] tbody tr:hover { background: #f1f5f9; }
+
+  /* Modal no tema claro */
+  html[data-theme="light"] .modal-box { background: #ffffff; }
+
+  /* Heatmap no tema claro */
+  html[data-theme="light"] .heat-0 { background: rgba(148,163,184,.15); }
+  html[data-theme="light"] .heat-1 { background: rgba(37,99,235,.15); }
+  html[data-theme="light"] .heat-2 { background: rgba(37,99,235,.35); }
+  html[data-theme="light"] .heat-3 { background: rgba(37,99,235,.55); }
+  html[data-theme="light"] .heat-4 { background: rgba(37,99,235,.75); }
+  html[data-theme="light"] .heat-5 { background: #1d4ed8; }
+
+  /* Loading overlay no tema claro */
+  html[data-theme="light"] .loading-overlay { background: rgba(240,244,248,.92); }
+
+  /* Tooltip no tema claro */
+  html[data-theme="light"] [data-tip]::after { background: #1e293b; border-color: #e2e8f0; color: #f8fafc; }
+
+  /* Sit-tags no tema claro */
+  html[data-theme="light"] .sit-dead { background: rgba(220,38,38,.12); color: #991b1b; border-color: rgba(220,38,38,.35); }
+  html[data-theme="light"] .sit-local { background: rgba(217,119,6,.12); color: #92400e; border-color: rgba(217,119,6,.35); }
+  html[data-theme="light"] .sit-verificar { background: rgba(217,119,6,.12) !important; color: #92400e !important; border-color: rgba(217,119,6,.35) !important; }
+  html[data-theme="light"] .sit-sem-dados { background: rgba(100,116,139,.1) !important; color: #475569 !important; border-color: rgba(100,116,139,.3) !important; }
+
+  /* Rota pills no tema claro */
+  html[data-theme="light"] .rota-pill.rota-transferir { background: rgba(22,163,74,.12); color: #166534; border-color: rgba(22,163,74,.35); }
+  html[data-theme="light"] .rota-pill.rota-devolucao  { background: rgba(22,163,74,.10); color: #166534; border-color: rgba(22,163,74,.3); }
+  html[data-theme="light"] .rota-pill.rota-revalidar  { background: rgba(29,78,216,.12); color: #1e40af; border-color: rgba(29,78,216,.3); }
+  html[data-theme="light"] .rota-pill.rota-venda      { background: rgba(217,119,6,.12); color: #92400e; border-color: rgba(217,119,6,.35); }
+  html[data-theme="light"] .rota-pill.rota-descarte   { background: rgba(220,38,38,.12); color: #991b1b; border-color: rgba(220,38,38,.3); }
+
+  /* Checklist items no tema claro */
+  html[data-theme="light"] .prod-cod { background: rgba(29,78,216,.12); color: #1e40af; }
+  html[data-theme="light"] .prod-extra-tag { background: rgba(22,163,74,.12); color: #166534; }
+
+  /* Semgiro note no tema claro */
+  html[data-theme="light"] .semgiro-cfop-note { background: rgba(217,119,6,.07); border-color: rgba(217,119,6,.25); }
+
 </style>
 <body>
 
@@ -1962,6 +2122,10 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
     </div>
     <div class="topbar-right">
       <select id="seletor-filial" class="select-sm hidden" onchange="trocarFilial(this.value)" title="Selecionar filial para análise" style="max-width:220px;"></select>
+      <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <i class="ti ti-moon-stars" id="theme-icon"></i>
+        <span id="theme-label">Escuro</span>
+      </button>
       <div class="filial-badge" id="filial-badge" style="background:var(--bg3);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;">
         <div class="dot" style="background:var(--text3);width:7px;height:7px;border-radius:50%;"></div>
         <span id="filial-nome">Sem filial</span>
@@ -1988,17 +2152,24 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
             <div class="upload-status hidden" id="status-lotes"></div>
           </div>
         </div>
-        <div style="background:var(--card-bg); border:1px solid var(--verde); border-radius:10px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
-          <i class="ti ti-circle-check" style="color:var(--verde); font-size:20px;"></i>
-          <div style="flex:1;">
+        <div style="background:var(--card-bg); border:1px solid var(--verde); border-radius:10px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <i class="ti ti-circle-check" style="color:var(--verde); font-size:20px; flex-shrink:0;"></i>
+          <div style="flex:1; min-width:180px;">
             <div style="font-size:13px; font-weight:600; color:var(--branco);">Base de Sazonalidade <span id="base-saz-origem">Embutida</span></div>
             <div style="font-size:12px; color:var(--texto-muted);" id="base-saz-info">—</div>
           </div>
           <!-- Controle oculto: atualização da base de sazonalidade (avançado) -->
           <input type="file" id="input-base-saz" accept=".json,application/json" onchange="importarBaseSazonal(this)" style="display:none;">
-          <span id="base-saz-acoes" style="display:flex; gap:14px; align-items:center;">
-            <a href="javascript:void(0)" onclick="document.getElementById('input-base-saz').click()" title="Importar atualização da base (arquivo sazonal_base.json gerado pelo script)" style="font-size:11px; color:var(--texto-muted); text-decoration:none; opacity:.6;"><i class="ti ti-database-cog" style="margin-right:4px;"></i>Atualizar base</a>
-            <a href="javascript:void(0)" id="base-saz-reset" onclick="resetBaseSazonal()" title="Voltar para a base embutida no aplicativo" style="font-size:11px; color:var(--texto-muted); text-decoration:none; opacity:.45; display:none;"><i class="ti ti-rotate" style="margin-right:4px;"></i>Reverter</a>
+          <span id="base-saz-acoes" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button onclick="document.getElementById('input-base-saz').click()" title="Importar sazonal_base.json gerado pelo script Python" class="btn-sm" style="font-size:11px;">
+              <i class="ti ti-database-import"></i> Atualizar base
+            </button>
+            <button onclick="baixarScriptSazonalidade()" title="Baixar o script Python para gerar sazonal_base.json a partir do relatório de movimentações CFOP" class="btn-sm primary" style="font-size:11px;">
+              <i class="ti ti-file-download"></i> Baixar script (.py)
+            </button>
+            <button id="base-saz-reset" onclick="resetBaseSazonal()" title="Voltar para a base embutida no aplicativo" class="btn-sm" style="font-size:11px; display:none;">
+              <i class="ti ti-rotate"></i> Reverter
+            </button>
           </span>
         </div>
 
@@ -2073,7 +2244,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
               <option value="nao_aplica">Não se aplica</option>
             </select>
             <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-risco" oninput="filtrarTabela()">
-            <button class="btn-limpar" onclick="limparFiltros('risco')"><i class="ti ti-x"></i> Limpar</button>
+            <button class="btn-limpar" onclick="limparFiltros('risco')" title="Limpar filtros"><i class="ti ti-x"></i></button>
             <div class="export-dropdown" id="dd-risco">
               <button class="btn-sm primary" onclick="toggleDropdown('dd-risco')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
               <div class="export-menu" id="menu-dd-risco">
@@ -2133,7 +2304,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
               <option value="">Todas as Linhas</option>
             </select>
             <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-vencidos" oninput="filtrarTabelaV()">
-            <button class="btn-limpar" onclick="limparFiltros('vencidos')"><i class="ti ti-x"></i> Limpar</button>
+            <button class="btn-limpar" onclick="limparFiltros('vencidos')" title="Limpar filtros"><i class="ti ti-x"></i></button>
             <div class="export-dropdown" id="dd-vencidos">
               <button class="btn-sm primary" onclick="toggleDropdown('dd-vencidos')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
               <div class="export-menu" id="menu-dd-vencidos">
@@ -2197,7 +2368,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
               <option value="sobra">Só os que vão sobrar</option>
             </select>
             <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-alerta" oninput="filtrarAlerta()">
-            <button class="btn-limpar" onclick="limparFiltros('alerta')"><i class="ti ti-x"></i> Limpar</button>
+            <button class="btn-limpar" onclick="limparFiltros('alerta')" title="Limpar filtros"><i class="ti ti-x"></i></button>
             <div class="export-dropdown" id="dd-alerta">
               <button class="btn-sm primary" onclick="toggleDropdown('dd-alerta')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
               <div class="export-menu" id="menu-dd-alerta">
@@ -2268,7 +2439,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
               <option value="">Todas as Linhas</option>
             </select>
             <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-semgiro" oninput="filtrarTabelaSG()">
-            <button class="btn-limpar" onclick="limparFiltros('semgiro')"><i class="ti ti-x"></i> Limpar</button>
+            <button class="btn-limpar" onclick="limparFiltros('semgiro')" title="Limpar filtros"><i class="ti ti-x"></i></button>
             <div class="export-dropdown" id="dd-semgiro">
               <button class="btn-sm primary" onclick="toggleDropdown('dd-semgiro')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
               <div class="export-menu" id="menu-dd-semgiro">
@@ -2331,7 +2502,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
               <option value="verificar">Só a verificar</option>
             </select>
             <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-cacaerros" oninput="filtrarCacaErros()">
-            <button class="btn-limpar" onclick="limparFiltros('cacaerros')"><i class="ti ti-x"></i> Limpar</button>
+            <button class="btn-limpar" onclick="limparFiltros('cacaerros')" title="Limpar filtros"><i class="ti ti-x"></i></button>
             <button class="btn-sm primary" onclick="exportarCacaErrosExcel()" title="Exportar Excel (.xlsx)"><i class="ti ti-file-spreadsheet"></i></button>
           </div>
         </div>
@@ -2383,7 +2554,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <select class="select-sm" id="filtro-linha-s" onchange="filtrarSazonalidade()">
             <option value="">Todas as Linhas</option>
           </select>
-          <button class="btn-limpar" onclick="limparFiltros('sazonalidade')"><i class="ti ti-x"></i> Limpar</button>
+          <button class="btn-limpar" onclick="limparFiltros('sazonalidade')" title="Limpar filtros"><i class="ti ti-x"></i></button>
           <div class="export-dropdown" id="dd-sazonal" style="margin-left:auto;">
             <button class="btn-sm primary" onclick="toggleDropdown('dd-sazonal')"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down" style="font-size:9px;"></i></button>
             <div class="export-menu" id="menu-dd-sazonal">
@@ -2432,7 +2603,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
             <option value="">Todos os grupos</option>
             <option value="alerta">Apenas com alerta (vence antes, tem equivalente com folga)</option>
           </select>
-          <button class="btn-limpar" onclick="limparFiltros('principioativo')"><i class="ti ti-x"></i> Limpar</button>
+          <button class="btn-limpar" onclick="limparFiltros('principioativo')" title="Limpar filtros"><i class="ti ti-x"></i></button>
           <button class="btn-sm primary" style="margin-left:auto;" onclick="exportarPNG('pa-container','principio_ativo')"><i class="ti ti-photo"></i> Imagem (.png)</button>
         </div>
         <div class="metodologia-bar" style="margin-bottom:16px;">
@@ -3788,10 +3959,13 @@ function processarDados() {
       APP.semGiro = APP.lotes
         .filter(l => l.situacao === 'Disponível' && !vendeNestaFilial(l.codProduto, APP.sigla))
         .map(l => {
-          const dead = !SAZONAL_BASE[l.codProduto];
-          const vendeOutras = dead ? [] : filiaisComGiro(l.codProduto, APP.sigla);
+          const inBase = !!SAZONAL_BASE[l.codProduto];
+          const dead = !inBase;
+          const vendeOutras = inBase ? filiaisComGiro(l.codProduto, APP.sigla) : [];
           const temRemessa = dead && temRemessaNaoVenda(l.codProduto);
-          const e = { ...l, semGiroTipo: dead ? 'dead' : 'local', _vendeOutras: vendeOutras, _temRemessa: temRemessa };
+          const semDados = dead && !temRemessa;
+          const tipo = semDados ? 'sem_dados' : (dead ? 'verificar' : (vendeOutras.length ? 'local' : 'dead'));
+          const e = { ...l, semGiroTipo: tipo, _vendeOutras: vendeOutras, _temRemessa: temRemessa, _semDados: semDados };
           e._rec = recomendacaoSemGiro(e);
           e._recRota = e._rec.rota;
           return e;
@@ -4643,6 +4817,10 @@ function renderSummarySemGiro() {
   const deadValor = dead.reduce((s, l) => s + l.vlrCustoTotal, 0);
   const deadProd = new Set(dead.map(l => l.codProduto)).size;
 
+  const semDados = data.filter(l => l.semGiroTipo === 'sem_dados');
+  const semDadosValor = semDados.reduce((s, l) => s + l.vlrCustoTotal, 0);
+  const semDadosProd = new Set(semDados.map(l => l.codProduto)).size;
+
   const recuperavel = data.filter(l => ROTAS_RECUPERAVEIS.includes(l._recRota)).reduce((s, l) => s + l.vlrCustoTotal, 0);
   const semRetorno = valorParado - recuperavel;
   const pctRec = valorParado > 0 ? Math.round(recuperavel / valorParado * 100) : 0;
@@ -4669,9 +4847,15 @@ function renderSummarySemGiro() {
     <div class="summary-card red">
       <div class="summary-label">Dead Stock</div>
       <div class="summary-value" style="font-size:18px;">${formatValor(deadValor)}</div>
-      <div class="summary-sub">${deadProd} produtos que nunca venderam (Jan/24–Jun/26)</div>
+      <div class="summary-sub">${deadProd} produtos que nunca venderam na base histórica</div>
       <i class="ti ti-package-off summary-icon"></i>
     </div>
+    ${semDadosProd > 0 ? `<div class="summary-card" style="--card-accent:var(--text3);">
+      <div class="summary-label">Sem dados na base</div>
+      <div class="summary-value" style="font-size:18px;">${formatValor(semDadosValor)}</div>
+      <div class="summary-sub">${semDadosProd} produtos sem histórico — atualize a base de sazonalidade</div>
+      <i class="ti ti-database-off summary-icon"></i>
+    </div>` : ''}
   `;
 
   renderSemGiroRotas(data, valorParado);
@@ -4727,12 +4911,14 @@ function renderTabelaSemGiro(page) {
     const vencido = l.diasVencimento < 0;
     const corVenc = vencido ? 'var(--vermelho)' : (l.diasVencimento <= 90 ? 'var(--amber)' : 'var(--texto)');
     const dias = vencido ? `${Math.abs(l.diasVencimento)}d vencido` : `${l.diasVencimento}d`;
-    const dead = l.semGiroTipo === 'dead';
-    const sitTag = dead
-      ? (l._temRemessa
-          ? '<span class="sit-tag sit-verificar" title="Tem remessa de entrega futura (CFOP 5116/5117/6116/6117) registrada sem venda correspondente nos dados — confirme manualmente antes de tratar como dead stock.">Verificar remessa</span>'
-          : '<span class="sit-tag sit-dead" title="Nunca registrou venda em nenhuma filial">Dead stock</span>')
-      : `<span class="sit-tag sit-local" title="Vende em: ${(l._vendeOutras||[]).join(', ') || '—'}">Parado aqui</span>`;
+    const tipo = l.semGiroTipo;
+    const sitTag = tipo === 'sem_dados'
+      ? '<span class="sit-tag sit-sem-dados" title="Sem histórico de vendas na base de sazonalidade — verifique se o produto é recente ou se a base precisa ser atualizada">Sem dados na base</span>'
+      : tipo === 'verificar'
+        ? '<span class="sit-tag sit-verificar" title="Tem remessa de entrega futura (CFOP 5116/5117/6116/6117) registrada sem venda correspondente nos dados — confirme manualmente antes de tratar como dead stock.">Verificar remessa</span>'
+        : tipo === 'dead'
+          ? '<span class="sit-tag sit-dead" title="Nunca registrou venda em nenhuma filial na base histórica">Dead stock</span>'
+          : `<span class="sit-tag sit-local" title="Vende em: ${(l._vendeOutras||[]).join(', ') || '—'}">Parado aqui</span>`;
     const rota = l._rec.rota;
     const rotaCls = l._rec.cls;
     return `<tr>
@@ -6355,7 +6541,7 @@ function exportarExcel(tipo) {
     } : {}),
     ...(tipo === 'semgiro' ? {
       Fabricante: l.fabricante,
-      'Situação': l.semGiroTipo === 'dead' ? (l._temRemessa ? 'Verificar remessa (CFOP 5116/5117/6116/6117)' : 'Dead stock (nunca vendeu)') : 'Parado nesta filial',
+      'Situação': l.semGiroTipo === 'sem_dados' ? 'Sem dados na base (produto não encontrado no histórico)' : l.semGiroTipo === 'verificar' ? 'Verificar remessa (CFOP 5116/5117/6116/6117)' : l.semGiroTipo === 'dead' ? 'Dead stock (nunca vendeu na base histórica)' : 'Parado nesta filial',
       'Vende em (filiais)': (l._vendeOutras || []).join(', '),
       'Recomendação': l._recRota,
       'Justificativa': l._rec ? l._rec.detalhe : '',
@@ -6929,6 +7115,16 @@ function validarBaseImportada(d) {
   return null;
 }
 
+function baixarScriptSazonalidade() {
+  const url = 'tools/gerar_base_sazonalidade.py';
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'gerar_base_sazonalidade.py';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 function importarBaseSazonal(input) {
   const file = input.files && input.files[0];
   if (!file) return;
@@ -6995,6 +7191,42 @@ function carregarBaseSalva() {
   atualizarInfoBaseSaz();
 }
 document.addEventListener('DOMContentLoaded', carregarBaseSalva);
+
+// ===== TEMA CLARO/ESCURO =====
+function toggleTheme() {
+  var current = document.documentElement.getAttribute('data-theme') || 'dark';
+  var next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('agroquima-theme', next);
+  updateThemeButton(next);
+}
+function updateThemeButton(theme) {
+  var icon = document.getElementById('theme-icon');
+  var label = document.getElementById('theme-label');
+  if (!icon || !label) return;
+  if (theme === 'light') {
+    icon.className = 'ti ti-sun';
+    label.textContent = 'Claro';
+  } else {
+    icon.className = 'ti ti-moon-stars';
+    label.textContent = 'Escuro';
+  }
+}
+// Atualiza o botão de tema na carga
+document.addEventListener('DOMContentLoaded', function() {
+  var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  updateThemeButton(theme);
+  // Ouve mudança de preferência do sistema
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      if (!localStorage.getItem('agroquima-theme')) {
+        var t = e.matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        updateThemeButton(t);
+      }
+    });
+  }
+});
 
   // ── Mobile sidebar toggle ──────────────────────────────────────────────────
   function toggleSidebar() {
