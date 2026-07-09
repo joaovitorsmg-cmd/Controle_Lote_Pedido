@@ -2702,7 +2702,6 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <th style="padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);">Vlr Vencidos</th>
 
           <th style="padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);">Sem Giro</th>
-          <th style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--border);">Score</th>
           <th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);">Registrado</th>
           <th style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--border);"></th>
         </tr>
@@ -6825,10 +6824,6 @@ function _gravarRegistroVencidos(override = {}) {
   const totalVencidos = override.totalVencidos !== undefined ? override.totalVencidos : APP.vencidos.length;
   const valorVencidos = override.valorVencidos !== undefined ? override.valorVencidos : APP.vencidos.reduce((s, l) => s + l.vlrCustoTotal, 0);
   const semGiroProd = override.semGiroProd !== undefined ? override.semGiroProd : new Set(APP.semGiro.map(l => l.codProduto)).size;
-  const faturamento = null; // Faturamento gerenciado no Ranking Geral
-  const pctVencFat = null;
-  const scoreVenc = null; // Calculado no Ranking após importar faturamento
-
   // Determinar mês/período: usa a data da auditoria
   const d = APP.dataAuditoria || new Date();
   const mes = String(d.getMonth() + 1).padStart(2, '0');
@@ -6845,10 +6840,7 @@ function _gravarRegistroVencidos(override = {}) {
     totalLotes: APP.lotes.length,
     totalVencidos,
     valorVencidos,
-    faturamento,
-    pctVencFat,
     semGiroProd,
-    scoreVenc,
     dataReg: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}),
   };
 
@@ -6940,7 +6932,6 @@ function renderHistoricoVenc() {
       <td style="padding:9px 12px;text-align:right;${d.valorVencidos>0?'color:var(--red-dk);font-weight:700':''}">${formatValor(d.valorVencidos)}</td>
 
       <td style="padding:9px 12px;text-align:right;">${d.semGiroProd}</td>
-      <td style="padding:9px 12px;text-align:center;"><span style="color:var(--text3);font-size:11px;">—</span></td>
       <td style="padding:9px 12px;font-size:10px;color:var(--text3);">${d.dataReg}</td>
       <td style="padding:9px 12px;text-align:center;"><button class="btn-del-hist" onclick="removerRegistroVenc(${d.id})" title="Remover">✕</button></td>
     </tr>`;
@@ -7030,7 +7021,6 @@ function exportarArquivoVencidosPadrao() {
     totalVencidos: APP.vencidos.length,
     valorVencidos: APP.vencidos.reduce((s,l) => s+l.vlrCustoTotal, 0),
     semGiroProd: new Set(APP.semGiro.map(l=>l.codProduto)).size,
-    semGiroValor: APP.semGiro.reduce((s,l) => s+l.vlrCustoTotal, 0),
     // Faturamento será informado no painel de ranking ao carregar o arquivo
     faturamento: null,
     scoreVenc: null, // calculado no ranking após informar faturamento
@@ -8528,9 +8518,9 @@ try {
 function PED_calcScore(d) {
   // 4 itens: Semente(40) + Pedido(30) + Vencidos(20) + Canhoto(10) = 100
   const sSem  = (d.semPend === 0) ? 40 : 0;
-  const sPed  = d.pedConf > 0 ? Math.min(d.pctPed / 95, 1) * 30 : 0;
-  const sVenc = d.scoreVenc != null ? (d.scoreVenc / 100) * 20 : 20; // fallback 100% para registros antigos sem scoreVenc
-  const sCan  = d.canConf > 0 ? Math.min(d.pctCan / 95, 1) * 10 : 0;
+  const sPed  = (d.pedConf > 0 && d.pctPed >= 95) ? 30 : 0;
+  const sVenc = d.scoreVenc != null ? (d.scoreVenc / 100) * 20 : 20;
+  const sCan  = (d.canConf > 0 && d.pctCan >= 95) ? 10 : 0;
   return Math.round((sSem + sPed + sVenc + sCan) * 100) / 100;
 }
 
@@ -8812,15 +8802,15 @@ function ajusteRecalcScore() {
   const pctCan = canConf > 0 ? parseFloat((canAss/canConf*100).toFixed(2)) : 0;
   const semPend = (PED_agRiscoSementes ? PED_agRiscoSementes() : { itens: [] }).itens.length;
   const sSem = semPend === 0 ? 40 : 0;
-  const sPed = pedConf > 0 ? Math.min(pctPed / 95, 1) * 30 : 0;
+  const sPed = (pedConf > 0 && pctPed >= 95) ? 30 : 0;
   const sVenc = (calcScoreVencPrev(totalVenc) / 100) * 20;
-  const sCan = canConf > 0 ? Math.min(pctCan / 95, 1) * 10 : 0;
+  const sCan = (canConf > 0 && pctCan >= 95) ? 10 : 0;
   const score = Math.round((sSem + sPed + sVenc + sCan) * 100) / 100;
   const cls = score >= 90 ? '#5fd4a0' : score >= 70 ? '#fbbf24' : '#f87171';
   const prev = document.getElementById('ajp-score-preview');
   if (prev) { prev.textContent = score.toFixed(2); prev.style.color = cls; }
   const det = document.getElementById('ajp-score-detalhe');
-  if (det) det.innerHTML = `Sementes: ${sSem.toFixed(0)}/40 · Pedidos: ${sPed.toFixed(2)}/30<br>Vencidos: ${sVenc.toFixed(2)}/20 · Canhotos: ${sCan.toFixed(2)}/10<br>%Ped: ${pctPed}% · %Can: ${pctCan}%`;
+  if (det) det.innerHTML = `Sementes: ${sSem.toFixed(0)}/40 · Pedidos: ${sPed.toFixed(0)}/30 (meta ≥95%)<br>Vencidos: ${sVenc.toFixed(2)}/20 · Canhotos: ${sCan.toFixed(0)}/10 (meta ≥95%)<br>%Ped: ${pctPed}% · %Can: ${pctCan}%`;
 }
 
 function confirmarAjusteRegistro() {
