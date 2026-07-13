@@ -2344,27 +2344,36 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
       <div class="metodologia-bar">
         <i class="ti ti-info-circle met-icon"></i>
         <div class="met-texto">
-          <strong>Alerta de Vencimento — Painel de Cobrança Diária do Supervisor.</strong>
-          Lista o estoque <strong>ainda válido</strong> que vence nos próximos <strong>90 dias</strong>, agrupado por janela de urgência,
-          para o supervisor <strong>cobrar do gerente da filial uma ação corretiva antes do vencimento</strong>.
-          Difere da aba <strong>Vencidos</strong> (o que já venceu = prejuízo) e da <strong>Análise de Risco</strong> (score técnico de todo o estoque):
-          aqui o foco é a <strong>agenda de ação</strong> — o que precisa de decisão <em>hoje</em> e quem é o responsável.
-          A coluna <strong>Vai sobrar</strong> usa a projeção de venda da própria filial: se o lote não vende o suficiente até vencer, vira cobrança imediata.
+          <strong>Alerta de Vencimento &amp; Planejamento — Painel de Cobrança e Análise Futura.</strong>
+          Lista o estoque <strong>ainda válido</strong> agrupado por janela de urgência, cobrindo até <strong>540 dias</strong> à frente.
+          Use o seletor <strong>Horizonte</strong> para focar em ação imediata (≤90d) ou planejar com antecedência (≤180d, ≤365d).
+          Difere da aba <strong>Vencidos</strong> (o que já venceu = prejuízo) e da <strong>Análise de Risco</strong> (score técnico):
+          aqui o foco é a <strong>agenda de ação e planejamento</strong> — <em>Crítico/Urgente</em> exigem decisão imediata do supervisor;
+          <em>Atenção/Monitorar/Planejamento</em> permitem agir com antecedência antes que virem risco real.
+          A coluna <strong>Vai sobrar</strong> usa projeção de venda da filial: sobra &gt; 0 + ≤30d = cobrança imediata.
         </div>
       </div>
       <div id="alerta-responsavel" style="margin-bottom:14px;"></div>
       <div id="export-wrap-alerta" style="background:var(--bg);padding:4px 0;">
-      <div class="summary-grid" id="summary-alerta"></div>
+      <div class="summary-grid" id="summary-alerta" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr));"></div>
       <div id="alerta-cobranca" style="margin-bottom:16px;"></div>
       <div class="table-container" id="tc-alerta">
         <div class="table-header">
-          <div class="table-title"><i class="ti ti-bell-ringing" style="color:var(--laranja)"></i> Estoque a Vencer em 90 dias</div>
+          <div class="table-title"><i class="ti ti-bell-ringing" style="color:var(--laranja)"></i> Estoque a Vencer — Análise e Planejamento</div>
           <div class="table-actions">
+            <select class="select-sm" id="filtro-horizonte-a" onchange="filtrarAlerta()" title="Horizonte de análise">
+              <option value="90">Horizonte: 90 dias</option>
+              <option value="180" selected>Horizonte: 180 dias</option>
+              <option value="365">Horizonte: 365 dias</option>
+              <option value="540">Horizonte: 540 dias</option>
+            </select>
             <select class="select-sm" id="filtro-janela-a" onchange="filtrarAlerta()">
               <option value="">Todas as janelas</option>
               <option value="critico">≤ 30 dias (crítico)</option>
               <option value="urgente">31–60 dias (urgente)</option>
               <option value="atencao">61–90 dias (atenção)</option>
+              <option value="monitorar">91–180 dias (monitorar)</option>
+              <option value="planejamento">181–540 dias (planejamento)</option>
               <option value="sobra">Só os que vão sobrar</option>
             </select>
             <input class="search-box" placeholder="Buscar produto ou lote..." id="busca-alerta" oninput="filtrarAlerta()">
@@ -4180,21 +4189,25 @@ function renderTabelaVencidos(page) {
 // ==================== ALERTA DE VENCIMENTO (cobrança do supervisor) ====================
 // Janelas de urgência para o estoque AINDA VÁLIDO que vence em até 90 dias.
 const ALERTA_JANELAS = {
-  critico: { max: 30,  label: '≤ 30 dias',  cor: '#ef4444', bg: 'rgba(239,68,68,0.12)',  nome: 'Crítico'  },
-  urgente: { max: 60,  label: '31–60 dias', cor: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  nome: 'Urgente'  },
-  atencao: { max: 90,  label: '61–90 dias', cor: '#eab308', bg: 'rgba(234,179,8,0.12)',   nome: 'Atenção'  },
+  critico:      { max:  30, label: '≤ 30 dias',    cor: '#ef4444', bg: 'rgba(239,68,68,0.12)',   nome: 'Crítico'      },
+  urgente:      { max:  60, label: '31–60 dias',   cor: '#f59e0b', bg: 'rgba(245,158,11,0.12)',   nome: 'Urgente'      },
+  atencao:      { max:  90, label: '61–90 dias',   cor: '#eab308', bg: 'rgba(234,179,8,0.12)',    nome: 'Atenção'      },
+  monitorar:    { max: 180, label: '91–180 dias',  cor: '#3b82f6', bg: 'rgba(59,130,246,0.10)',   nome: 'Monitorar'    },
+  planejamento: { max: 540, label: '181–540 dias', cor: '#8b5cf6', bg: 'rgba(139,92,246,0.10)',   nome: 'Planejamento' },
 };
 function janelaDe(dias) {
-  if (dias <= 30) return 'critico';
-  if (dias <= 60) return 'urgente';
-  return 'atencao';
+  if (dias <=  30) return 'critico';
+  if (dias <=  60) return 'urgente';
+  if (dias <=  90) return 'atencao';
+  if (dias <= 180) return 'monitorar';
+  return 'planejamento';
 }
 
-// Monta a lista de lotes válidos vencendo em até 90 dias, com projeção de giro da própria filial.
+// Monta a lista de lotes válidos vencendo em até 540 dias, com projeção de giro da própria filial.
 function computarAlerta() {
   const hoje = APP.dataAuditoria || new Date();
   APP.alerta = APP.lotes
-    .filter(l => l.situacao !== 'Vencido' && l.diasVencimento >= 0 && l.diasVencimento <= 90)
+    .filter(l => l.situacao !== 'Vencido' && l.diasVencimento >= 0 && l.diasVencimento <= 540)
     .map(l => {
       const meses = Math.max(1, Math.ceil(l.diasVencimento / 30));
       const projecao = projetarVendas(l.codProduto, APP.sigla, meses, hoje);
@@ -4242,7 +4255,7 @@ function renderAlerta() {
     </div>`;
   };
   document.getElementById('summary-alerta').innerHTML = `
-    ${card('critico')}${card('urgente')}${card('atencao')}
+    ${card('critico')}${card('urgente')}${card('atencao')}${card('monitorar')}${card('planejamento')}
     <div class="summary-card" style="border-left:4px solid #ef4444; background:rgba(239,68,68,0.06);">
       <div class="summary-label">Ação prioritária hoje</div>
       <div class="summary-value" style="color:#ef4444;">${acaoHoje.length}</div>
@@ -4272,14 +4285,14 @@ function renderAlerta() {
     cob.innerHTML = '';
   }
 
-  renderTabelaAlerta();
+  filtrarAlerta();
 }
 
 function renderTabelaAlerta() {
   const tbody = document.getElementById('body-alerta');
   const data = APP.filteredAlerta;
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><i class="ti ti-circle-check" style="color:var(--verde)"></i><p>Nenhum lote vencendo nos próximos 90 dias nesta seleção.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><i class="ti ti-circle-check" style="color:var(--verde)"></i><p>Nenhum lote vencendo no horizonte selecionado.</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = data.map(l => {
@@ -4309,11 +4322,13 @@ function renderTabelaAlerta() {
 
 function filtrarAlerta() {
   const j = document.getElementById('filtro-janela-a').value;
+  const h = parseInt(document.getElementById('filtro-horizonte-a')?.value) || 540;
   const busca = (document.getElementById('busca-alerta').value || '').toLowerCase();
   APP.filteredAlerta = APP.alerta.filter(l => {
     const mJanela = !j || (j === 'sobra' ? l.sobra > 0 : l.janela === j);
+    const mHorizonte = l.diasVencimento <= h;
     const mBusca = !busca || l.nomeProduto.toLowerCase().includes(busca) || String(l.lote).toLowerCase().includes(busca) || String(l.codProduto).includes(busca);
-    return mJanela && mBusca;
+    return mJanela && mHorizonte && mBusca;
   });
   renderTabelaAlerta();
 }
@@ -4493,13 +4508,13 @@ function computarCacaErros() {
   }
 
   // (5) Fabricante — regras fixas de negócio da Agroquima (zero tolerância, sem heurística de maioria):
-  //   • Linha 1  (Nutrição Animal): só 9024 ou 9025. Nome terminado em "CB" → 9025; senão → 9024.
+  //   • Linha 1  (Nutrição Animal): só 9024 ou 9025. Nome contendo "CB" como palavra (ex.: "CB SC") → 9025; senão → 9024.
   //   • Linha 18 (Semente de Pastagem): fabricação própria, só 9013.
   //   • Linha 15 (Vetoquinol): só 70.
   //   • Demais linhas: o mesmo código+nome de produto NUNCA pode ter fabricantes diferentes entre lojas.
   //   • Qualquer fabricante "90xx" que não seja 9013/9024/9025 é, por definição, um código inválido da Agroquima.
   const CODIGOS_AGROQUIMA = new Set(['9013', '9024', '9025']);
-  const terminaEmCB = nome => /\bCB\s*(\/|$)/i.test(String(nome || '').trim());
+  const terminaEmCB = nome => /\bCB\b/i.test(String(nome || '').trim());
 
   for (const l of lotes) {
     const cod = codFab(l.fabricante);
