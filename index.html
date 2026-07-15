@@ -2091,6 +2091,10 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
       <i class="ti ti-list-check nav-icon"></i> Plano de Ação
       <span class="nav-badge orange hidden" id="badge-plano">0</span>
     </div>
+    <div class="nav-item" onclick="showTab('placas')" id="nav-placas">
+      <i class="ti ti-tag nav-icon"></i> Placas
+      <span class="nav-badge green hidden" id="badge-placas">0</span>
+    </div>
     <div class="nav-item" onclick="showTab('historico')" id="nav-historico" style="opacity:.45;font-size:11px;padding:6px 14px;margin-top:4px;border-top:1px solid var(--border);" title="Histórico de Auditorias (uso interno)">
       <i class="ti ti-history nav-icon" style="font-size:13px;"></i> <span>Histórico</span>
       <span class="nav-badge" id="badge-historico" style="background:var(--verde);display:none;">0</span>
@@ -2724,6 +2728,105 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
   </div>
 </div>
 <!-- /ABA HISTÓRICO -->
+
+<!-- ABA PLACAS DE IDENTIFICAÇÃO -->
+<div id="tab-placas" class="tab-content hidden">
+
+  <!-- Cabeçalho -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <div>
+      <h2 style="margin:0;font-size:18px;font-weight:700;color:var(--text1);">
+        <i class="ti ti-tag" style="margin-right:6px;"></i>Placas de Identificação de Lote
+      </h2>
+      <p style="margin:4px 0 0;font-size:12px;color:var(--text3);">
+        Selecione os lotes, escolha o formato e imprima em A4 (P&B).
+      </p>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="placa-count-sel" style="font-size:13px;font-weight:600;color:var(--text2);">0 selecionados</span>
+      <label style="font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px;">
+        Por folha:
+        <select id="placa-por-folha" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:13px;">
+          <option value="1">1 placa / folha</option>
+          <option value="2">2 placas / folha</option>
+        </select>
+      </label>
+      <button id="placa-btn-imprimir" onclick="imprimirPlacas()" disabled
+        style="padding:8px 18px;border-radius:7px;border:none;background:#111;color:#fff;font-size:13px;font-weight:700;cursor:pointer;opacity:.4;transition:opacity .2s;">
+        <i class="ti ti-printer"></i> Imprimir
+      </button>
+    </div>
+  </div>
+
+  <!-- Barra de filtros -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+    <input id="placa-busca" type="text" placeholder="🔍 Busca: código, nome, lote, linha…"
+      oninput="filtrarPlacas()"
+      style="flex:1;min-width:200px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:13px;" />
+
+    <select id="placa-filtro-linha" onchange="filtrarPlacas()"
+      style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:13px;min-width:140px;">
+      <option value="">Todas as linhas</option>
+    </select>
+
+    <select id="placa-filtro-status" onchange="filtrarPlacas()"
+      style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:13px;">
+      <option value="">Todos os status</option>
+      <option value="Válido">✅ Válido</option>
+      <option value="Próximo">⚠️ Próximo ao venc.</option>
+      <option value="Vencido">❌ Vencido</option>
+    </select>
+
+    <select id="placa-filtro-periodo" onchange="filtrarPlacas()"
+      style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:13px;">
+      <option value="">Qualquer vencimento</option>
+      <option value="30">Vence em ≤ 30 dias</option>
+      <option value="60">Vence em ≤ 60 dias</option>
+      <option value="90">Vence em ≤ 90 dias</option>
+      <option value="180">Vence em ≤ 180 dias</option>
+      <option value="neg">Já vencidos</option>
+    </select>
+  </div>
+
+  <!-- Controles de seleção em massa -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;">
+      <input type="checkbox" id="placa-sel-all" onchange="selecionarTodasPlacas(this.checked)" style="width:15px;height:15px;" />
+      Selecionar todos visíveis
+    </label>
+    <button onclick="selecionarTodasPlacas(false)"
+      style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;">
+      Limpar seleção
+    </button>
+    <span id="placa-total-count" style="margin-left:auto;font-size:12px;color:var(--text3);"></span>
+  </div>
+
+  <!-- Tabela de lotes -->
+  <div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="background:var(--bg2);color:var(--text2);text-transform:uppercase;font-size:11px;letter-spacing:.05em;">
+          <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);width:36px;">☐</th>
+          <th style="padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);">Código</th>
+          <th style="padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);">Produto</th>
+          <th style="padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);">Lote</th>
+          <th style="padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);">Linha</th>
+          <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Fabricação</th>
+          <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Validade</th>
+          <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Dias</th>
+          <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Status</th>
+          <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Qtd Impressão</th>
+        </tr>
+      </thead>
+      <tbody id="placa-tbody"></tbody>
+    </table>
+  </div>
+
+  <div id="placa-empty" style="display:none;text-align:center;padding:40px;color:var(--text3);font-size:14px;">
+    Nenhum lote encontrado. Importe uma planilha primeiro.
+  </div>
+</div>
+<!-- /ABA PLACAS -->
 
 <!-- MODAL IMPRESSÃO -->
 <div class="modal-overlay hidden" id="modal-impressao">
@@ -6523,11 +6626,12 @@ function atualizarSidebar() {
 
 // ==================== NAVEGAÇÃO ====================
 function showTab(tab) {
-  ['upload','risco','vencidos','alerta','semgiro','cacaerros','auditoria','sazonalidade','principioativo','plano','historico'].forEach(t => {
+  ['upload','risco','vencidos','alerta','semgiro','cacaerros','auditoria','sazonalidade','principioativo','plano','historico','placas'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
     document.getElementById(`nav-${t}`)?.classList.toggle('active', t === tab);
   });
   if (tab === 'plano' && APP.lotes.length) renderPlanoAcao();
+  if (tab === 'placas' && APP.lotes.length) renderPlacas();
 }
 
 // ==================== EXPORT ====================
@@ -9051,5 +9155,337 @@ function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTr
   </div>
 </div>
 
+<!-- ==================== PLACAS DE IDENTIFICAÇÃO ==================== -->
+<script>
+(function() {
+
+const _PLACA_LOGO_B64 = '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';
+
+let _placasData = [];
+
+function _placaSituacao(l) {
+  const d = parseInt(l.diasVencimento, 10);
+  if (isNaN(d) || d < 0) return 'Vencido';
+  if (d <= 90) return 'Próximo';
+  return 'Válido';
+}
+
+function renderPlacas() {
+  const sel = document.getElementById('placa-filtro-linha');
+  const linhasAtuais = new Set(Array.from(sel.options).map(o => o.value).filter(v => v));
+  const linhasNovos = new Set(APP.lotes.map(l => l.linha).filter(Boolean));
+  linhasNovos.forEach(ln => {
+    if (!linhasAtuais.has(ln)) {
+      const opt = document.createElement('option');
+      opt.value = ln; opt.textContent = ln;
+      sel.appendChild(opt);
+    }
+  });
+  filtrarPlacas();
+}
+
+function filtrarPlacas() {
+  if (!APP.lotes || !APP.lotes.length) {
+    document.getElementById('placa-tbody').innerHTML = '';
+    document.getElementById('placa-empty').style.display = 'block';
+    _atualizarContadorPlacas();
+    return;
+  }
+  const busca = (document.getElementById('placa-busca').value || '').toLowerCase().trim();
+  const filtLinha = document.getElementById('placa-filtro-linha').value;
+  const filtStatus = document.getElementById('placa-filtro-status').value;
+  const filtPeriodo = document.getElementById('placa-filtro-periodo').value;
+
+  const prev = {};
+  _placasData.forEach(p => { prev[p._key] = { _sel: p._sel, _qty: p._qty }; });
+
+  _placasData = APP.lotes.filter(l => {
+    if (filtLinha && l.linha !== filtLinha) return false;
+    const st = _placaSituacao(l);
+    if (filtStatus && st !== filtStatus) return false;
+    const dias = parseInt(l.diasVencimento, 10);
+    if (filtPeriodo === 'neg') { if (isNaN(dias) || dias >= 0) return false; }
+    else if (filtPeriodo) { const dp = parseInt(filtPeriodo, 10); if (isNaN(dias) || dias < 0 || dias > dp) return false; }
+    if (busca) {
+      const hay = [l.codProduto, l.nomeProduto, l.lote, l.linha].join(' ').toLowerCase();
+      if (!hay.includes(busca)) return false;
+    }
+    return true;
+  }).map(l => {
+    const key = `${l.codProduto}|${l.lote}`;
+    const old = prev[key] || {};
+    return Object.assign({}, l, { _sel: old._sel || false, _qty: old._qty !== undefined ? old._qty : 1, _key: key });
+  });
+
+  document.getElementById('placa-empty').style.display = _placasData.length ? 'none' : 'block';
+  _renderPlacasTabela();
+  _atualizarContadorPlacas();
+}
+
+function _fmtDt(v) {
+  if (!v) return '—';
+  if (v instanceof Date) return v.toLocaleDateString('pt-BR');
+  return String(v);
+}
+
+function _renderPlacasTabela() {
+  const tbody = document.getElementById('placa-tbody');
+  if (!_placasData.length) { tbody.innerHTML = ''; return; }
+
+  const rows = _placasData.map((l, i) => {
+    const st = _placaSituacao(l);
+    const stColor = st === 'Vencido' ? '#b91c1c' : st === 'Próximo' ? '#92400e' : '#166534';
+    const stBg = st === 'Vencido' ? '#fee2e2' : st === 'Próximo' ? '#fef3c7' : '#dcfce7';
+    const rowBg = l._sel ? 'var(--bg2)' : '';
+    const dias = parseInt(l.diasVencimento, 10);
+    const diasTxt = isNaN(dias) ? '—' : dias < 0 ? `${Math.abs(dias)}d atrás` : `${dias}d`;
+    return `<tr style="border-bottom:1px solid var(--border);background:${rowBg};" id="placa-row-${i}">
+      <td style="padding:8px 12px;text-align:center;">
+        <input type="checkbox" ${l._sel ? 'checked' : ''} onchange="_placaToggle(${i},this.checked)" style="width:15px;height:15px;cursor:pointer;" />
+      </td>
+      <td style="padding:8px 12px;font-family:monospace;font-size:12px;">${l.codProduto || '—'}</td>
+      <td style="padding:8px 12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${l.nomeProduto || ''}">${l.nomeProduto || '—'}</td>
+      <td style="padding:8px 12px;font-family:monospace;font-size:12px;font-weight:700;">${l.lote || '—'}</td>
+      <td style="padding:8px 12px;font-size:12px;">${l.linha || '—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-size:12px;">${_fmtDt(l.dtFabricacao)}</td>
+      <td style="padding:8px 12px;text-align:center;font-size:12px;font-weight:600;">${_fmtDt(l.dtVencimento)}</td>
+      <td style="padding:8px 12px;text-align:center;font-size:12px;">${diasTxt}</td>
+      <td style="padding:8px 12px;text-align:center;">
+        <span style="padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:${stColor};background:${stBg};">${st}</span>
+      </td>
+      <td style="padding:8px 12px;text-align:center;">
+        <input type="number" min="1" max="999" value="${l._qty}" onchange="_placaQty(${i},this.value)"
+          style="width:60px;padding:4px 6px;border-radius:5px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);text-align:center;font-size:12px;" />
+      </td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML = rows;
+  document.getElementById('placa-total-count').textContent = `${_placasData.length} lote(s) encontrado(s)`;
+}
+
+function _placaToggle(i, checked) {
+  if (!_placasData[i]) return;
+  _placasData[i]._sel = checked;
+  const row = document.getElementById(`placa-row-${i}`);
+  if (row) row.style.background = checked ? 'var(--bg2)' : '';
+  _atualizarContadorPlacas();
+}
+
+function _placaQty(i, v) {
+  if (!_placasData[i]) return;
+  _placasData[i]._qty = Math.max(1, parseInt(v, 10) || 1);
+}
+
+function selecionarTodasPlacas(checked) {
+  _placasData.forEach((p, i) => {
+    p._sel = checked;
+    const cb = document.querySelector(`#placa-row-${i} input[type=checkbox]`);
+    if (cb) cb.checked = checked;
+    const row = document.getElementById(`placa-row-${i}`);
+    if (row) row.style.background = checked ? 'var(--bg2)' : '';
+  });
+  const allCb = document.getElementById('placa-sel-all');
+  if (allCb) allCb.checked = checked;
+  _atualizarContadorPlacas();
+}
+
+function _atualizarContadorPlacas() {
+  const sel = _placasData.filter(p => p._sel);
+  const n = sel.length;
+  const span = document.getElementById('placa-count-sel');
+  if (span) span.textContent = `${n} selecionado${n !== 1 ? 's' : ''}`;
+  const btn = document.getElementById('placa-btn-imprimir');
+  if (btn) { btn.disabled = n === 0; btn.style.opacity = n === 0 ? '.4' : '1'; btn.style.cursor = n === 0 ? 'not-allowed' : 'pointer'; }
+  const badge = document.getElementById('badge-placas');
+  if (badge) { badge.textContent = n; badge.classList.toggle('hidden', n === 0); }
+}
+
+function _qrText(l, qty, hoje) {
+  const fab = l.fabricante || '—';
+  const lines = [
+    'AGROQUIMA — IDENTIFICAÇÃO DE LOTE',
+    '',
+    `Filial  : ${l.filial || '—'} (${l.sigla || '—'})`,
+    `Linha   : ${l.linha || '—'}`,
+    `Produto : ${l.nomeProduto || '—'}`,
+    `Código  : ${l.codProduto || '—'}`,
+    `Lote    : ${l.lote || '—'}`,
+    `Fabric. : ${_fmtDt(l.dtFabricacao)}`,
+    `Validad.: ${_fmtDt(l.dtVencimento)}`,
+    `Situação: ${_placaSituacao(l)}`,
+    `Dias p/ venc.: ${l.diasVencimento !== undefined ? l.diasVencimento : '—'}`,
+    `Qtd física: ${qty}`,
+    `Fabricante: ${fab}`,
+    '',
+    `Impresso em: ${hoje}`,
+  ];
+  return lines.join('\n');
+}
+
+function imprimirPlacas() {
+  const selecionados = _placasData.filter(p => p._sel);
+  if (!selecionados.length) return;
+  const porFolha = parseInt(document.getElementById('placa-por-folha').value, 10) || 1;
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const html = _buildPrintHTML(selecionados, porFolha, hoje);
+  const w = window.open('', '_blank', 'width=900,height=700');
+  if (!w) { alert('Pop-up bloqueado! Permita pop-ups para este site e tente novamente.'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+function _buildPrintHTML(lotes, porFolha, hoje) {
+  const p2 = porFolha === 2;
+
+  const placaStyle = p2
+    ? `height:calc((297mm - 24mm) / 2); page-break-inside:avoid; overflow:hidden;`
+    : `height:calc(297mm - 20mm); page-break-inside:avoid; overflow:hidden;`;
+
+  const wrapStyle = p2
+    ? `display:flex; flex-direction:column; gap:0; height:297mm; page-break-after:always; overflow:hidden;`
+    : ``;
+
+  const pages = [];
+  if (p2) {
+    for (let i = 0; i < lotes.length; i += 2) { pages.push(lotes.slice(i, i + 2)); }
+  } else {
+    lotes.forEach(l => pages.push([l]));
+  }
+
+  const placasHTML = pages.map(group => {
+    const items = group.map((l, idx) => {
+      const st = _placaSituacao(l);
+      const isVenc = st === 'Vencido';
+      const isProx = st === 'Próximo';
+      const bannerBg = isVenc
+        ? `repeating-linear-gradient(45deg,#000 0px,#000 8px,#1a1a1a 8px,#1a1a1a 16px)`
+        : isProx
+        ? `repeating-linear-gradient(45deg,#222 0px,#222 8px,#333 8px,#333 16px)`
+        : `#111`;
+      const bannerTxt = isVenc ? '✕ PRODUTO VENCIDO' : isProx ? '⚠ PRÓXIMO DO VENCIMENTO' : '✓ PRODUTO VÁLIDO';
+      const dtVencStyle = isVenc
+        ? 'font-size:20px;font-weight:900;color:#000;text-decoration:underline;text-decoration-thickness:3px;'
+        : isProx
+        ? 'font-size:20px;font-weight:900;color:#000;text-decoration:underline;text-decoration-style:wavy;'
+        : 'font-size:20px;font-weight:900;color:#000;';
+      const qrId = `qr-${idx}-${Date.now()}-${Math.floor(Math.random()*99999)}`;
+      const qrEncoded = encodeURIComponent(_qrText(l, l._qty, hoje));
+
+      return `<div class="placa" style="${placaStyle}" data-qr-id="${qrId}" data-qr-text="${qrEncoded}">
+  <div style="background:${bannerBg};color:#fff;text-align:center;padding:6px 0;font-family:Arial Black,sans-serif;font-size:13px;font-weight:900;letter-spacing:.12em;">
+    ${bannerTxt}
+  </div>
+  <div style="display:flex;gap:0;flex:1;border:3px solid #000;border-top:none;border-bottom:none;">
+    <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px;">
+        <img src="data:image/jpeg;base64,${_PLACA_LOGO_B64}" alt="Agroquima" style="height:36px;filter:grayscale(1) contrast(2);object-fit:contain;" />
+        <span style="font-family:Arial,sans-serif;font-size:11px;color:#333;font-weight:600;text-align:right;">
+          Filial: <strong>${l.filial || '—'}</strong> (${l.sigla || '—'})<br>Linha: <strong>${l.linha || '—'}</strong>
+        </span>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="font-family:Arial,sans-serif;font-size:10px;text-transform:uppercase;color:#555;letter-spacing:.08em;margin-bottom:2px;">Produto</div>
+        <div style="font-family:Arial Black,sans-serif;font-size:15px;font-weight:900;color:#000;line-height:1.2;">${l.nomeProduto || '—'}</div>
+        <div style="font-family:Courier New,monospace;font-size:11px;color:#333;">Cód: ${l.codProduto || '—'}</div>
+      </div>
+      <div style="margin-bottom:8px;background:#000;color:#fff;padding:6px 10px;border-radius:4px;">
+        <div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;color:#ccc;">Número do Lote</div>
+        <div style="font-family:Courier New,monospace;font-size:22px;font-weight:900;letter-spacing:.08em;">${l.lote || '—'}</div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:8px;">
+        <div style="flex:1;">
+          <div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;color:#555;letter-spacing:.07em;margin-bottom:2px;">Fabricação</div>
+          <div style="font-family:Courier New,monospace;font-size:15px;font-weight:700;color:#000;">${_fmtDt(l.dtFabricacao)}</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;color:#555;letter-spacing:.07em;margin-bottom:2px;">Validade</div>
+          <div style="font-family:Courier New,monospace;${dtVencStyle}">${_fmtDt(l.dtVencimento)}</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #ccc;padding-top:6px;">
+        <div>
+          <div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;color:#555;margin-bottom:1px;">Qtd. em estoque</div>
+          <div style="font-family:Courier New,monospace;font-size:18px;font-weight:900;">${l._qty}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;color:#555;margin-bottom:1px;">Fabricante</div>
+          <div style="font-family:Arial,sans-serif;font-size:10px;font-weight:600;max-width:140px;text-align:right;line-height:1.2;">${l.fabricante || '—'}</div>
+        </div>
+      </div>
+      <div style="font-family:Arial,sans-serif;font-size:8px;color:#999;text-align:right;margin-top:4px;">Impresso em: ${hoje}</div>
+    </div>
+    <div style="width:2px;background:#000;flex-shrink:0;"></div>
+    <div style="width:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;gap:6px;">
+      <canvas id="${qrId}" style="width:74px;height:74px;image-rendering:pixelated;"></canvas>
+      <div style="font-family:Arial,sans-serif;font-size:7px;text-align:center;color:#444;line-height:1.3;">Escaneie para<br>ver todos<br>os dados</div>
+      <div style="font-family:Arial,sans-serif;font-size:7px;color:#999;text-align:center;margin-top:auto;">iOS &amp; Android</div>
+    </div>
+  </div>
+  <div style="border:3px solid #000;border-top:none;height:3px;"></div>
+  ${p2 && idx === 0 ? '<div style="border-top:2px dashed #aaa;margin:4px 0;position:relative;"><span style="position:absolute;left:50%;transform:translateX(-50%);top:-8px;background:#fff;padding:0 6px;font-size:9px;color:#999;font-family:Arial,sans-serif;">✂ recorte aqui</span></div>' : ''}
+</div>`;
+    }).join('');
+    return `<div style="${wrapStyle}">${items}</div>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Placas de Identificação — Agroquima</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#fff;font-family:Arial,sans-serif;}
+@media print{
+  body{margin:0;padding:0;}
+  @page{size:A4 portrait;margin:10mm;}
+  .no-print{display:none!important;}
+  .placa{page-break-inside:avoid;}
+}
+@media screen{
+  body{padding:20px;background:#e5e5e5;}
+  .placa{margin:10px auto;max-width:190mm;border:1px solid #ccc;background:#fff;}
+}
+</style>
+</head>
+<body>
+<div class="no-print" style="text-align:center;padding:10px 0 20px;font-family:Arial,sans-serif;font-size:13px;color:#333;">
+  <button onclick="window.print()" style="padding:10px 28px;background:#111;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:12px;">🖨 Imprimir</button>
+  <button onclick="window.close()" style="padding:10px 18px;background:#666;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">✕ Fechar</button>
+  <span style="margin-left:16px;font-size:12px;color:#666;">${lotes.length} placa(s) · ${porFolha} por folha</span>
+</div>
+${placasHTML}
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script>
+<script>
+(function(){
+  function gerarQRs(){
+    if(typeof QRCode==='undefined'){setTimeout(gerarQRs,200);return;}
+    document.querySelectorAll('[data-qr-id]').forEach(function(el){
+      var id=el.getAttribute('data-qr-id');
+      var text=decodeURIComponent(el.getAttribute('data-qr-text'));
+      var canvas=document.getElementById(id);
+      if(!canvas)return;
+      QRCode.toCanvas(canvas,text,{width:74,margin:1,errorCorrectionLevel:'M',color:{dark:'#000',light:'#fff'}},function(err){
+        if(err){canvas.parentElement.innerHTML='<div style="width:74px;height:74px;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-size:7px;text-align:center;padding:4px;">QR indisponível</div>';}
+      });
+    });
+  }
+  gerarQRs();
+  window.addEventListener('load',function(){setTimeout(function(){window.print();},800);});
+})();
+<\/script>
+</body>
+</html>`;
+}
+
+window._placaToggle = _placaToggle;
+window._placaQty = _placaQty;
+window.selecionarTodasPlacas = selecionarTodasPlacas;
+window.filtrarPlacas = filtrarPlacas;
+window.renderPlacas = renderPlacas;
+window.imprimirPlacas = imprimirPlacas;
+
+})();
+</script>
 </body>
 </html>
