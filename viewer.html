@@ -180,7 +180,11 @@ body{
 
     var filialLabel = esc(d.fc) + (d.fn ? ' &mdash; ' + esc(d.fn) : '');
     var linhaLabel  = (d.lc ? 'Linha ' + esc(d.lc) + ' &mdash; ' : '') + esc(d.ln||'');
-    var fab = esc(d.fab||'—').replace(/^\d+ - /, '');
+    /* parse "NNNNN - NOME FORNECEDOR" into code + name */
+    var fabRaw = d.fab || '';
+    var fabMatch = fabRaw.match(/^(\d+)\s*-\s*(.+)$/);
+    var fabCod  = fabMatch ? fabMatch[1] : '';
+    var fabNome = fabMatch ? fabMatch[2] : fabRaw;
     var dvClass = statusClass;
 
     document.getElementById('root').innerHTML =
@@ -225,8 +229,9 @@ body{
       +'</div>'
 
       +'<div class="info-card-full">'
-      +'<div class="sec-label">Fabricante</div>'
-      +'<div class="fab-value">'+fab+'</div>'
+      +'<div class="sec-label">Fornecedor</div>'
+      +(fabCod ? '<div class="product-code" style="margin-bottom:4px;">C&oacute;d: <strong>'+esc(fabCod)+'</strong></div>' : '')
+      +'<div class="fab-value">'+esc(fabNome||'—')+'</div>'
       +'</div>'
 
       +'<hr class="divider">'
