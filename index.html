@@ -9214,7 +9214,7 @@ function filtrarPlacas() {
   }).map(l => {
     const key = `${l.codProduto}|${l.lote}`;
     const old = prev[key] || {};
-    return Object.assign({}, l, { _sel: old._sel || false, _qty: old._qty !== undefined ? old._qty : 1, _key: key });
+    return Object.assign({}, l, { _sel: old._sel || false, _qty: old._qty !== undefined ? old._qty : (parseFloat(l.quantidade) || 1), _key: key });
   });
 
   document.getElementById('placa-empty').style.display = _placasData.length ? 'none' : 'block';
@@ -9301,12 +9301,14 @@ function _atualizarContadorPlacas() {
 }
 
 function _qrText(l, qty, hoje) {
+  const nomeFilial = (typeof lojaNome === 'function' ? lojaNome(l.sigla) : '') || l.sigla || l.filial || '—';
+  const nomeLinha  = (typeof getNomeLinha === 'function' ? getNomeLinha(l.linha) : '') || ('Linha ' + (l.linha || '—'));
   const fab = l.fabricante || '—';
   const lines = [
     'AGROQUIMA — IDENTIFICAÇÃO DE LOTE',
     '',
-    `Filial  : ${l.filial || '—'} (${l.sigla || '—'})`,
-    `Linha   : ${l.linha || '—'}`,
+    `Filial  : ${l.filial || '—'} — ${nomeFilial}`,
+    `Linha   : ${l.linha || '—'} — ${nomeLinha}`,
     `Produto : ${l.nomeProduto || '—'}`,
     `Código  : ${l.codProduto || '—'}`,
     `Lote    : ${l.lote || '—'}`,
@@ -9323,139 +9325,230 @@ function _qrText(l, qty, hoje) {
 }
 
 function imprimirPlacas() {
-  const selecionados = _placasData.filter(p => p._sel);
+  var selecionados = _placasData.filter(function(p) { return p._sel; });
   if (!selecionados.length) return;
-  const porFolha = parseInt(document.getElementById('placa-por-folha').value, 10) || 1;
-  const hoje = new Date().toLocaleDateString('pt-BR');
-  const html = _buildPrintHTML(selecionados, porFolha, hoje);
-  const w = window.open('', '_blank', 'width=900,height=700');
-  if (!w) { alert('Pop-up bloqueado! Permita pop-ups para este site e tente novamente.'); return; }
-  w.document.write(html);
-  w.document.close();
+  var porFolha = parseInt(document.getElementById('placa-por-folha').value, 10) || 1;
+  var hoje = new Date().toLocaleDateString('pt-BR');
+
+  var btn = document.getElementById('placa-btn-imprimir');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Gerando...'; }
+
+  function _restaurarBtn() {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-printer"><\/i> Imprimir'; }
+  }
+
+  function _abrirJanela(qrUrls) {
+    _restaurarBtn();
+    var html = _buildPrintHTML(selecionados, porFolha, hoje, qrUrls || []);
+    var w = window.open('', '_blank', 'width=1100,height=820');
+    if (!w) { alert('Pop-up bloqueado! Permita pop-ups para este site e tente novamente.'); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function _gerarQRs() {
+    var urls = new Array(selecionados.length).fill(null);
+    var pendente = selecionados.length;
+    if (!pendente) { _abrirJanela(urls); return; }
+    selecionados.forEach(function(l, i) {
+      var texto = _qrText(l, l._qty, hoje);
+      QRCode.toDataURL(texto, {
+        width: 280, margin: 1, errorCorrectionLevel: 'M',
+        color: { dark: '#000000', light: '#ffffff' }
+      }, function(err, url) {
+        urls[i] = err ? null : url;
+        if (--pendente === 0) _abrirJanela(urls);
+      });
+    });
+  }
+
+  if (typeof QRCode !== 'undefined') {
+    _gerarQRs();
+  } else {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+    s.onload  = _gerarQRs;
+    s.onerror = function() { _abrirJanela([]); };
+    document.head.appendChild(s);
+  }
 }
 
-function _buildPrintHTML(lotes, porFolha, hoje) {
+function _buildPrintHTML(lotes, porFolha, hoje, qrUrls) {
   var logoSrc = (document.getElementById('placa-logo-hidden') || {}).src || '';
   var p2 = porFolha === 2;
+  qrUrls = qrUrls || [];
+
+  /* CSS forced print-color-adjust shorthand */
+  var PCA = 'print-color-adjust:exact;-webkit-print-color-adjust:exact;';
 
   function makePlaca(l, idx, h, compact) {
-    var st = _placaSituacao(l);
+    var st     = _placaSituacao(l);
     var isVenc = st === 'Vencido';
     var isProx = st === 'Próximo';
+
+    /* status palette */
     var bannerBg = isVenc
       ? 'repeating-linear-gradient(45deg,#000 0px,#000 10px,#1a1a1a 10px,#1a1a1a 20px)'
       : isProx
-      ? 'repeating-linear-gradient(45deg,#333 0px,#333 10px,#555 10px,#555 20px)'
-      : '#000';
-    var bannerTxt = isVenc ? '&#10005;&#10005;  PRODUTO VENCIDO  &#10005;&#10005;'
-      : isProx ? '&#9888;  PRÓXIMO DO VENCIMENTO  &#9888;'
-      : '&#10003;  PRODUTO VÁLIDO  &#10003;';
-    var dtVencStyle = isVenc
+      ? 'repeating-linear-gradient(45deg,#2a2a2a 0px,#2a2a2a 10px,#4a4a4a 10px,#4a4a4a 20px)'
+      : '#111';
+
+    var bannerIcon = isVenc ? '✕✕' : isProx ? '⚠' : '✓';
+    var bannerLabel = isVenc ? 'PRODUTO VENCIDO' : isProx ? 'PRÓXIMO DO VENCIMENTO' : 'PRODUTO VÁLIDO';
+
+    var loteBg   = '#000';
+    var loteCol  = '#fff';
+
+    var dtVencDeco = isVenc
       ? 'text-decoration:underline;text-decoration-thickness:3px;'
       : isProx
       ? 'text-decoration:underline;text-decoration-style:wavy;'
       : '';
-    var qrId = 'qr' + idx + 'x' + Math.floor(Math.random() * 1e8);
-    var qrEncoded = encodeURIComponent(_qrText(l, l._qty, hoje));
 
-    var nameSz   = compact ? '13px' : '19px';
+    /* full names from main-window helpers (both are in scope at call time) */
+    var nomeFilial = (typeof lojaNome      === 'function' ? lojaNome(l.sigla)       : '') || l.sigla || l.filial || '—';
+    var nomeLinha  = (typeof getNomeLinha  === 'function' ? getNomeLinha(l.linha)   : '') || ('Linha ' + (l.linha || '—'));
+
+    /* font sizes scale between 1-per-page and 2-per-page */
+    var nameSz   = compact ? '13px' : '20px';
     var codeSz   = compact ? '10px' : '12px';
-    var loteSz   = compact ? '22px' : '38px';
-    var dateSz   = compact ? '14px' : '22px';
-    var qtySz    = compact ? '17px' : '28px';
-    var logoH    = compact ? '24px' : '42px';
-    var fSz      = compact ? '10px' : '12px';
-    var bannerH  = compact ? '9mm'  : '13mm';
-    var headerH  = compact ? '15mm' : '22mm';
-    var bannerFS = compact ? '11px' : '16px';
+    var loteSz   = compact ? '23px' : '40px';
+    var dateSz   = compact ? '15px' : '23px';
+    var qtySz    = compact ? '18px' : '30px';
+    var logoH    = compact ? '28px' : '54px';
+    var headerFS = compact ? '11px' : '14px';
+    var headerH  = compact ? '18mm' : '26mm';
+    var bannerH  = compact ? '10mm' : '15mm';
+    var bannerFS = compact ? '12px' : '18px';
+
+    var qrUrl    = qrUrls[idx] || null;
+    var qrBlock  = qrUrl
+      ? '<img src="' + qrUrl + '" style="width:58mm;height:58mm;display:block;image-rendering:pixelated;" />'
+      : '<div style="width:58mm;height:58mm;border:2px solid #bbb;display:flex;align-items:center;'
+        + 'justify-content:center;font-size:9px;text-align:center;color:#aaa;padding:6px;'
+        + 'font-family:Arial,sans-serif;">QR<br>indispon&iacute;vel</div>';
 
     return '<div class="placa" style="height:' + h + ';display:flex;flex-direction:column;'
-      + 'border:3px solid #000;overflow:hidden;box-sizing:border-box;" '
-      + 'data-qr-id="' + qrId + '" data-qr-text="' + qrEncoded + '">'
+      + 'border:3px solid #000;overflow:hidden;box-sizing:border-box;">'
 
-      + '<div style="flex-shrink:0;height:' + bannerH + ';background:' + bannerBg + ';color:#fff;'
-      + 'display:flex;align-items:center;justify-content:center;'
+      /* ── BANNER ── */
+      + '<div style="flex-shrink:0;height:' + bannerH + ';background:' + bannerBg + ';' + PCA
+      + 'color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;'
       + 'font-family:Arial Black,sans-serif;font-size:' + bannerFS + ';font-weight:900;'
-      + 'letter-spacing:.14em;text-transform:uppercase;">' + bannerTxt + '</div>'
+      + 'letter-spacing:.16em;text-transform:uppercase;">'
+      + '<span>' + bannerIcon + '</span>'
+      + '<span>' + bannerLabel + '</span>'
+      + '<span>' + bannerIcon + '</span>'
+      + '</div>'
 
+      /* ── HEADER: centered logo + filial/linha ── */
       + '<div style="flex-shrink:0;height:' + headerH + ';display:flex;align-items:center;'
-      + 'justify-content:space-between;padding:0 14px;border-bottom:2px solid #000;">'
-      + '<img src="' + logoSrc + '" alt="Agroquima" style="height:' + logoH + ';'
-      + 'filter:grayscale(1) contrast(1.8);object-fit:contain;" />'
-      + '<div style="text-align:right;font-family:Arial,sans-serif;font-size:' + fSz + ';color:#222;line-height:1.5;">'
-      + 'Filial: <strong>' + (l.filial||'—') + '</strong> (' + (l.sigla||'—') + ')<br>'
-      + 'Linha: <strong>' + (l.linha||'—') + '</strong></div></div>'
+      + 'justify-content:center;gap:20px;padding:0 18px;border-bottom:2px solid #000;">'
 
+        /* logo */
+        + '<img src="' + logoSrc + '" alt="Agroquima" '
+        + 'style="height:' + logoH + ';filter:grayscale(1) contrast(1.8);object-fit:contain;flex-shrink:0;" />'
+
+        /* vertical divider */
+        + '<div style="width:2px;height:65%;background:#222;flex-shrink:0;' + PCA + '"></div>'
+
+        /* filial + linha centered text */
+        + '<div style="text-align:center;font-family:Arial,sans-serif;line-height:1.55;">'
+        + '<div style="font-size:' + headerFS + ';font-weight:900;letter-spacing:.04em;color:#000;">'
+        + (l.filial || '—') + ' — ' + nomeFilial.toUpperCase()
+        + '</div>'
+        + '<div style="font-size:' + (compact ? '10px' : '12px') + ';font-weight:600;color:#333;">'
+        + 'Linha ' + (l.linha || '—') + ' &mdash; ' + nomeLinha
+        + '</div>'
+        + '</div>'
+
+      + '</div>'
+
+      /* ── BODY ── */
       + '<div style="flex:1;min-height:0;display:flex;">'
 
-      /* left content column */
-      + '<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">'
+        /* left content column */
+        + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">'
 
-        /* product */
-        + '<div style="flex:2;min-height:0;display:flex;flex-direction:column;justify-content:center;'
-        + 'padding:5px 14px;border-bottom:1px solid #ccc;">'
-        + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;color:#666;'
-        + 'letter-spacing:.08em;margin-bottom:2px;">Produto</div>'
-        + '<div style="font-family:Arial Black,sans-serif;font-size:' + nameSz + ';font-weight:900;'
-        + 'color:#000;line-height:1.15;overflow:hidden;">' + (l.nomeProduto||'—') + '</div>'
-        + '<div style="font-family:Courier New,monospace;font-size:' + codeSz + ';color:#444;margin-top:2px;">'
-        + 'Cód: ' + (l.codProduto||'—') + '</div></div>'
-
-        /* lote */
-        + '<div style="flex:2;min-height:0;display:flex;flex-direction:column;justify-content:center;'
-        + 'padding:5px 14px;background:#000;color:#fff;border-bottom:2px solid #000;">'
-        + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-        + 'letter-spacing:.1em;color:#aaa;margin-bottom:2px;">Número do Lote</div>'
-        + '<div style="font-family:Courier New,monospace;font-size:' + loteSz + ';font-weight:900;'
-        + 'letter-spacing:.06em;white-space:nowrap;overflow:hidden;">' + (l.lote||'—') + '</div></div>'
-
-        /* datas */
-        + '<div style="flex:1.5;min-height:0;display:flex;border-bottom:1px solid #ccc;">'
-          + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;'
-          + 'padding:4px 14px;border-right:1px solid #ddd;">'
+          /* product */
+          + '<div style="flex:2;min-height:0;display:flex;flex-direction:column;justify-content:center;'
+          + 'padding:5px 14px;border-bottom:1px solid #ccc;">'
           + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'color:#666;letter-spacing:.07em;margin-bottom:2px;">Fabricação</div>'
-          + '<div style="font-family:Courier New,monospace;font-size:' + dateSz + ';'
-          + 'font-weight:700;color:#000;">' + _fmtDt(l.dtFabricacao) + '</div></div>'
-          + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 14px;">'
+          + 'color:#666;letter-spacing:.08em;margin-bottom:2px;">Produto</div>'
+          + '<div style="font-family:Arial Black,sans-serif;font-size:' + nameSz + ';font-weight:900;'
+          + 'color:#000;line-height:1.15;overflow:hidden;text-overflow:ellipsis;">'
+          + (l.nomeProduto || '—') + '</div>'
+          + '<div style="font-family:Courier New,monospace;font-size:' + codeSz + ';color:#444;margin-top:3px;">'
+          + 'Cód: ' + (l.codProduto || '—') + '</div>'
+          + '</div>'
+
+          /* lote — black bg */
+          + '<div style="flex:2;min-height:0;display:flex;flex-direction:column;justify-content:center;'
+          + 'padding:5px 14px;background:' + loteBg + ';' + PCA
+          + 'color:' + loteCol + ';border-bottom:2px solid #000;">'
           + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'color:#666;letter-spacing:.07em;margin-bottom:2px;">Validade</div>'
-          + '<div style="font-family:Courier New,monospace;font-size:' + dateSz + ';'
-          + dtVencStyle + 'font-weight:900;color:#000;">' + _fmtDt(l.dtVencimento) + '</div></div>'
+          + 'letter-spacing:.1em;color:#aaa;margin-bottom:2px;">Número do Lote</div>'
+          + '<div style="font-family:Courier New,monospace;font-size:' + loteSz + ';font-weight:900;'
+          + 'letter-spacing:.05em;white-space:nowrap;overflow:hidden;">'
+          + (l.lote || '—') + '</div>'
+          + '</div>'
+
+          /* dates */
+          + '<div style="flex:1.5;min-height:0;display:flex;border-bottom:1px solid #ccc;">'
+
+            + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;'
+            + 'padding:4px 14px;border-right:1px solid #ddd;">'
+            + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
+            + 'color:#666;letter-spacing:.07em;margin-bottom:2px;">Fabricação</div>'
+            + '<div style="font-family:Courier New,monospace;font-size:' + dateSz + ';'
+            + 'font-weight:700;color:#000;">' + _fmtDt(l.dtFabricacao) + '</div>'
+            + '</div>'
+
+            + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 14px;">'
+            + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
+            + 'color:#666;letter-spacing:.07em;margin-bottom:2px;">Validade</div>'
+            + '<div style="font-family:Courier New,monospace;font-size:' + dateSz + ';'
+            + dtVencDeco + 'font-weight:900;color:#000;">' + _fmtDt(l.dtVencimento) + '</div>'
+            + '</div>'
+
+          + '</div>'
+
+          /* qty + fabricante */
+          + '<div style="flex:1.3;min-height:0;display:flex;align-items:center;'
+          + 'justify-content:space-between;padding:4px 14px;border-bottom:1px solid #ccc;">'
+            + '<div>'
+            + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
+            + 'color:#666;margin-bottom:1px;">Qtd. em estoque</div>'
+            + '<div style="font-family:Courier New,monospace;font-size:' + qtySz + ';'
+            + 'font-weight:900;color:#000;">' + (l._qty || l.quantidade || '—') + '</div>'
+            + '</div>'
+            + '<div style="text-align:right;max-width:160px;">'
+            + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
+            + 'color:#666;margin-bottom:1px;">Fabricante</div>'
+            + '<div style="font-family:Arial,sans-serif;font-size:10px;font-weight:600;'
+            + 'line-height:1.3;color:#000;">' + (l.fabricante || '—') + '</div>'
+            + '</div>'
+          + '</div>'
+
+          /* footer */
+          + '<div style="flex-shrink:0;padding:3px 14px;text-align:right;background:#f4f4f4;">'
+          + '<span style="font-family:Arial,sans-serif;font-size:8px;color:#999;">'
+          + 'Impresso em: ' + hoje + '</span>'
+          + '</div>'
+
         + '</div>'
 
-        /* qty + fabricante */
-        + '<div style="flex:1.3;min-height:0;display:flex;align-items:center;'
-        + 'justify-content:space-between;padding:4px 14px;border-bottom:1px solid #ccc;">'
-          + '<div><div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'color:#666;margin-bottom:1px;">Qtd. em estoque</div>'
-          + '<div style="font-family:Courier New,monospace;font-size:' + qtySz + ';'
-          + 'font-weight:900;color:#000;">' + l._qty + '</div></div>'
-          + '<div style="text-align:right;max-width:150px;">'
-          + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'color:#666;margin-bottom:1px;">Fabricante</div>'
-          + '<div style="font-family:Arial,sans-serif;font-size:10px;font-weight:600;'
-          + 'line-height:1.3;color:#000;">' + (l.fabricante||'—') + '</div></div>'
+        /* right QR column */
+        + '<div style="width:74mm;flex-shrink:0;display:flex;flex-direction:column;'
+        + 'align-items:center;justify-content:center;padding:10px 8px;gap:8px;'
+        + 'border-left:2px solid #000;">'
+        + qrBlock
+        + '<div style="font-family:Arial,sans-serif;font-size:8px;text-align:center;'
+        + 'color:#444;line-height:1.5;">Escaneie para ver<br>todos os dados do lote</div>'
+        + '<div style="font-family:Arial,sans-serif;font-size:7px;color:#aaa;text-align:center;">'
+        + '&#10003; iOS &amp; Android</div>'
         + '</div>'
-
-        /* footer */
-        + '<div style="flex-shrink:0;padding:3px 14px;text-align:right;background:#f4f4f4;">'
-        + '<span style="font-family:Arial,sans-serif;font-size:8px;color:#999;">'
-        + 'Impresso em: ' + hoje + '</span></div>'
-
-      + '</div>'
-
-      /* right QR column */
-      + '<div style="width:72mm;flex-shrink:0;display:flex;flex-direction:column;'
-      + 'align-items:center;justify-content:center;padding:10px 8px;gap:8px;'
-      + 'border-left:2px solid #000;background:#fff;">'
-      + '<canvas id="' + qrId + '" width="160" height="160" '
-      + 'style="width:56mm;height:56mm;image-rendering:pixelated;border:1px solid #ddd;"></canvas>'
-      + '<div style="font-family:Arial,sans-serif;font-size:8px;text-align:center;'
-      + 'color:#444;line-height:1.5;">Escaneie para ver<br>todos os dados do lote</div>'
-      + '<div style="font-family:Arial,sans-serif;font-size:7px;color:#aaa;text-align:center;">'
-      + '&#10003; iOS &amp; Android</div>'
-      + '</div>'
 
       + '</div>'
     + '</div>';
@@ -9501,51 +9594,22 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
     + '  @page{size:A4 landscape;margin:10mm;}\n'
     + '  .no-print{display:none!important;}\n'
     + '  .placa{page-break-inside:avoid;}\n'
+    + '  *{print-color-adjust:exact;-webkit-print-color-adjust:exact;}\n'
     + '}\n'
     + '@media screen{\n'
-    + '  body{padding:20px;background:#c8c8c8;}\n'
-    + '  .screen-page{margin:0 auto 24px;width:277mm;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.3);}\n'
+    + '  body{padding:24px;background:#c4c4c4;}\n'
     + '}\n'
     + '<\/style>\n<\/head>\n<body>\n'
-    + '<div class="no-print" style="text-align:center;padding:12px 0 22px;font-family:Arial,sans-serif;font-size:13px;color:#333;">\n'
-    + '  <button onclick="window.print()" style="padding:10px 28px;background:#111;color:#fff;'
+    + '<div class="no-print" style="text-align:center;padding:14px 0 24px;font-family:Arial,sans-serif;font-size:13px;color:#333;">\n'
+    + '  <button onclick="window.print()" style="padding:10px 30px;background:#111;color:#fff;'
     + 'border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:12px;">'
     + '&#128424; Imprimir<\/button>\n'
     + '  <button onclick="window.close()" style="padding:10px 18px;background:#666;color:#fff;'
     + 'border:none;border-radius:6px;font-size:13px;cursor:pointer;">&#10005; Fechar<\/button>\n'
     + '  <span style="margin-left:16px;font-size:12px;color:#666;">'
-    + lotes.length + ' placa(s) · ' + porFolha + ' por folha · A4 paisagem<\/span>\n<\/div>\n'
+    + lotes.length + ' placa(s) &middot; ' + porFolha + ' por folha &middot; A4 paisagem<\/span>\n<\/div>\n'
     + placasHTML
-    + '\n<script>\n(function(){\n'
-    + '  var s=document.createElement(\'script\');\n'
-    + '  s.src=\'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js\';\n'
-    + '  function fallback(){\n'
-    + '    document.querySelectorAll(\'[data-qr-id]\').forEach(function(el){\n'
-    + '      var c=document.getElementById(el.getAttribute(\'data-qr-id\'));\n'
-    + '      if(c&&c.parentNode)c.parentNode.innerHTML=\'<div style="width:56mm;height:56mm;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-size:9px;text-align:center;">QR indispon&iacute;vel<\/div>\';\n'
-    + '    });\n'
-    + '    window.print();\n'
-    + '  }\n'
-    + '  s.onerror=fallback;\n'
-    + '  s.onload=function(){\n'
-    + '    var els=document.querySelectorAll(\'[data-qr-id]\');\n'
-    + '    var n=els.length;\n'
-    + '    if(!n){window.print();return;}\n'
-    + '    var done=0;\n'
-    + '    els.forEach(function(el){\n'
-    + '      var id=el.getAttribute(\'data-qr-id\');\n'
-    + '      var text=decodeURIComponent(el.getAttribute(\'data-qr-text\'));\n'
-    + '      var canvas=document.getElementById(id);\n'
-    + '      if(!canvas){if(++done>=n)window.print();return;}\n'
-    + '      QRCode.toCanvas(canvas,text,{width:160,margin:1,errorCorrectionLevel:\'M\',color:{dark:\'#000\',light:\'#fff\'}},function(err){\n'
-    + '        if(err&&canvas.parentNode)canvas.parentNode.innerHTML=\'<div style="width:56mm;height:56mm;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-size:9px;text-align:center;padding:4px;">QR indispon&iacute;vel<\/div>\';\n'
-    + '        if(++done>=n)window.print();\n'
-    + '      });\n'
-    + '    });\n'
-    + '  };\n'
-    + '  document.head.appendChild(s);\n'
-    + '})();\n'
-    + '<\/script>\n<\/body>\n<\/html>';
+    + '\n<\/body>\n<\/html>';
 }
 
 window._placaToggle = _placaToggle;
