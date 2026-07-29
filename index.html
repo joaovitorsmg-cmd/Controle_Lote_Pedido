@@ -5791,48 +5791,121 @@ function baixarHTMLMobile() {
 
   let itensHTML = '';
   let itemIdx = 0;
+  const lotesRef = [];
+
   for (const [linha, lotes] of Object.entries(porLinha)) {
     itensHTML += `<div class="grupo"><div class="grupo-header">${getNomeLinha(linha)}</div>`;
     for (const l of lotes) {
       itemIdx++;
+      const fabricanteClean = (l.fabricante||'').replace(/^\d+\s*-\s*/,'');
+      const obsInicial = (APP.checklistObs[l.codProduto+'|'+String(l.lote).trim()]||'').replace(/</g,'&lt;');
+      const nivelKey = (l.nivel||'OK').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const vencColor = l.nivel==='CRÍTICO' ? '#ef4444' : l.nivel==='ALERTA' ? '#f59e0b' : '#374151';
+
+      lotesRef.push({
+        idx: itemIdx,
+        lote: String(l.lote||'').trim(),
+        fab: String(l.dtFabricacao||'').trim(),
+        venc: String(l.dtVencimento||'').trim(),
+        qtd: l.quantidade
+      });
+
       itensHTML += `
         <div class="item" id="item-${itemIdx}">
           <div class="item-header">
-            <label class="checkbox-wrap">
+            <label class="checkbox-wrap" onclick="event.stopPropagation()">
               <input type="checkbox" onchange="marcarItem(${itemIdx}, this.checked)">
               <span class="checkmark"></span>
             </label>
             <div class="item-info">
               <div class="item-nome">${l.nomeProduto.trim()}</div>
-              <div class="item-meta">Cód: <strong style="color:#1a4a8a;font-family:monospace;">${l.codProduto}</strong> · Lote: <strong>${l.lote.trim()}</strong> · Vence: <strong style="color:${l.nivel==='CRÍTICO'?'#ef4444':'#f59e0b'}">${l.dtVencimento}</strong></div>
-              ${l.fabricante ? `<div class="item-meta" style="margin-top:2px;">Fabricante: <strong>${l.fabricante.replace(/^\d+\s*-\s*/,'')}</strong></div>` : ''}
+              <div class="item-meta">Cód: <strong class="cod-tag">${l.codProduto}</strong> · Lote: <strong>${l.lote.trim()}</strong></div>
+              <div class="item-meta">Fab: <strong>${l.dtFabricacao||'—'}</strong> · Vence: <strong style="color:${vencColor}">${l.dtVencimento}</strong></div>
+              ${fabricanteClean ? `<div class="item-meta forn-tag">${fabricanteClean}</div>` : ''}
             </div>
-            <span class="nivel nivel-${(l.nivel||'OK').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}">${l.nivel||'OK'}</span>
+            <div class="item-badges">
+              <span class="nivel nivel-${nivelKey}">${l.nivel||'OK'}</span>
+              <span class="badge-diverg hidden" id="bdiv-${itemIdx}" title="Divergência detectada">⚠</span>
+            </div>
           </div>
-          <div class="item-body">
+
+          <div class="item-body" id="body-${itemIdx}">
+            <div class="section-sep">Contagem de Estoque</div>
             <div class="campo-row">
               <div class="campo">
-                <label>Qtd no Sistema</label>
+                <label>No Sistema</label>
                 <div class="campo-valor">${l.quantidade.toLocaleString('pt-BR')}</div>
               </div>
               <div class="campo">
-                <label>Qtd Encontrada</label>
+                <label>Encontrado</label>
                 <input type="number" inputmode="decimal" class="campo-input" placeholder="—" id="qtd-${itemIdx}" data-sistema="${l.quantidade}" oninput="calcDivergencia(${itemIdx}, ${l.quantidade})">
               </div>
               <div class="campo">
-                <label>Divergência</label>
-                <div class="campo-valor" id="div-${itemIdx}" style="color:#6b7280">—</div>
+                <label>Diferença</label>
+                <div class="campo-valor" id="div-${itemIdx}" style="color:#9ca3af">—</div>
               </div>
             </div>
-            <div class="campo" style="margin-top:8px;">
-              <label>Observações</label>
-              <textarea class="campo-textarea" id="obs-${itemIdx}" placeholder="Anote divergências, condições do produto, localização...">${(APP.checklistObs[l.codProduto+'|'+String(l.lote).trim()]||'').replace(/</g,'&lt;')}</textarea>
+
+            <button class="conf-toggle" id="ctog-${itemIdx}" onclick="toggleConf(${itemIdx})">
+              <span>🔍 Conferir dados do lote</span>
+              <span class="conf-arrow" id="carr-${itemIdx}">▼</span>
+            </button>
+
+            <div class="conf-body" id="conf-${itemIdx}">
+              <div class="conf-ref">
+                <div class="conf-ref-title">📋 Dados no Sistema (referência)</div>
+                <div class="conf-ref-grid">
+                  <div class="conf-ref-cell"><span class="conf-ref-lbl">Lote</span><strong>${l.lote.trim()||'—'}</strong></div>
+                  <div class="conf-ref-cell"><span class="conf-ref-lbl">Fabricação</span><strong>${l.dtFabricacao||'—'}</strong></div>
+                  <div class="conf-ref-cell"><span class="conf-ref-lbl">Vencimento</span><strong>${l.dtVencimento||'—'}</strong></div>
+                </div>
+              </div>
+
+              <div class="conf-inputs">
+                <div class="conf-ref-title">📦 O que está na embalagem física</div>
+                <div class="conf-field-row">
+                  <div class="conf-field">
+                    <div class="conf-field-lbl">Lote físico</div>
+                    <div class="conf-input-wrap">
+                      <input type="text" id="cf-lote-${itemIdx}" class="conf-input" placeholder="Lote da embalagem" autocomplete="off" oninput="verificarLote(${itemIdx})">
+                      <span id="cf-lote-st-${itemIdx}" class="match-badge match-nd">—</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="conf-field-row conf-field-row-2">
+                  <div class="conf-field">
+                    <div class="conf-field-lbl">Fabricação</div>
+                    <div class="conf-input-wrap">
+                      <input type="text" id="cf-fab-${itemIdx}" class="conf-input conf-input-date" placeholder="DD/MM/AAAA" autocomplete="off" oninput="verificarLote(${itemIdx})">
+                      <span id="cf-fab-st-${itemIdx}" class="match-badge match-nd">—</span>
+                    </div>
+                  </div>
+                  <div class="conf-field">
+                    <div class="conf-field-lbl">Vencimento</div>
+                    <div class="conf-input-wrap">
+                      <input type="text" id="cf-venc-${itemIdx}" class="conf-input conf-input-date" placeholder="DD/MM/AAAA" autocomplete="off" oninput="verificarLote(${itemIdx})">
+                      <span id="cf-venc-st-${itemIdx}" class="match-badge match-nd">—</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn-marcar-div" id="bdiv-btn-${itemIdx}" onclick="toggleDivergente(${itemIdx})">
+                ⚠ Marcar como Divergente
+              </button>
+            </div>
+
+            <div class="campo obs-campo">
+              <label>Observações / Motivo da divergência</label>
+              <textarea class="campo-textarea" id="obs-${itemIdx}" placeholder="Anote divergências, condições do produto, localização...">${obsInicial}</textarea>
             </div>
           </div>
         </div>`;
     }
     itensHTML += '</div>';
   }
+
+  const lotesRefJSON = JSON.stringify(lotesRef);
 
   const mobileHTML = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -5845,45 +5918,112 @@ function baixarHTMLMobile() {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; }
-  .header { background: #1a4a8a; color: white; padding: 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+  /* ── Header ── */
+  .header { background: #1a4a8a; color: white; padding: 14px 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.35); }
   .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .header h1 { font-size: 16px; font-weight: 700; }
+  .header h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
   .header-meta { font-size: 11px; opacity: 0.8; }
-  .progress-bar { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 10px; }
+  .header-stats { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; }
+  .stat-pill { background: rgba(255,255,255,0.15); border-radius: 20px; padding: 3px 10px; white-space: nowrap; }
+  .stat-pill.warn { background: rgba(251,191,36,0.3); color: #fde68a; }
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 8px; }
   .progress-fill { height: 100%; background: #60a5fa; border-radius: 2px; transition: width 0.3s; }
-  .progress-label { font-size: 11px; opacity: 0.8; margin-top: 4px; }
-  .content { padding: 12px; max-width: 600px; margin: 0 auto; }
+
+  /* ── Layout ── */
+  .content { padding: 10px 12px; max-width: 640px; margin: 0 auto; }
   .content.print-cols { max-width: 1300px; }
   .print-cols .grupo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; }
   .print-cols .grupo-header { grid-column: 1 / -1; }
-  .print-cols .item { margin-bottom: 0; border-radius: 8px; }
-  .grupo { margin-bottom: 12px; }
-  .grupo-header { background: #1e3a5f; color: #93c5fd; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 8px 14px; border-radius: 8px 8px 0 0; }
-  .item { background: white; border: 1px solid #e2e8f0; margin-bottom: 2px; transition: background 0.2s; }
+
+  /* ── Grupo / Linha ── */
+  .grupo { margin-bottom: 14px; }
+  .grupo-header { background: #1e3a5f; color: #93c5fd; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 8px 14px; border-radius: 8px 8px 0 0; }
+
+  /* ── Item card ── */
+  .item { background: white; border: 1px solid #e2e8f0; margin-bottom: 2px; transition: background 0.2s, border-color 0.2s; }
   .item:last-child { border-radius: 0 0 8px 8px; }
   .item.conferido { background: #f0fdf4; border-color: #86efac; }
-  .item-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
-  .checkbox-wrap { position: relative; flex-shrink: 0; }
+  .item.divergente { border-color: #f59e0b; border-width: 2px; }
+  .item.divergente.conferido { background: #fffbeb; }
+  .item.divergente-grave { border-color: #ef4444; border-width: 2px; }
+
+  /* ── Item header ── */
+  .item-header { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; cursor: default; }
+  .checkbox-wrap { position: relative; flex-shrink: 0; margin-top: 2px; }
   .checkbox-wrap input { opacity: 0; position: absolute; width: 0; height: 0; }
   .checkmark { display: block; width: 24px; height: 24px; border: 2px solid #94a3b8; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
   .checkbox-wrap input:checked ~ .checkmark { background: #16a34a; border-color: #16a34a; }
   .checkbox-wrap input:checked ~ .checkmark::after { content: '✓'; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 700; height: 100%; }
-  .item-info { flex: 1; }
-  .item-nome { font-size: 13px; font-weight: 600; color: #1e293b; }
-  .item-meta { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-nome { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.3; }
+  .item-meta { font-size: 11px; color: #64748b; margin-top: 3px; line-height: 1.4; }
+  .cod-tag { color: #1a4a8a; font-family: monospace; font-size: 12px; }
+  .forn-tag { color: #94a3b8; font-style: italic; }
+  .item-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
   .nivel { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
   .nivel-critico { background: #fee2e2; color: #991b1b; }
   .nivel-alerta { background: #fef3c7; color: #92400e; }
   .nivel-atencao { background: #fef9c3; color: #854d0e; }
   .nivel-ok { background: #e0f2fe; color: #075985; }
+  .badge-diverg { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px; background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; white-space: nowrap; }
+  .badge-diverg.hidden { display: none; }
+  .badge-diverg.grave { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+  /* ── Item body ── */
   .item-body { padding: 0 14px 14px; }
-  .campo-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .section-sep { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dashed #e2e8f0; }
+
+  /* ── Campos de contagem ── */
+  .campo-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
   .campo label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; display: block; margin-bottom: 4px; }
   .campo-valor { font-size: 16px; font-weight: 700; color: #1e293b; padding: 6px 0; }
   .campo-input { width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 16px; font-weight: 600; text-align: center; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
   .campo-input:focus { border-color: #3b82f6; }
-  .campo-textarea { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; resize: vertical; min-height: 56px; font-family: inherit; transition: border-color 0.2s; }
+  .obs-campo { margin-top: 10px; }
+  .obs-campo label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; display: block; margin-bottom: 5px; }
+  .campo-textarea { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; resize: vertical; min-height: 52px; font-family: inherit; transition: border-color 0.2s; color: #374151; }
   .campo-textarea:focus { border-color: #3b82f6; }
+
+  /* ── Conferência do Lote (collapsible) ── */
+  .conf-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; margin-bottom: 0; transition: background 0.2s, color 0.2s; }
+  .conf-toggle:active, .conf-toggle.open { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .conf-arrow { font-size: 10px; transition: transform 0.2s; }
+  .conf-toggle.open .conf-arrow { transform: rotate(180deg); }
+  .conf-body { display: none; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; background: #fafbff; margin-bottom: 8px; overflow: hidden; }
+  .conf-body.open { display: block; }
+
+  /* ── Ref grid ── */
+  .conf-ref { background: #eff6ff; padding: 10px 12px; border-bottom: 1px solid #dbeafe; }
+  .conf-ref-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #3b82f6; margin-bottom: 8px; }
+  .conf-ref-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .conf-ref-cell { display: flex; flex-direction: column; gap: 2px; }
+  .conf-ref-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #93c5fd; font-weight: 700; }
+  .conf-ref-cell strong { font-size: 12px; color: #1e3a5f; font-family: monospace; word-break: break-all; }
+
+  /* ── Inputs de verificação ── */
+  .conf-inputs { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+  .conf-field-row { margin-bottom: 8px; }
+  .conf-field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .conf-field { display: flex; flex-direction: column; gap: 4px; }
+  .conf-field-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+  .conf-input-wrap { display: flex; align-items: center; gap: 6px; }
+  .conf-input { flex: 1; border: 2px solid #e2e8f0; border-radius: 7px; padding: 8px 10px; font-size: 13px; font-weight: 600; outline: none; transition: border-color 0.2s; background: white; }
+  .conf-input:focus { border-color: #3b82f6; }
+  .conf-input.ok { border-color: #86efac; background: #f0fdf4; }
+  .conf-input.err { border-color: #fca5a5; background: #fff5f5; }
+  .conf-input-date { font-family: monospace; letter-spacing: 0.5px; }
+  .match-badge { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .match-ok { background: #dcfce7; color: #16a34a; }
+  .match-err { background: #fee2e2; color: #dc2626; }
+  .match-nd { background: #f1f5f9; color: #94a3b8; font-size: 11px; }
+
+  /* ── Botão divergente ── */
+  .btn-marcar-div { width: calc(100% - 24px); margin: 10px 12px; padding: 10px; border: 2px solid #fcd34d; border-radius: 8px; background: #fffbeb; color: #b45309; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-marcar-div:active, .btn-marcar-div.ativo { background: #fef08a; border-color: #f59e0b; color: #92400e; }
+  .btn-marcar-div.divergente-grave-btn { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+
+  /* ── Assinaturas ── */
   .assinaturas { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin: 16px 0; }
   .assinaturas h3 { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
   .sig-block { margin-bottom: 16px; }
@@ -5894,12 +6034,38 @@ function baixarHTMLMobile() {
   canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: none; cursor: crosshair; }
   .sig-btns { display: flex; gap: 8px; margin-top: 6px; }
   .sig-btn { flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; background: #f1f5f9; color: #475569; }
-  .sig-btn:active { background: #e2e8f0; }
-  .footer-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 32px; }
-  .btn-primary { background: #1a4a8a; color: white; border: none; border-radius: 10px; padding: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
-  .btn-secondary { background: white; color: #1a4a8a; border: 2px solid #1a4a8a; border-radius: 10px; padding: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+
+  /* ── Rodapé ── */
+  .footer-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0 32px; }
+  .btn-primary { background: #1a4a8a; color: white; border: none; border-radius: 10px; padding: 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn-secondary { background: white; color: #1a4a8a; border: 2px solid #1a4a8a; border-radius: 10px; padding: 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn-warn { background: #fef3c7; color: #92400e; border: 2px solid #fcd34d; border-radius: 10px; padding: 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* ── Toast ── */
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90vw; text-align: center; }
   .toast.show { opacity: 1; }
+
+  /* ── Overlay de Resumo ── */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; overflow-y: auto; padding: 16px; }
+  .overlay.show { display: block; }
+  .overlay-card { background: white; border-radius: 16px; max-width: 560px; margin: 0 auto; overflow: hidden; }
+  .overlay-header { background: #1a4a8a; color: white; padding: 16px; font-size: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .overlay-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .overlay-body { padding: 16px; }
+  .resumo-stat { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+  .resumo-stat:last-child { border-bottom: none; }
+  .resumo-stat-val { font-weight: 700; font-size: 18px; }
+  .resumo-stat-val.ok { color: #16a34a; }
+  .resumo-stat-val.warn { color: #f59e0b; }
+  .resumo-stat-val.err { color: #dc2626; }
+  .div-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94a3b8; margin: 16px 0 8px; }
+  .div-item { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 12px; }
+  .div-item.grave { background: #fff5f5; border-color: #fca5a5; }
+  .div-item-nome { font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 4px; }
+  .div-item-linha { color: #64748b; margin-bottom: 2px; }
+  .div-item-linha strong { color: #dc2626; }
+  .div-item-linha.ok strong { color: #16a34a; }
+  .div-empty { color: #94a3b8; font-size: 13px; text-align: center; padding: 16px; }
 </style>
 </head>
 <body>
@@ -5910,246 +6076,387 @@ function baixarHTMLMobile() {
         <div style="width:28px;height:28px;border-radius:6px;overflow:hidden;background:white;flex-shrink:0;"><img src="${LOGO_AGQ}" style="width:100%;height:100%;object-fit:cover;"></div>
         <div style="font-size:11px; opacity:0.85; letter-spacing:1px; text-transform:uppercase;">Agroquima · Auditoria de Lotes</div>
       </div>
-      <h1>Folha de Contagem — ${APP.sigla}</h1>
+      <h1>Contagem e Conferência — ${APP.sigla}</h1>
     </div>
     <div style="text-align:right;">
       <div style="font-size:12px; font-weight:700;">${hoje}</div>
       <div style="font-size:11px; opacity:0.7;">${filialNome}</div>
     </div>
   </div>
+  <div class="header-stats">
+    <span class="stat-pill" id="stat-conf">0 / ${itemIdx} conferidos</span>
+    <span class="stat-pill warn hidden" id="stat-divs"></span>
+  </div>
   <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
-  <div class="progress-label"><span id="prog-txt">0 de ${itemIdx} itens conferidos</span></div>
 </div>
+
 <div class="content">
   ${itensHTML}
+
   <div class="assinaturas">
-    <h3><i>✍</i> Assinaturas dos Conferentes</h3>
+    <h3>✍ Assinaturas dos Conferentes</h3>
     <div class="sig-block">
       <div class="sig-label">Conferente 1 — Nome</div>
       <input class="sig-nome" type="text" placeholder="Digite o nome completo...">
-      <div class="sig-canvas-wrap">
-        <canvas class="sig-canvas" id="sig1" width="600" height="120"></canvas>
-      </div>
+      <div class="sig-canvas-wrap"><canvas class="sig-canvas" id="sig1" width="600" height="120"></canvas></div>
       <div class="sig-btns">
         <button class="sig-btn" onclick="limparSig('sig1')">✕ Limpar</button>
-        <span style="flex:2; font-size:10px; color:#94a3b8; align-self:center; text-align:center;">Assine com o dedo ou mouse</span>
+        <span style="flex:2;font-size:10px;color:#94a3b8;align-self:center;text-align:center;">Assine com o dedo ou mouse</span>
       </div>
     </div>
     <div class="sig-block">
       <div class="sig-label">Conferente 2 — Nome</div>
       <input class="sig-nome" type="text" placeholder="Digite o nome completo...">
-      <div class="sig-canvas-wrap">
-        <canvas class="sig-canvas" id="sig2" width="600" height="120"></canvas>
-      </div>
+      <div class="sig-canvas-wrap"><canvas class="sig-canvas" id="sig2" width="600" height="120"></canvas></div>
       <div class="sig-btns">
         <button class="sig-btn" onclick="limparSig('sig2')">✕ Limpar</button>
-        <span style="flex:2; font-size:10px; color:#94a3b8; align-self:center; text-align:center;">Assine com o dedo ou mouse</span>
+        <span style="flex:2;font-size:10px;color:#94a3b8;align-self:center;text-align:center;">Assine com o dedo ou mouse</span>
       </div>
     </div>
     <div class="sig-block">
       <div class="sig-label">Auditor Responsável — Nome</div>
       <input class="sig-nome" type="text" placeholder="Digite o nome completo...">
-      <div class="sig-canvas-wrap">
-        <canvas class="sig-canvas" id="sig3" width="600" height="120"></canvas>
-      </div>
-      <div class="sig-btns">
-        <button class="sig-btn" onclick="limparSig('sig3')">✕ Limpar</button>
-      </div>
+      <div class="sig-canvas-wrap"><canvas class="sig-canvas" id="sig3" width="600" height="120"></canvas></div>
+      <div class="sig-btns"><button class="sig-btn" onclick="limparSig('sig3')">✕ Limpar</button></div>
     </div>
   </div>
-  <div class="footer-btns" style="grid-template-columns:1fr 1fr 1fr;">
-    <button class="btn-secondary" onclick="mostrarResumo()">Ver Resumo</button>
-    <button class="btn-secondary" onclick="gerarPDFMobile()" id="btn-pdf" style="background:#1a4a8a;color:white;border-color:#1a4a8a;">⬇ Salvar PDF</button>
+
+  <div class="footer-btns">
+    <button class="btn-secondary" onclick="abrirResumo()">📋 Resumo</button>
+    <button class="btn-secondary" onclick="gerarPDFMobile()" id="btn-pdf" style="background:#1a4a8a;color:white;border-color:#1a4a8a;">⬇ PDF</button>
     <button class="btn-primary" onclick="finalizarContagem()" id="btn-finalizar">✓ Finalizar</button>
   </div>
 </div>
+
+<!-- Overlay resumo / divergências -->
+<div class="overlay" id="overlay-resumo" onclick="if(event.target===this)fecharResumo()">
+  <div class="overlay-card">
+    <div class="overlay-header">
+      <span>📋 Resumo da Auditoria</span>
+      <button class="overlay-close" onclick="fecharResumo()">✕</button>
+    </div>
+    <div class="overlay-body" id="overlay-body"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
   const TOTAL = ${itemIdx};
-  let conferidos = 0;
-  function marcarItem(idx, checked) {
-    const el = document.getElementById('item-' + idx);
-    el.classList.toggle('conferido', checked);
-    conferidos = document.querySelectorAll('.item.conferido').length;
-    const pct = Math.round(conferidos / TOTAL * 100);
-    document.getElementById('prog').style.width = pct + '%';
-    document.getElementById('prog-txt').textContent = conferidos + ' de ' + TOTAL + ' itens conferidos';
+  const LOTES_REF = ${lotesRefJSON};
+
+  // divState[idx] = { qtd, lote, fab, venc, manual }
+  const divState = {};
+  for (const l of LOTES_REF) divState[l.idx] = { qtd: false, lote: false, fab: false, venc: false, manual: false };
+
+  // ── Normalização para comparação ──
+  function normStr(s) {
+    return String(s||'').trim().toUpperCase().replace(/[\s\-\.\/\\\\]/g, '');
   }
-  function calcDivergencia(idx, sistema) {
-    const raw = document.getElementById('qtd-' + idx).value.trim();
-    const div = document.getElementById('div-' + idx);
-    // Campo vazio = nada encontrado fisicamente → divergência negativa total
-    if (raw === '') {
-      div.textContent = '-' + Number(sistema).toFixed(0);
-      div.style.color = '#dc2626';
-      return;
-    }
-    const val = parseFloat(raw.replace(',', '.'));
-    if (isNaN(val)) {
-      div.textContent = '-' + Number(sistema).toFixed(0);
-      div.style.color = '#dc2626';
-      return;
-    }
-    const dif = val - sistema;
-    div.textContent = (dif > 0 ? '+' : '') + dif.toFixed(0);
-    div.style.color = dif === 0 ? '#16a34a' : '#dc2626';
+  function normData(s) {
+    const n = String(s||'').trim().replace(/\s+/g,'');
+    // aceita DD/MM/AAAA, DD-MM-AAAA, DDMMAAAA, DD/MM/AA
+    const m = n.match(/^(\d{1,2})[\/\-.]?(\d{1,2})[\/\-.]?(\d{2,4})$/);
+    if (!m) return n.toUpperCase();
+    const d = m[1].padStart(2,'0');
+    const mo = m[2].padStart(2,'0');
+    let y = m[3];
+    if (y.length === 2) y = '20' + y;
+    return d + mo + y;
   }
-  // Inicializa todas as divergências como negativas (nada contado ainda)
-  function initDivergencias() {
-    document.querySelectorAll('[id^="qtd-"]').forEach(inp => {
-      const idx = inp.id.replace('qtd-', '');
-      const sistema = parseFloat(inp.dataset.sistema || '0');
-      const div = document.getElementById('div-' + idx);
-      if (div && inp.value.trim() === '') {
-        div.textContent = '-' + sistema.toFixed(0);
-        div.style.color = '#dc2626';
+
+  // ── Conferência do Lote (collapsible) ──
+  function toggleConf(idx) {
+    const body = document.getElementById('conf-' + idx);
+    const tog = document.getElementById('ctog-' + idx);
+    const open = body.classList.toggle('open');
+    tog.classList.toggle('open', open);
+  }
+
+  function verificarLote(idx) {
+    const ref = LOTES_REF.find(x => x.idx === idx);
+    if (!ref) return;
+    const cfLote = (document.getElementById('cf-lote-' + idx)?.value||'').trim();
+    const cfFab  = (document.getElementById('cf-fab-'  + idx)?.value||'').trim();
+    const cfVenc = (document.getElementById('cf-venc-' + idx)?.value||'').trim();
+
+    function setField(inputId, stId, entrou, bate) {
+      const inp = document.getElementById(inputId);
+      const st  = document.getElementById(stId);
+      if (!inp || !st) return;
+      if (!entrou) {
+        inp.className = inp.className.replace(/\b(ok|err)\b/g,'').trim();
+        st.className = 'match-badge match-nd'; st.textContent = '—';
+        return bate; // null = sem preencher
       }
-    });
+      if (bate) {
+        inp.classList.remove('err'); inp.classList.add('ok');
+        st.className = 'match-badge match-ok'; st.textContent = '✓';
+      } else {
+        inp.classList.remove('ok'); inp.classList.add('err');
+        st.className = 'match-badge match-err'; st.textContent = '✗';
+      }
+    }
+
+    const loteBate  = cfLote  ? normStr(cfLote)  === normStr(ref.lote)  : null;
+    const fabBate   = cfFab   ? normData(cfFab)   === normData(ref.fab)   : null;
+    const vencBate  = cfVenc  ? normData(cfVenc)  === normData(ref.venc)  : null;
+
+    setField('cf-lote-' + idx, 'cf-lote-st-' + idx, !!cfLote,  loteBate);
+    setField('cf-fab-'  + idx, 'cf-fab-st-'  + idx, !!cfFab,   fabBate);
+    setField('cf-venc-' + idx, 'cf-venc-st-' + idx, !!cfVenc,  vencBate);
+
+    divState[idx].lote = loteBate === false;
+    divState[idx].fab  = fabBate  === false;
+    divState[idx].venc = vencBate === false;
+
+    // Auto-abre seção se detectar divergência
+    const temDiv = divState[idx].lote || divState[idx].fab || divState[idx].venc;
+    if (temDiv) {
+      const body = document.getElementById('conf-' + idx);
+      if (!body.classList.contains('open')) toggleConf(idx);
+    }
+
+    atualizarItemVisual(idx);
   }
-  // Assinatura digital
+
+  function toggleDivergente(idx) {
+    divState[idx].manual = !divState[idx].manual;
+    const btn = document.getElementById('bdiv-btn-' + idx);
+    if (divState[idx].manual) {
+      btn.classList.add('ativo');
+      btn.textContent = '✓ Marcado como Divergente — toque para desfazer';
+    } else {
+      btn.classList.remove('ativo');
+      btn.textContent = '⚠ Marcar como Divergente';
+    }
+    atualizarItemVisual(idx);
+  }
+
+  function atualizarItemVisual(idx) {
+    const s = divState[idx];
+    const temDivLote = s.lote || s.fab || s.venc || s.manual;
+    const temDivQtd  = s.qtd;
+    const ehDiv = temDivLote || temDivQtd;
+    const graveDiv = temDivLote; // divergência de dados do lote é grave
+    const item = document.getElementById('item-' + idx);
+    item.classList.toggle('divergente', ehDiv && !graveDiv);
+    item.classList.toggle('divergente-grave', graveDiv);
+    const badge = document.getElementById('bdiv-' + idx);
+    badge.classList.toggle('hidden', !ehDiv);
+    badge.classList.toggle('grave', graveDiv);
+    if (graveDiv) {
+      badge.textContent = '⚠ LOTE';
+    } else if (temDivQtd) {
+      badge.textContent = '⚠ QTD';
+    }
+    atualizarProgresso();
+  }
+
+  function calcDivergencia(idx, sistema) {
+    const raw = (document.getElementById('qtd-' + idx)?.value||'').trim();
+    const divEl = document.getElementById('div-' + idx);
+    if (!raw) {
+      divEl.textContent = '—'; divEl.style.color = '#9ca3af';
+      divState[idx].qtd = false;
+    } else {
+      const val = parseFloat(raw.replace(',','.'));
+      if (isNaN(val)) {
+        divEl.textContent = '—'; divEl.style.color = '#9ca3af';
+        divState[idx].qtd = false;
+      } else {
+        const dif = val - sistema;
+        divEl.textContent = (dif > 0 ? '+' : '') + dif.toFixed(0);
+        divEl.style.color = dif === 0 ? '#16a34a' : '#dc2626';
+        divState[idx].qtd = dif !== 0;
+      }
+    }
+    atualizarItemVisual(idx);
+  }
+
+  function marcarItem(idx, checked) {
+    document.getElementById('item-' + idx).classList.toggle('conferido', checked);
+    atualizarProgresso();
+  }
+
+  function atualizarProgresso() {
+    const conf = document.querySelectorAll('.item.conferido').length;
+    const pct = Math.round(conf / TOTAL * 100);
+    document.getElementById('prog').style.width = pct + '%';
+    document.getElementById('stat-conf').textContent = conf + ' / ' + TOTAL + ' conferidos';
+    const ndivs = Object.values(divState).filter(s => s.qtd || s.lote || s.fab || s.venc || s.manual).length;
+    const statDiv = document.getElementById('stat-divs');
+    if (ndivs > 0) {
+      statDiv.textContent = ndivs + ' divergência' + (ndivs > 1 ? 's' : '');
+      statDiv.classList.remove('hidden');
+    } else {
+      statDiv.classList.add('hidden');
+    }
+  }
+
+  // ── Assinaturas ──
   function initCanvas(id) {
     const canvas = document.getElementById(id);
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let drawing = false;
     function getPos(e) {
       const r = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / r.width;
-      const scaleY = canvas.height / r.height;
+      const sx = canvas.width / r.width, sy = canvas.height / r.height;
       const src = e.touches ? e.touches[0] : e;
-      return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
+      return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
     }
-    canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-    canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b'; ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); });
+    canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#1e293b'; ctx.lineTo(p.x,p.y); ctx.stroke(); });
     canvas.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, {passive:false});
-    canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b'; ctx.lineTo(p.x, p.y); ctx.stroke(); }, {passive:false});
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }, {passive:false});
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); if(!drawing)return; const p=getPos(e); ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.strokeStyle='#1e293b'; ctx.lineTo(p.x,p.y); ctx.stroke(); }, {passive:false});
     canvas.addEventListener('touchend', () => drawing = false);
   }
   function limparSig(id) { const c = document.getElementById(id); c.getContext('2d').clearRect(0,0,c.width,c.height); }
   ['sig1','sig2','sig3'].forEach(initCanvas);
-  // Inicializa divergências negativas assim que a página abre
-  initDivergencias();
-  function mostrar(msg) {
+
+  // ── Toast ──
+  function mostrar(msg, dur) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
-  }
-  function mostrarResumo() {
-    const divs = [];
-    for (let i = 1; i <= TOTAL; i++) {
-      const qtd = document.getElementById('qtd-' + i)?.value;
-      if (qtd) divs.push(i);
-    }
-    mostrar(conferidos + ' itens marcados · ' + divs.length + ' qtds preenchidas');
-  }
-  function finalizarContagem() {
-    if (conferidos < TOTAL) {
-      if (!confirm(conferidos + ' de ' + TOTAL + ' itens conferidos. Finalizar mesmo assim?')) return;
-    }
-    mostrar('✓ Contagem registrada! Guarde este arquivo.');
-    document.getElementById('btn-finalizar').textContent = '✓ Contagem Finalizada';
-    document.getElementById('btn-finalizar').style.background = '#16a34a';
+    setTimeout(() => t.classList.remove('show'), dur || 2500);
   }
 
+  // ── Resumo ──
+  function abrirResumo() {
+    const body = document.getElementById('overlay-body');
+    const conf = document.querySelectorAll('.item.conferido').length;
+    const divItems = Object.entries(divState).filter(([,s]) => s.qtd || s.lote || s.fab || s.venc || s.manual);
+    const divQtd  = divItems.filter(([,s]) => s.qtd).length;
+    const divLote = divItems.filter(([,s]) => s.lote || s.fab || s.venc || s.manual).length;
+
+    let html = \`
+      <div class="resumo-stat"><span>Itens no checklist</span><span class="resumo-stat-val">\${TOTAL}</span></div>
+      <div class="resumo-stat"><span>Itens conferidos</span><span class="resumo-stat-val \${conf===TOTAL?'ok':'warn'}">\${conf}</span></div>
+      <div class="resumo-stat"><span>Divergências de quantidade</span><span class="resumo-stat-val \${divQtd>0?'err':'ok'}">\${divQtd}</span></div>
+      <div class="resumo-stat"><span>Divergências de dados do lote</span><span class="resumo-stat-val \${divLote>0?'err':'ok'}">\${divLote}</span></div>
+    \`;
+
+    if (divItems.length > 0) {
+      html += \`<div class="div-section-title">Itens com Divergência</div>\`;
+      for (const [idxStr, s] of divItems) {
+        const idx = parseInt(idxStr);
+        const ref = LOTES_REF.find(x => x.idx === idx);
+        const nome = document.querySelector(\`#item-\${idx} .item-nome\`)?.textContent || '—';
+        const obs  = (document.getElementById('obs-' + idx)?.value||'').trim();
+        const cfLote = (document.getElementById('cf-lote-' + idx)?.value||'').trim();
+        const cfFab  = (document.getElementById('cf-fab-'  + idx)?.value||'').trim();
+        const cfVenc = (document.getElementById('cf-venc-' + idx)?.value||'').trim();
+        const qtdEl  = document.getElementById('div-' + idx);
+        const grave  = s.lote || s.fab || s.venc || s.manual;
+        html += \`<div class="div-item \${grave?'grave':''}">
+          <div class="div-item-nome">\${nome}</div>
+          <div class="div-item-linha">Lote sistema: <strong>\${ref?.lote||'—'}</strong></div>\`;
+        if (s.qtd && qtdEl) {
+          html += \`<div class="div-item-linha">Diferença de estoque: <strong>\${qtdEl.textContent}</strong></div>\`;
+        }
+        if (s.lote && cfLote) {
+          html += \`<div class="div-item-linha">Lote físico: <strong>\${cfLote}</strong> (sistema: \${ref?.lote||'—'})</div>\`;
+        }
+        if (s.fab && cfFab) {
+          html += \`<div class="div-item-linha">Fabricação física: <strong>\${cfFab}</strong> (sistema: \${ref?.fab||'—'})</div>\`;
+        }
+        if (s.venc && cfVenc) {
+          html += \`<div class="div-item-linha">Vencimento físico: <strong>\${cfVenc}</strong> (sistema: \${ref?.venc||'—'})</div>\`;
+        }
+        if (s.manual) {
+          html += \`<div class="div-item-linha">Marcado manualmente como divergente</div>\`;
+        }
+        if (obs) {
+          html += \`<div class="div-item-linha" style="margin-top:4px;padding-top:4px;border-top:1px solid #fcd34d;color:#92400e;">Obs: \${obs}</div>\`;
+        }
+        html += \`</div>\`;
+      }
+    } else {
+      html += \`<div class="div-empty">✓ Nenhuma divergência registrada</div>\`;
+    }
+
+    body.innerHTML = html;
+    document.getElementById('overlay-resumo').classList.add('show');
+  }
+  function fecharResumo() {
+    document.getElementById('overlay-resumo').classList.remove('show');
+  }
+
+  function finalizarContagem() {
+    const conf = document.querySelectorAll('.item.conferido').length;
+    const ndivs = Object.values(divState).filter(s => s.qtd || s.lote || s.fab || s.venc || s.manual).length;
+    if (conf < TOTAL) {
+      if (!confirm(conf + ' de ' + TOTAL + ' itens conferidos. Finalizar mesmo assim?')) return;
+    }
+    const btn = document.getElementById('btn-finalizar');
+    btn.textContent = '✓ Finalizado';
+    btn.style.background = '#16a34a';
+    const msg = ndivs > 0
+      ? '✓ Auditoria finalizada — ' + ndivs + ' divergência' + (ndivs>1?'s':'') + ' registrada' + (ndivs>1?'s':'') + '. Salve o PDF.'
+      : '✓ Auditoria finalizada sem divergências. Salve o PDF.';
+    mostrar(msg, 4000);
+  }
+
+  // ── PDF ──
   async function gerarPDFMobile() {
     const btn = document.getElementById('btn-pdf');
     btn.textContent = 'Gerando...';
     btn.disabled = true;
     const contentEl = document.querySelector('.content');
-    // Amplia para 3 colunas só durante a captura, para aproveitar a largura da página A4
     contentEl.classList.add('print-cols');
     try {
       const { jsPDF } = window.jspdf;
       const SCALE = 1.5;
-
-      // 1) Captura a página inteira (já em layout de 3 colunas) em um canvas único
       const body = document.body;
       const fullCanvas = await html2canvas(body, {
-        scale: SCALE,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        logging: false,
-        scrollY: 0,
-        height: body.scrollHeight,
-        windowHeight: body.scrollHeight,
+        scale: SCALE, backgroundColor: '#ffffff', useCORS: true,
+        logging: false, scrollY: 0, height: body.scrollHeight, windowHeight: body.scrollHeight,
       });
-
-      // 2) Mapeia os limites "seguros" de quebra.
-      //    Usamos o topo de cada .grupo e de cada LINHA de itens, mas excluímos a
-      //    primeira linha de cada grupo (para o header do grupo nunca ficar órfão no rodapé).
       const bodyTop = body.getBoundingClientRect().top + window.scrollY;
       const pontos = [];
       document.querySelectorAll('.grupo').forEach(grupo => {
         const gtop = grupo.getBoundingClientRect().top + window.scrollY - bodyTop;
         pontos.push(Math.round(gtop * SCALE));
         const items = [...grupo.querySelectorAll('.item')];
-        const tops = [...new Set(items.map(it => Math.round(it.getBoundingClientRect().top + window.scrollY - bodyTop)))].sort((a, b) => a - b);
-        // pula a primeira linha de itens (1 a 3 cards) — fica colada ao header
+        const tops = [...new Set(items.map(it => Math.round(it.getBoundingClientRect().top + window.scrollY - bodyTop)))].sort((a,b) => a-b);
         tops.slice(1).forEach(t => pontos.push(Math.round(t * SCALE)));
       });
-      const cortes = [...new Set(pontos)].filter(y => y > 0).sort((a, b) => a - b);
-
-      // 3) Configura PDF A4
+      const cortes = [...new Set(pontos)].filter(y => y > 0).sort((a,b) => a-b);
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
       const pageWmm = doc.internal.pageSize.getWidth();
       const pageHmm = doc.internal.pageSize.getHeight();
-      const margin = 6;
-      const usableWmm = pageWmm - margin * 2;
-      const usableHmm = pageHmm - margin * 2;
-      // Altura de página convertida para px do canvas
+      const margin = 6, usableWmm = pageWmm - margin * 2, usableHmm = pageHmm - margin * 2;
       const pageHpx = Math.floor((usableHmm * fullCanvas.width) / usableWmm);
-
-      // 4) Fatia respeitando os cortes seguros
-      let yStart = 0;
-      let page = 0;
+      let yStart = 0, page = 0, guard = 0;
       const totalH = fullCanvas.height;
-      let guard = 0;
-
       while (yStart < totalH && guard < 100) {
         guard++;
-        let yEnd = yStart + pageHpx; // fim ideal desta página
-
+        let yEnd = yStart + pageHpx;
         if (yEnd < totalH) {
-          // Procura o último ponto de corte seguro que cabe nesta página
-          const corteSeguro = [...cortes].reverse().find(c => c > yStart && c <= yEnd);
-          if (corteSeguro) {
-            yEnd = corteSeguro;
-          } else {
-            // Nenhum corte cabe (card maior que a página inteira) → corta no limite
-            yEnd = yStart + pageHpx;
-          }
-        } else {
-          yEnd = totalH;
-        }
-
+          const cs = [...cortes].reverse().find(c => c > yStart && c <= yEnd);
+          if (cs) yEnd = cs;
+        } else { yEnd = totalH; }
         const sliceH = yEnd - yStart;
         if (sliceH <= 0) break;
-
-        // Cria canvas da fatia
-        const sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width = fullCanvas.width;
-        sliceCanvas.height = sliceH;
-        const ctx = sliceCanvas.getContext('2d');
+        const sc = document.createElement('canvas');
+        sc.width = fullCanvas.width; sc.height = sliceH;
+        const ctx = sc.getContext('2d');
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+        ctx.fillRect(0,0,sc.width,sc.height);
         ctx.drawImage(fullCanvas, 0, yStart, fullCanvas.width, sliceH, 0, 0, fullCanvas.width, sliceH);
-
         if (page > 0) doc.addPage();
         const hmm = (sliceH * usableWmm) / fullCanvas.width;
-        doc.addImage(sliceCanvas.toDataURL('image/jpeg', 0.82), 'JPEG', margin, margin, usableWmm, hmm);
-
-        yStart = yEnd;
-        page++;
+        doc.addImage(sc.toDataURL('image/jpeg', 0.82), 'JPEG', margin, margin, usableWmm, hmm);
+        yStart = yEnd; page++;
       }
-
-      const hoje = new Date().toLocaleDateString('pt-BR').split('/').join('-');
-      doc.save('relatorio_contagem_lotes_' + hoje + '.pdf');
+      const d = new Date().toLocaleDateString('pt-BR').split('/').join('-');
+      doc.save('auditoria_lotes_${APP.sigla}_' + d + '.pdf');
       btn.textContent = '✓ PDF Salvo';
       btn.style.background = '#16a34a';
     } catch(e) {
-      btn.textContent = '⬇ Salvar PDF';
-      btn.disabled = false;
+      btn.textContent = '⬇ PDF'; btn.disabled = false;
       alert('Erro ao gerar PDF: ' + e.message);
     } finally {
       contentEl.classList.remove('print-cols');
@@ -6167,6 +6474,7 @@ function baixarHTMLMobile() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 // ==================== PLANO DE AÇÃO ====================
 function renderPlanoAcao() {
