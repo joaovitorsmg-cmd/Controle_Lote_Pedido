@@ -6697,7 +6697,7 @@ async function gerarPDF() {
       doc.addImage(sc.toDataURL('image/jpeg', .82), 'JPEG', mg, mg, uw, (sh * uw) / fc.width);
       yS = yE; pg++;
     }
-    doc.save('auditoria_lotes_${APP.sigla}_' + new Date().toLocaleDateString('pt-BR').replace(/\//g,'-') + '.pdf');
+    doc.save('auditoria_lotes_${APP.sigla}_' + new Date().toLocaleDateString('pt-BR').split('/').join('-') + '.pdf');
     btn.textContent = '✓ PDF Salvo'; btn.style.background = '#16a34a';
   } catch(e) {
     btn.textContent = '⬇ PDF'; btn.disabled = false;
