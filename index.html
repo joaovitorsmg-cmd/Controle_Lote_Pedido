@@ -5792,44 +5792,50 @@ function baixarHTMLMobile() {
   let itensHTML = '';
   let itemIdx = 0;
   const lotesRef = [];
+  let tabOrd = 10;
 
   for (const [linha, lotes] of Object.entries(porLinha)) {
-    itensHTML += `<div class="grupo"><div class="grupo-header">${getNomeLinha(linha)}</div>`;
+    const nomeL = getNomeLinha(linha);
+    itensHTML += `<div class="grupo" data-grupo="${nomeL}"><div class="grupo-header">${nomeL}</div>`;
     for (const l of lotes) {
       itemIdx++;
-      const fabricanteClean = (l.fabricante||'').replace(/^\d+\s*-\s*/,'');
-      const obsInicial = (APP.checklistObs[l.codProduto+'|'+String(l.lote).trim()]||'').replace(/</g,'&lt;');
-      const nivelKey = (l.nivel||'OK').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      const vencColor = l.nivel==='CRÍTICO' ? '#ef4444' : l.nivel==='ALERTA' ? '#f59e0b' : '#374151';
+      tabOrd += 10;
+      const fabClean = (l.fabricante||'').replace(/^\d+\s*-\s*/,'');
+      const obsIni   = (APP.checklistObs[l.codProduto+'|'+String(l.lote).trim()]||'').replace(/</g,'&lt;');
+      const nivelKey = (l.nivel||'OK').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+      const vencCor  = l.nivel==='CRÍTICO' ? '#ef4444' : l.nivel==='ALERTA' ? '#f59e0b' : '#374151';
+      const buscaAttr = (l.nomeProduto+' '+l.codProduto+' '+String(l.lote||'')+' '+nomeL).toLowerCase();
 
       lotesRef.push({
         idx: itemIdx,
         lote: String(l.lote||'').trim(),
-        fab: String(l.dtFabricacao||'').trim(),
+        fab:  String(l.dtFabricacao||'').trim(),
         venc: String(l.dtVencimento||'').trim(),
-        qtd: l.quantidade
+        qtd:  l.quantidade,
+        nome: l.nomeProduto.trim(),
+        cod:  String(l.codProduto),
       });
 
       itensHTML += `
-        <div class="item" id="item-${itemIdx}">
+        <div class="item" id="item-${itemIdx}" data-busca="${buscaAttr}">
           <div class="item-header">
             <label class="checkbox-wrap" onclick="event.stopPropagation()">
-              <input type="checkbox" onchange="marcarItem(${itemIdx}, this.checked)">
+              <input type="checkbox" onchange="marcarItem(${itemIdx},this.checked)">
               <span class="checkmark"></span>
             </label>
             <div class="item-info">
               <div class="item-nome">${l.nomeProduto.trim()}</div>
               <div class="item-meta">Cód: <strong class="cod-tag">${l.codProduto}</strong> · Lote: <strong>${l.lote.trim()}</strong></div>
-              <div class="item-meta">Fab: <strong>${l.dtFabricacao||'—'}</strong> · Vence: <strong style="color:${vencColor}">${l.dtVencimento}</strong></div>
-              ${fabricanteClean ? `<div class="item-meta forn-tag">${fabricanteClean}</div>` : ''}
+              <div class="item-meta">Fab: <strong>${l.dtFabricacao||'—'}</strong> · Vence: <strong style="color:${vencCor}">${l.dtVencimento}</strong></div>
+              ${fabClean ? `<div class="item-meta forn-tag">${fabClean}</div>` : ''}
             </div>
             <div class="item-badges">
               <span class="nivel nivel-${nivelKey}">${l.nivel||'OK'}</span>
-              <span class="badge-diverg hidden" id="bdiv-${itemIdx}" title="Divergência detectada">⚠</span>
+              <span class="badge-diverg" id="bdiv-${itemIdx}">— —</span>
             </div>
           </div>
 
-          <div class="item-body" id="body-${itemIdx}">
+          <div class="item-body">
             <div class="section-sep">Contagem de Estoque</div>
             <div class="campo-row">
               <div class="campo">
@@ -5838,69 +5844,92 @@ function baixarHTMLMobile() {
               </div>
               <div class="campo">
                 <label>Encontrado</label>
-                <input type="number" inputmode="decimal" class="campo-input" placeholder="—" id="qtd-${itemIdx}" data-sistema="${l.quantidade}" oninput="calcDivergencia(${itemIdx}, ${l.quantidade})">
+                <input type="number" inputmode="decimal" class="campo-input"
+                       id="qtd-${itemIdx}" tabindex="${tabOrd}"
+                       data-sistema="${l.quantidade}" data-idx="${itemIdx}"
+                       placeholder="—" enterkeyhint="next" autocomplete="off"
+                       oninput="calcDiv(${itemIdx},${l.quantidade})"
+                       onkeydown="navNext(event,${itemIdx})">
               </div>
               <div class="campo">
                 <label>Diferença</label>
-                <div class="campo-valor" id="div-${itemIdx}" style="color:#9ca3af">—</div>
+                <div class="campo-valor" id="div-${itemIdx}">—</div>
               </div>
             </div>
 
-            <button class="conf-toggle" id="ctog-${itemIdx}" onclick="toggleConf(${itemIdx})">
-              <span>🔍 Conferir dados do lote</span>
-              <span class="conf-arrow" id="carr-${itemIdx}">▼</span>
+            <button class="conf-toggle" id="ctog-${itemIdx}" type="button" onclick="toggleConf(${itemIdx})">
+              🔍 Conferir dados do lote &nbsp;<span id="carr-${itemIdx}">▼</span>
             </button>
 
             <div class="conf-body" id="conf-${itemIdx}">
               <div class="conf-ref">
-                <div class="conf-ref-title">📋 Dados no Sistema (referência)</div>
+                <div class="conf-ref-title">📋 Sistema — dados de referência</div>
                 <div class="conf-ref-grid">
-                  <div class="conf-ref-cell"><span class="conf-ref-lbl">Lote</span><strong>${l.lote.trim()||'—'}</strong></div>
-                  <div class="conf-ref-cell"><span class="conf-ref-lbl">Fabricação</span><strong>${l.dtFabricacao||'—'}</strong></div>
-                  <div class="conf-ref-cell"><span class="conf-ref-lbl">Vencimento</span><strong>${l.dtVencimento||'—'}</strong></div>
+                  <div class="conf-ref-cell">
+                    <span class="conf-ref-lbl">Lote</span>
+                    <span class="conf-ref-val">${l.lote.trim()||'—'}</span>
+                  </div>
+                  <div class="conf-ref-cell">
+                    <span class="conf-ref-lbl">Fabricação</span>
+                    <span class="conf-ref-val">${l.dtFabricacao||'—'}</span>
+                  </div>
+                  <div class="conf-ref-cell">
+                    <span class="conf-ref-lbl">Vencimento</span>
+                    <span class="conf-ref-val">${l.dtVencimento||'—'}</span>
+                  </div>
                 </div>
               </div>
 
               <div class="conf-inputs">
                 <div class="conf-ref-title">📦 O que está na embalagem física</div>
-                <div class="conf-field-row">
-                  <div class="conf-field">
-                    <div class="conf-field-lbl">Lote físico</div>
-                    <div class="conf-input-wrap">
-                      <input type="text" id="cf-lote-${itemIdx}" class="conf-input" placeholder="Lote da embalagem" autocomplete="off" oninput="verificarLote(${itemIdx})">
-                      <span id="cf-lote-st-${itemIdx}" class="match-badge match-nd">—</span>
-                    </div>
+                <div class="conf-field">
+                  <div class="conf-field-lbl">Lote na embalagem</div>
+                  <div class="conf-input-wrap">
+                    <input type="text" id="cf-lote-${itemIdx}" class="conf-input"
+                           tabindex="${tabOrd+1}" placeholder="Digite o lote encontrado"
+                           autocomplete="off" enterkeyhint="next"
+                           oninput="verificarLote(${itemIdx})">
+                    <span id="cf-lote-st-${itemIdx}" class="match-badge match-nd">—</span>
                   </div>
                 </div>
-                <div class="conf-field-row conf-field-row-2">
+                <div class="conf-fields-2col">
                   <div class="conf-field">
-                    <div class="conf-field-lbl">Fabricação</div>
+                    <div class="conf-field-lbl">Data de Fabricação</div>
                     <div class="conf-input-wrap">
-                      <input type="text" id="cf-fab-${itemIdx}" class="conf-input conf-input-date" placeholder="DD/MM/AAAA" autocomplete="off" oninput="verificarLote(${itemIdx})">
+                      <input type="text" id="cf-fab-${itemIdx}" class="conf-input mono"
+                             tabindex="${tabOrd+2}" placeholder="DD/MM/AAAA"
+                             autocomplete="off" enterkeyhint="next"
+                             oninput="verificarLote(${itemIdx})">
                       <span id="cf-fab-st-${itemIdx}" class="match-badge match-nd">—</span>
                     </div>
                   </div>
                   <div class="conf-field">
-                    <div class="conf-field-lbl">Vencimento</div>
+                    <div class="conf-field-lbl">Data de Vencimento</div>
                     <div class="conf-input-wrap">
-                      <input type="text" id="cf-venc-${itemIdx}" class="conf-input conf-input-date" placeholder="DD/MM/AAAA" autocomplete="off" oninput="verificarLote(${itemIdx})">
+                      <input type="text" id="cf-venc-${itemIdx}" class="conf-input mono"
+                             tabindex="${tabOrd+3}" placeholder="DD/MM/AAAA"
+                             autocomplete="off" enterkeyhint="done"
+                             oninput="verificarLote(${itemIdx})">
                       <span id="cf-venc-st-${itemIdx}" class="match-badge match-nd">—</span>
                     </div>
                   </div>
                 </div>
+
+                <button class="btn-marcar-div" id="bdiv-btn-${itemIdx}" type="button"
+                        onclick="toggleDivergente(${itemIdx})">
+                  ⚠ Marcar como Divergente
+                </button>
               </div>
+            </div><!-- /conf-body -->
 
-              <button class="btn-marcar-div" id="bdiv-btn-${itemIdx}" onclick="toggleDivergente(${itemIdx})">
-                ⚠ Marcar como Divergente
-              </button>
+            <div class="obs-area">
+              <label class="obs-lbl">Observações</label>
+              <textarea class="campo-textarea" id="obs-${itemIdx}"
+                        tabindex="${tabOrd+4}" rows="2"
+                        placeholder="Divergência, condição, localização...">${obsIni}</textarea>
             </div>
-
-            <div class="campo obs-campo">
-              <label>Observações / Motivo da divergência</label>
-              <textarea class="campo-textarea" id="obs-${itemIdx}" placeholder="Anote divergências, condições do produto, localização...">${obsInicial}</textarea>
-            </div>
-          </div>
-        </div>`;
+          </div><!-- /item-body -->
+        </div><!-- /item -->`;
     }
     itensHTML += '</div>';
   }
@@ -5916,561 +5945,776 @@ function baixarHTMLMobile() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+       background: #f1f5f9; color: #1e293b; font-size: 14px; }
 
-  /* ── Header ── */
-  .header { background: #1a4a8a; color: white; padding: 14px 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.35); }
-  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .header h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
-  .header-meta { font-size: 11px; opacity: 0.8; }
-  .header-stats { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; }
-  .stat-pill { background: rgba(255,255,255,0.15); border-radius: 20px; padding: 3px 10px; white-space: nowrap; }
-  .stat-pill.warn { background: rgba(251,191,36,0.3); color: #fde68a; }
-  .progress-bar { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 8px; }
-  .progress-fill { height: 100%; background: #60a5fa; border-radius: 2px; transition: width 0.3s; }
+/* ─── Header ─────────────────────────────── */
+.header { background: #1a4a8a; color: #fff; padding: 12px 14px 10px;
+          position: sticky; top: 0; z-index: 100;
+          box-shadow: 0 2px 10px rgba(0,0,0,.35); }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.header-title { font-size: 15px; font-weight: 700; line-height: 1.2; }
+.header-sub   { font-size: 11px; opacity: .8; margin-top: 2px; }
+.header-right { text-align: right; flex-shrink: 0; }
+.header-data  { font-size: 12px; font-weight: 700; }
+.header-filial{ font-size: 11px; opacity: .75; }
 
-  /* ── Layout ── */
-  .content { padding: 10px 12px; max-width: 640px; margin: 0 auto; }
-  .content.print-cols { max-width: 1300px; }
-  .print-cols .grupo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; }
-  .print-cols .grupo-header { grid-column: 1 / -1; }
+/* busca no header */
+.header-busca-wrap { position: relative; margin-top: 9px; }
+.header-busca { width: 100%; padding: 8px 34px 8px 10px;
+                border: 1px solid rgba(255,255,255,.3); border-radius: 8px;
+                background: rgba(255,255,255,.15); color: #fff;
+                font-size: 13px; outline: none; }
+.header-busca::placeholder { color: rgba(255,255,255,.6); }
+.header-busca:focus { background: rgba(255,255,255,.25); border-color: rgba(255,255,255,.6); }
+.busca-limpar { position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+                background: none; border: none; color: rgba(255,255,255,.7);
+                font-size: 16px; cursor: pointer; line-height: 1; padding: 2px 4px; display: none; }
+.header-busca-hint { font-size: 11px; opacity: .75; margin-top: 3px; min-height: 15px; }
 
-  /* ── Grupo / Linha ── */
-  .grupo { margin-bottom: 14px; }
-  .grupo-header { background: #1e3a5f; color: #93c5fd; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 8px 14px; border-radius: 8px 8px 0 0; }
+/* stats pills + progress */
+.header-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.stat-pill { background: rgba(255,255,255,.15); border-radius: 20px;
+             padding: 3px 10px; font-size: 11px; white-space: nowrap; }
+.stat-pill.warn { background: rgba(251,191,36,.3); color: #fde68a; }
+.prog-bar { height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; margin-top: 8px; }
+.prog-fill { height: 100%; background: #60a5fa; border-radius: 2px; transition: width .3s; }
 
-  /* ── Item card ── */
-  .item { background: white; border: 1px solid #e2e8f0; margin-bottom: 2px; transition: background 0.2s, border-color 0.2s; }
-  .item:last-child { border-radius: 0 0 8px 8px; }
-  .item.conferido { background: #f0fdf4; border-color: #86efac; }
-  .item.divergente { border-color: #f59e0b; border-width: 2px; }
-  .item.divergente.conferido { background: #fffbeb; }
-  .item.divergente-grave { border-color: #ef4444; border-width: 2px; }
+/* ─── Layout ─────────────────────────────── */
+.content { padding: 10px 12px; max-width: 640px; margin: 0 auto; }
+.content.print-cols { max-width: 1300px; }
+.print-cols .grupo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; }
+.print-cols .grupo-header { grid-column: 1 / -1; }
 
-  /* ── Item header ── */
-  .item-header { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; cursor: default; }
-  .checkbox-wrap { position: relative; flex-shrink: 0; margin-top: 2px; }
-  .checkbox-wrap input { opacity: 0; position: absolute; width: 0; height: 0; }
-  .checkmark { display: block; width: 24px; height: 24px; border: 2px solid #94a3b8; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
-  .checkbox-wrap input:checked ~ .checkmark { background: #16a34a; border-color: #16a34a; }
-  .checkbox-wrap input:checked ~ .checkmark::after { content: '✓'; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 700; height: 100%; }
-  .item-info { flex: 1; min-width: 0; }
-  .item-nome { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.3; }
-  .item-meta { font-size: 11px; color: #64748b; margin-top: 3px; line-height: 1.4; }
-  .cod-tag { color: #1a4a8a; font-family: monospace; font-size: 12px; }
-  .forn-tag { color: #94a3b8; font-style: italic; }
-  .item-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-  .nivel { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
-  .nivel-critico { background: #fee2e2; color: #991b1b; }
-  .nivel-alerta { background: #fef3c7; color: #92400e; }
-  .nivel-atencao { background: #fef9c3; color: #854d0e; }
-  .nivel-ok { background: #e0f2fe; color: #075985; }
-  .badge-diverg { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px; background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; white-space: nowrap; }
-  .badge-diverg.hidden { display: none; }
-  .badge-diverg.grave { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+/* ─── Grupo ─────────────────────────────── */
+.grupo { margin-bottom: 14px; }
+.grupo-header { background: #1e3a5f; color: #93c5fd; font-size: 10px; font-weight: 700;
+                text-transform: uppercase; letter-spacing: 1px;
+                padding: 8px 14px; border-radius: 8px 8px 0 0; }
 
-  /* ── Item body ── */
-  .item-body { padding: 0 14px 14px; }
-  .section-sep { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dashed #e2e8f0; }
+/* ─── Item card ──────────────────────────── */
+.item { background: #fff; border: 1.5px solid #e2e8f0; margin-bottom: 2px;
+        transition: border-color .2s, background .2s; }
+.item:last-child { border-radius: 0 0 8px 8px; }
+.item.conferido   { background: #f0fdf4; border-color: #86efac; }
+.item.div-lote    { border-color: #ef4444; border-width: 2px; }
+.item.div-qtd     { border-color: #f59e0b; border-width: 2px; }
+.item.div-lote.conferido { background: #fff5f5; }
+.item.div-qtd.conferido  { background: #fffbeb; }
 
-  /* ── Campos de contagem ── */
-  .campo-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-  .campo label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; display: block; margin-bottom: 4px; }
-  .campo-valor { font-size: 16px; font-weight: 700; color: #1e293b; padding: 6px 0; }
-  .campo-input { width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 16px; font-weight: 600; text-align: center; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
-  .campo-input:focus { border-color: #3b82f6; }
-  .obs-campo { margin-top: 10px; }
-  .obs-campo label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; display: block; margin-bottom: 5px; }
-  .campo-textarea { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; resize: vertical; min-height: 52px; font-family: inherit; transition: border-color 0.2s; color: #374151; }
-  .campo-textarea:focus { border-color: #3b82f6; }
+/* ─── Item header ────────────────────────── */
+.item-header { display: flex; align-items: flex-start; gap: 10px;
+               padding: 11px 13px; }
+.checkbox-wrap { position: relative; flex-shrink: 0; margin-top: 3px; }
+.checkbox-wrap input { opacity: 0; position: absolute; width: 0; height: 0; }
+.checkmark { display: block; width: 26px; height: 26px; border: 2px solid #94a3b8;
+             border-radius: 7px; cursor: pointer; transition: all .2s; }
+.checkbox-wrap input:checked ~ .checkmark { background: #16a34a; border-color: #16a34a; }
+.checkbox-wrap input:checked ~ .checkmark::after {
+  content: '✓'; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 15px; font-weight: 700; height: 100%; }
+.item-info { flex: 1; min-width: 0; }
+.item-nome  { font-size: 13px; font-weight: 700; color: #1e293b; line-height: 1.3; }
+.item-meta  { font-size: 11px; color: #64748b; margin-top: 3px; line-height: 1.5; }
+.cod-tag    { color: #1a4a8a; font-family: monospace; font-size: 12px; }
+.forn-tag   { color: #94a3b8; font-style: italic; font-size: 11px; }
+.item-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.nivel { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+.nivel-critico { background: #fee2e2; color: #991b1b; }
+.nivel-alerta  { background: #fef3c7; color: #92400e; }
+.nivel-atencao { background: #fef9c3; color: #854d0e; }
+.nivel-ok      { background: #e0f2fe; color: #075985; }
+.badge-diverg  { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+                 display: none; white-space: nowrap; }
+.badge-diverg.show-qtd  { display: inline-block; background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+.badge-diverg.show-lote { display: inline-block; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 
-  /* ── Conferência do Lote (collapsible) ── */
-  .conf-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; margin-bottom: 0; transition: background 0.2s, color 0.2s; }
-  .conf-toggle:active, .conf-toggle.open { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-  .conf-arrow { font-size: 10px; transition: transform 0.2s; }
-  .conf-toggle.open .conf-arrow { transform: rotate(180deg); }
-  .conf-body { display: none; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; background: #fafbff; margin-bottom: 8px; overflow: hidden; }
-  .conf-body.open { display: block; }
+/* ─── Item body ──────────────────────────── */
+.item-body   { padding: 0 13px 13px; }
+.section-sep { font-size: 10px; font-weight: 700; text-transform: uppercase;
+               letter-spacing: .8px; color: #94a3b8;
+               margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dashed #e2e8f0; }
 
-  /* ── Ref grid ── */
-  .conf-ref { background: #eff6ff; padding: 10px 12px; border-bottom: 1px solid #dbeafe; }
-  .conf-ref-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #3b82f6; margin-bottom: 8px; }
-  .conf-ref-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .conf-ref-cell { display: flex; flex-direction: column; gap: 2px; }
-  .conf-ref-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #93c5fd; font-weight: 700; }
-  .conf-ref-cell strong { font-size: 12px; color: #1e3a5f; font-family: monospace; word-break: break-all; }
+/* ─── Contagem row ───────────────────────── */
+.campo-row   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.campo label { font-size: 10px; color: #64748b; text-transform: uppercase;
+               letter-spacing: .5px; font-weight: 600; display: block; margin-bottom: 4px; }
+.campo-valor { font-size: 18px; font-weight: 700; color: #1e293b; padding: 5px 0; min-height: 36px; }
+.campo-input { width: 100%; border: 2px solid #e2e8f0; border-radius: 8px;
+               padding: 7px 8px; font-size: 18px; font-weight: 700;
+               text-align: center; outline: none; -webkit-appearance: none;
+               transition: border-color .2s; }
+.campo-input:focus { border-color: #3b82f6; }
 
-  /* ── Inputs de verificação ── */
-  .conf-inputs { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
-  .conf-field-row { margin-bottom: 8px; }
-  .conf-field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .conf-field { display: flex; flex-direction: column; gap: 4px; }
-  .conf-field-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
-  .conf-input-wrap { display: flex; align-items: center; gap: 6px; }
-  .conf-input { flex: 1; border: 2px solid #e2e8f0; border-radius: 7px; padding: 8px 10px; font-size: 13px; font-weight: 600; outline: none; transition: border-color 0.2s; background: white; }
-  .conf-input:focus { border-color: #3b82f6; }
-  .conf-input.ok { border-color: #86efac; background: #f0fdf4; }
-  .conf-input.err { border-color: #fca5a5; background: #fff5f5; }
-  .conf-input-date { font-family: monospace; letter-spacing: 0.5px; }
-  .match-badge { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
-  .match-ok { background: #dcfce7; color: #16a34a; }
-  .match-err { background: #fee2e2; color: #dc2626; }
-  .match-nd { background: #f1f5f9; color: #94a3b8; font-size: 11px; }
+/* ─── Conf toggle button ─────────────────── */
+.conf-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center;
+               padding: 9px 12px; margin-bottom: 0;
+               background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+               font-size: 12px; font-weight: 600; color: #475569;
+               cursor: pointer; -webkit-tap-highlight-color: transparent;
+               transition: background .15s, color .15s; }
+.conf-toggle:active { background: #eff6ff; color: #1d4ed8; }
+.conf-toggle.aberto { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; border-radius: 8px 8px 0 0; }
 
-  /* ── Botão divergente ── */
-  .btn-marcar-div { width: calc(100% - 24px); margin: 10px 12px; padding: 10px; border: 2px solid #fcd34d; border-radius: 8px; background: #fffbeb; color: #b45309; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-  .btn-marcar-div:active, .btn-marcar-div.ativo { background: #fef08a; border-color: #f59e0b; color: #92400e; }
-  .btn-marcar-div.divergente-grave-btn { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+/* ─── Conf body (collapsible) ────────────── */
+.conf-body { display: none; border: 1px solid #bfdbfe; border-top: none;
+             border-radius: 0 0 8px 8px; background: #fafbff;
+             margin-bottom: 8px; overflow: hidden; }
 
-  /* ── Assinaturas ── */
-  .assinaturas { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin: 16px 0; }
-  .assinaturas h3 { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
-  .sig-block { margin-bottom: 16px; }
-  .sig-block:last-child { margin-bottom: 0; }
-  .sig-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 6px; }
-  .sig-nome { width: 100%; border: none; border-bottom: 2px solid #1a4a8a; padding: 6px 0; font-size: 15px; font-weight: 600; outline: none; background: transparent; }
-  .sig-canvas-wrap { margin-top: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
-  canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: none; cursor: crosshair; }
-  .sig-btns { display: flex; gap: 8px; margin-top: 6px; }
-  .sig-btn { flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; background: #f1f5f9; color: #475569; }
+/* ─── Ref grid ───────────────────────────── */
+.conf-ref       { background: #eff6ff; padding: 9px 12px; border-bottom: 1px solid #dbeafe; }
+.conf-ref-title { font-size: 10px; font-weight: 700; text-transform: uppercase;
+                  letter-spacing: .7px; color: #3b82f6; margin-bottom: 7px; }
+.conf-ref-grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.conf-ref-cell  { display: flex; flex-direction: column; gap: 2px; }
+.conf-ref-lbl   { font-size: 9px; text-transform: uppercase; letter-spacing: .5px;
+                  color: #93c5fd; font-weight: 700; }
+.conf-ref-val   { font-size: 12px; color: #1e3a5f; font-family: monospace;
+                  font-weight: 700; word-break: break-all; }
 
-  /* ── Rodapé ── */
-  .footer-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0 32px; }
-  .btn-primary { background: #1a4a8a; color: white; border: none; border-radius: 10px; padding: 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
-  .btn-secondary { background: white; color: #1a4a8a; border: 2px solid #1a4a8a; border-radius: 10px; padding: 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
-  .btn-warn { background: #fef3c7; color: #92400e; border: 2px solid #fcd34d; border-radius: 10px; padding: 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+/* ─── Conf inputs ────────────────────────── */
+.conf-inputs    { padding: 10px 12px; }
+.conf-fields-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.conf-field     { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+.conf-fields-2col .conf-field { margin-bottom: 0; }
+.conf-field-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase;
+                  letter-spacing: .5px; color: #64748b; }
+.conf-input-wrap { display: flex; align-items: center; gap: 6px; }
+.conf-input   { flex: 1; min-width: 0; border: 2px solid #e2e8f0; border-radius: 7px;
+                padding: 8px 10px; font-size: 13px; font-weight: 600;
+                outline: none; background: #fff; transition: border-color .2s; }
+.conf-input:focus   { border-color: #3b82f6; }
+.conf-input.cok     { border-color: #86efac; background: #f0fdf4; }
+.conf-input.cerr    { border-color: #fca5a5; background: #fff5f5; }
+.conf-input.mono    { font-family: monospace; letter-spacing: .4px; }
+.match-badge  { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 13px; font-weight: 700; }
+.match-ok  { background: #dcfce7; color: #16a34a; }
+.match-err { background: #fee2e2; color: #dc2626; }
+.match-nd  { background: #f1f5f9; color: #94a3b8; font-size: 11px; }
 
-  /* ── Toast ── */
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90vw; text-align: center; }
-  .toast.show { opacity: 1; }
+/* ─── Divergente button ──────────────────── */
+.btn-marcar-div { width: 100%; margin-top: 8px; padding: 10px 12px;
+                  border: 2px solid #fcd34d; border-radius: 8px;
+                  background: #fffbeb; color: #b45309; font-size: 12px; font-weight: 700;
+                  cursor: pointer; transition: all .2s; }
+.btn-marcar-div:active, .btn-marcar-div.ativo {
+  background: #fef08a; border-color: #f59e0b; color: #78350f; }
 
-  /* ── Overlay de Resumo ── */
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; overflow-y: auto; padding: 16px; }
-  .overlay.show { display: block; }
-  .overlay-card { background: white; border-radius: 16px; max-width: 560px; margin: 0 auto; overflow: hidden; }
-  .overlay-header { background: #1a4a8a; color: white; padding: 16px; font-size: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-  .overlay-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .overlay-body { padding: 16px; }
-  .resumo-stat { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-  .resumo-stat:last-child { border-bottom: none; }
-  .resumo-stat-val { font-weight: 700; font-size: 18px; }
-  .resumo-stat-val.ok { color: #16a34a; }
-  .resumo-stat-val.warn { color: #f59e0b; }
-  .resumo-stat-val.err { color: #dc2626; }
-  .div-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #94a3b8; margin: 16px 0 8px; }
-  .div-item { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 12px; }
-  .div-item.grave { background: #fff5f5; border-color: #fca5a5; }
-  .div-item-nome { font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 4px; }
-  .div-item-linha { color: #64748b; margin-bottom: 2px; }
-  .div-item-linha strong { color: #dc2626; }
-  .div-item-linha.ok strong { color: #16a34a; }
-  .div-empty { color: #94a3b8; font-size: 13px; text-align: center; padding: 16px; }
+/* ─── Observações ─────────────────────────── */
+.obs-area { margin-top: 8px; }
+.obs-lbl  { font-size: 10px; color: #64748b; text-transform: uppercase;
+             letter-spacing: .5px; font-weight: 600; display: block; margin-bottom: 4px; }
+.campo-textarea { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px;
+                  padding: 8px 10px; font-size: 13px; outline: none;
+                  resize: vertical; min-height: 50px; font-family: inherit;
+                  transition: border-color .2s; color: #374151; }
+.campo-textarea:focus { border-color: #3b82f6; }
+
+/* ─── Assinaturas ─────────────────────────── */
+.assinaturas   { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+                 padding: 16px; margin: 16px 0; }
+.assinaturas h3{ font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+.sig-block     { margin-bottom: 16px; }
+.sig-block:last-child { margin-bottom: 0; }
+.sig-label     { font-size: 11px; color: #64748b; text-transform: uppercase;
+                 letter-spacing: .5px; font-weight: 600; margin-bottom: 6px; }
+.sig-nome      { width: 100%; border: none; border-bottom: 2px solid #1a4a8a;
+                 padding: 6px 0; font-size: 15px; font-weight: 600;
+                 outline: none; background: transparent; }
+.sig-canvas-wrap { margin-top: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: none; cursor: crosshair; }
+.sig-btns { display: flex; gap: 8px; margin-top: 6px; }
+.sig-btn  { flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;
+             font-size: 12px; font-weight: 600; cursor: pointer;
+             background: #f1f5f9; color: #475569; }
+
+/* ─── Rodapé ──────────────────────────────── */
+.footer-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0 32px; }
+.btn-prim { background: #1a4a8a; color: #fff; border: none; border-radius: 10px;
+             padding: 14px 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-sec  { background: #fff; color: #1a4a8a; border: 2px solid #1a4a8a;
+             border-radius: 10px; padding: 14px 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-pdf  { background: #1a4a8a; color: #fff; }
+
+/* ─── Toast ───────────────────────────────── */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+         background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px;
+         font-size: 13px; font-weight: 600; z-index: 300;
+         opacity: 0; transition: opacity .3s; pointer-events: none;
+         max-width: 90vw; text-align: center; white-space: pre-wrap; }
+.toast.show { opacity: 1; }
+
+/* ─── Overlay Resumo ──────────────────────── */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+           z-index: 200; overflow-y: auto; padding: 16px; }
+.overlay.show { display: block; }
+.ov-card { background: #fff; border-radius: 16px; max-width: 560px;
+           margin: 0 auto; overflow: hidden; }
+.ov-header { background: #1a4a8a; color: #fff; padding: 14px 16px;
+             font-size: 15px; font-weight: 700;
+             display: flex; justify-content: space-between; align-items: center; }
+.ov-close  { background: rgba(255,255,255,.2); border: none; color: #fff;
+              width: 30px; height: 30px; border-radius: 50%;
+              font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.ov-body   { padding: 16px; }
+.res-stat  { display: flex; justify-content: space-between; align-items: center;
+             padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+.res-stat:last-of-type { border-bottom: none; }
+.res-val   { font-weight: 700; font-size: 18px; }
+.res-ok    { color: #16a34a; }
+.res-warn  { color: #f59e0b; }
+.res-err   { color: #dc2626; }
+.div-sec-title { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                 letter-spacing: .7px; color: #94a3b8; margin: 14px 0 8px; }
+.div-card      { border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 12px; }
+.div-card.qtd  { background: #fffbeb; border: 1px solid #fcd34d; }
+.div-card.lote { background: #fff5f5; border: 1px solid #fca5a5; }
+.div-card-nome { font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 4px; }
+.div-card-row  { color: #64748b; line-height: 1.7; }
+.div-card-row strong { color: #dc2626; }
+.div-card-obs  { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,.08);
+                 color: #92400e; font-style: italic; }
+.div-empty     { color: #94a3b8; font-size: 13px; text-align: center; padding: 20px 0; }
 </style>
 </head>
 <body>
+
 <div class="header">
   <div class="header-top">
     <div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-        <div style="width:28px;height:28px;border-radius:6px;overflow:hidden;background:white;flex-shrink:0;"><img src="${LOGO_AGQ}" style="width:100%;height:100%;object-fit:cover;"></div>
-        <div style="font-size:11px; opacity:0.85; letter-spacing:1px; text-transform:uppercase;">Agroquima · Auditoria de Lotes</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+        <div style="width:26px;height:26px;border-radius:5px;overflow:hidden;background:#fff;flex-shrink:0;">
+          <img src="${LOGO_AGQ}" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+        <span style="font-size:10px;opacity:.8;letter-spacing:1px;text-transform:uppercase;">Agroquima · Auditoria</span>
       </div>
-      <h1>Contagem e Conferência — ${APP.sigla}</h1>
+      <div class="header-title">Contagem e Conferência — ${APP.sigla}</div>
     </div>
-    <div style="text-align:right;">
-      <div style="font-size:12px; font-weight:700;">${hoje}</div>
-      <div style="font-size:11px; opacity:0.7;">${filialNome}</div>
+    <div class="header-right">
+      <div class="header-data">${hoje}</div>
+      <div class="header-filial">${filialNome}</div>
     </div>
   </div>
+
+  <div class="header-busca-wrap">
+    <input id="busca-mobile" class="header-busca" type="search"
+           placeholder="🔍 Buscar produto, lote ou código…"
+           autocomplete="off" enterkeyhint="search"
+           oninput="buscarItens()" onfocus="this.select()">
+    <button class="busca-limpar" id="busca-limpar-btn" type="button" onclick="limparBusca()">✕</button>
+    <div class="header-busca-hint" id="busca-hint"></div>
+  </div>
+
   <div class="header-stats">
     <span class="stat-pill" id="stat-conf">0 / ${itemIdx} conferidos</span>
-    <span class="stat-pill warn hidden" id="stat-divs"></span>
+    <span class="stat-pill warn" id="stat-divs" style="display:none"></span>
   </div>
-  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
 </div>
 
-<div class="content">
+<div class="content" id="content-main">
   ${itensHTML}
 
   <div class="assinaturas">
     <h3>✍ Assinaturas dos Conferentes</h3>
     <div class="sig-block">
       <div class="sig-label">Conferente 1 — Nome</div>
-      <input class="sig-nome" type="text" placeholder="Digite o nome completo...">
-      <div class="sig-canvas-wrap"><canvas class="sig-canvas" id="sig1" width="600" height="120"></canvas></div>
+      <input class="sig-nome" type="text" placeholder="Digite o nome completo…">
+      <div class="sig-canvas-wrap">
+        <canvas class="sig-canvas" id="sig1" width="600" height="120"></canvas>
+      </div>
       <div class="sig-btns">
-        <button class="sig-btn" onclick="limparSig('sig1')">✕ Limpar</button>
+        <button class="sig-btn" type="button" onclick="limparSig('sig1')">✕ Limpar</button>
         <span style="flex:2;font-size:10px;color:#94a3b8;align-self:center;text-align:center;">Assine com o dedo ou mouse</span>
       </div>
     </div>
     <div class="sig-block">
       <div class="sig-label">Conferente 2 — Nome</div>
-      <input class="sig-nome" type="text" placeholder="Digite o nome completo...">
-      <div class="sig-canvas-wrap"><canvas class="sig-canvas" id="sig2" width="600" height="120"></canvas></div>
+      <input class="sig-nome" type="text" placeholder="Digite o nome completo…">
+      <div class="sig-canvas-wrap">
+        <canvas class="sig-canvas" id="sig2" width="600" height="120"></canvas>
+      </div>
       <div class="sig-btns">
-        <button class="sig-btn" onclick="limparSig('sig2')">✕ Limpar</button>
+        <button class="sig-btn" type="button" onclick="limparSig('sig2')">✕ Limpar</button>
         <span style="flex:2;font-size:10px;color:#94a3b8;align-self:center;text-align:center;">Assine com o dedo ou mouse</span>
       </div>
     </div>
     <div class="sig-block">
       <div class="sig-label">Auditor Responsável — Nome</div>
-      <input class="sig-nome" type="text" placeholder="Digite o nome completo...">
-      <div class="sig-canvas-wrap"><canvas class="sig-canvas" id="sig3" width="600" height="120"></canvas></div>
-      <div class="sig-btns"><button class="sig-btn" onclick="limparSig('sig3')">✕ Limpar</button></div>
+      <input class="sig-nome" type="text" placeholder="Digite o nome completo…">
+      <div class="sig-canvas-wrap">
+        <canvas class="sig-canvas" id="sig3" width="600" height="120"></canvas>
+      </div>
+      <div class="sig-btns">
+        <button class="sig-btn" type="button" onclick="limparSig('sig3')">✕ Limpar</button>
+      </div>
     </div>
   </div>
 
   <div class="footer-btns">
-    <button class="btn-secondary" onclick="abrirResumo()">📋 Resumo</button>
-    <button class="btn-secondary" onclick="gerarPDFMobile()" id="btn-pdf" style="background:#1a4a8a;color:white;border-color:#1a4a8a;">⬇ PDF</button>
-    <button class="btn-primary" onclick="finalizarContagem()" id="btn-finalizar">✓ Finalizar</button>
+    <button class="btn-sec" type="button" onclick="abrirResumo()">📋 Resumo</button>
+    <button class="btn-sec btn-pdf" type="button" onclick="gerarPDF()" id="btn-pdf">⬇ PDF</button>
+    <button class="btn-prim" type="button" onclick="finalizar()" id="btn-fin">✓ Finalizar</button>
   </div>
 </div>
 
-<!-- Overlay resumo / divergências -->
-<div class="overlay" id="overlay-resumo" onclick="if(event.target===this)fecharResumo()">
-  <div class="overlay-card">
-    <div class="overlay-header">
+<div class="overlay" id="ov-resumo" onclick="if(event.target===this)fecharResumo()">
+  <div class="ov-card">
+    <div class="ov-header">
       <span>📋 Resumo da Auditoria</span>
-      <button class="overlay-close" onclick="fecharResumo()">✕</button>
+      <button class="ov-close" type="button" onclick="fecharResumo()">✕</button>
     </div>
-    <div class="overlay-body" id="overlay-body"></div>
+    <div class="ov-body" id="ov-body"></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  const TOTAL = ${itemIdx};
-  const LOTES_REF = ${lotesRefJSON};
+/* ──────────────────────────────────────────
+   Dados e estado
+   ────────────────────────────────────────── */
+const TOTAL     = ${itemIdx};
+const LOTES_REF = ${lotesRefJSON};
 
-  // divState[idx] = { qtd, lote, fab, venc, manual }
-  const divState = {};
-  for (const l of LOTES_REF) divState[l.idx] = { qtd: false, lote: false, fab: false, venc: false, manual: false };
+// divState[idx] = { qtdDif: bool, lote: bool, fab: bool, venc: bool, manual: bool }
+const divState = {};
+LOTES_REF.forEach(l => {
+  divState[l.idx] = { qtdDif: false, lote: false, fab: false, venc: false, manual: false };
+});
 
-  // ── Normalização para comparação ──
-  function normStr(s) {
-    return String(s||'').trim().toUpperCase().replace(/[\s\-\.\/\\\\]/g, '');
+/* ──────────────────────────────────────────
+   Toggle seção de conferência de lote
+   ────────────────────────────────────────── */
+function toggleConf(idx) {
+  const body = document.getElementById('conf-' + idx);
+  const tog  = document.getElementById('ctog-' + idx);
+  const arr  = document.getElementById('carr-' + idx);
+  if (!body || !tog) return;
+  const abrindo = body.style.display === 'none' || body.style.display === '';
+  body.style.display = abrindo ? 'block' : 'none';
+  arr.textContent    = abrindo ? '▲' : '▼';
+  tog.classList.toggle('aberto', abrindo);
+}
+
+/* ──────────────────────────────────────────
+   Navegação Enter → próximo campo de qtd
+   ────────────────────────────────────────── */
+function navNext(e, idx) {
+  if (e.key !== 'Enter' && e.keyCode !== 13) return;
+  e.preventDefault();
+  for (let n = idx + 1; n <= TOTAL; n++) {
+    const el = document.getElementById('qtd-' + n);
+    if (el && el.closest('.item') && el.closest('.item').style.display !== 'none') {
+      el.focus(); el.select();
+      el.closest('.item').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
   }
-  function normData(s) {
-    const n = String(s||'').trim().replace(/\s+/g,'');
-    // aceita DD/MM/AAAA, DD-MM-AAAA, DDMMAAAA, DD/MM/AA
-    const m = n.match(/^(\d{1,2})[\/\-.]?(\d{1,2})[\/\-.]?(\d{2,4})$/);
-    if (!m) return n.toUpperCase();
-    const d = m[1].padStart(2,'0');
-    const mo = m[2].padStart(2,'0');
-    let y = m[3];
-    if (y.length === 2) y = '20' + y;
-    return d + mo + y;
+  // último item: remove foco
+  document.getElementById('qtd-' + idx)?.blur();
+}
+
+/* ──────────────────────────────────────────
+   Normalização para comparação de strings
+   ────────────────────────────────────────── */
+function normStr(s) {
+  return String(s || '').trim().toUpperCase().replace(/[\s\-\.\/\\\\]/g, '');
+}
+function normData(s) {
+  const n = String(s || '').trim().replace(/\s+/g, '');
+  // aceita: DD/MM/AAAA  DD-MM-AAAA  DDMMAAAA  DD/MM/AA  D/M/AAAA
+  const m = n.match(/^(\d{1,2})[\/\-.]?(\d{1,2})[\/\-.]?(\d{2,4})$/);
+  if (!m) return n.toUpperCase();
+  const d = m[1].padStart(2, '0');
+  const mo = m[2].padStart(2, '0');
+  let y = m[3];
+  if (y.length === 2) y = '20' + y;
+  return d + mo + y;
+}
+
+/* ──────────────────────────────────────────
+   Verificação física dos dados do lote
+   ────────────────────────────────────────── */
+function verificarLote(idx) {
+  const ref = LOTES_REF.find(x => x.idx === idx);
+  if (!ref) return;
+
+  const cfLote = (document.getElementById('cf-lote-' + idx)?.value || '').trim();
+  const cfFab  = (document.getElementById('cf-fab-'  + idx)?.value || '').trim();
+  const cfVenc = (document.getElementById('cf-venc-' + idx)?.value || '').trim();
+
+  function setField(inpId, stId, digitado, valorRef, normFn) {
+    const inp = document.getElementById(inpId);
+    const st  = document.getElementById(stId);
+    if (!inp || !st) return null;
+    // Limpa classes do input
+    inp.classList.remove('cok', 'cerr');
+    if (!digitado) {
+      st.className = 'match-badge match-nd'; st.textContent = '—';
+      return null; // não digitado = sem conclusão
+    }
+    const bate = normFn(digitado) === normFn(valorRef);
+    if (bate) {
+      inp.classList.add('cok');
+      st.className = 'match-badge match-ok'; st.textContent = '✓';
+    } else {
+      inp.classList.add('cerr');
+      st.className = 'match-badge match-err'; st.textContent = '✗';
+    }
+    return bate;
   }
 
-  // ── Conferência do Lote (collapsible) ──
-  function toggleConf(idx) {
+  const rLote = setField('cf-lote-' + idx, 'cf-lote-st-' + idx, cfLote, ref.lote, normStr);
+  const rFab  = setField('cf-fab-'  + idx, 'cf-fab-st-'  + idx, cfFab,  ref.fab,  normData);
+  const rVenc = setField('cf-venc-' + idx, 'cf-venc-st-' + idx, cfVenc, ref.venc, normData);
+
+  divState[idx].lote = rLote === false;
+  divState[idx].fab  = rFab  === false;
+  divState[idx].venc = rVenc === false;
+
+  // Abre seção automaticamente ao detectar divergência
+  if (divState[idx].lote || divState[idx].fab || divState[idx].venc) {
     const body = document.getElementById('conf-' + idx);
-    const tog = document.getElementById('ctog-' + idx);
-    const open = body.classList.toggle('open');
-    tog.classList.toggle('open', open);
+    if (body && body.style.display !== 'block') toggleConf(idx);
   }
 
-  function verificarLote(idx) {
-    const ref = LOTES_REF.find(x => x.idx === idx);
-    if (!ref) return;
-    const cfLote = (document.getElementById('cf-lote-' + idx)?.value||'').trim();
-    const cfFab  = (document.getElementById('cf-fab-'  + idx)?.value||'').trim();
-    const cfVenc = (document.getElementById('cf-venc-' + idx)?.value||'').trim();
+  atualizarVisual(idx);
+}
 
-    function setField(inputId, stId, entrou, bate) {
-      const inp = document.getElementById(inputId);
-      const st  = document.getElementById(stId);
-      if (!inp || !st) return;
-      if (!entrou) {
-        inp.className = inp.className.replace(/\b(ok|err)\b/g,'').trim();
-        st.className = 'match-badge match-nd'; st.textContent = '—';
-        return bate; // null = sem preencher
-      }
-      if (bate) {
-        inp.classList.remove('err'); inp.classList.add('ok');
-        st.className = 'match-badge match-ok'; st.textContent = '✓';
-      } else {
-        inp.classList.remove('ok'); inp.classList.add('err');
-        st.className = 'match-badge match-err'; st.textContent = '✗';
-      }
-    }
+/* ──────────────────────────────────────────
+   Toggle divergência manual
+   ────────────────────────────────────────── */
+function toggleDivergente(idx) {
+  divState[idx].manual = !divState[idx].manual;
+  const btn = document.getElementById('bdiv-btn-' + idx);
+  if (!btn) return;
+  if (divState[idx].manual) {
+    btn.classList.add('ativo');
+    btn.textContent = '✓ Divergente marcado — toque para desfazer';
+  } else {
+    btn.classList.remove('ativo');
+    btn.textContent = '⚠ Marcar como Divergente';
+  }
+  atualizarVisual(idx);
+}
 
-    const loteBate  = cfLote  ? normStr(cfLote)  === normStr(ref.lote)  : null;
-    const fabBate   = cfFab   ? normData(cfFab)   === normData(ref.fab)   : null;
-    const vencBate  = cfVenc  ? normData(cfVenc)  === normData(ref.venc)  : null;
+/* ──────────────────────────────────────────
+   Atualiza visual do card (bordas + badge)
+   ────────────────────────────────────────── */
+function atualizarVisual(idx) {
+  const s    = divState[idx];
+  const item = document.getElementById('item-' + idx);
+  const badge= document.getElementById('bdiv-' + idx);
+  if (!item || !badge) return;
 
-    setField('cf-lote-' + idx, 'cf-lote-st-' + idx, !!cfLote,  loteBate);
-    setField('cf-fab-'  + idx, 'cf-fab-st-'  + idx, !!cfFab,   fabBate);
-    setField('cf-venc-' + idx, 'cf-venc-st-' + idx, !!cfVenc,  vencBate);
+  const divLote = s.lote || s.fab || s.venc || s.manual;
+  const divQtd  = s.qtdDif;
 
-    divState[idx].lote = loteBate === false;
-    divState[idx].fab  = fabBate  === false;
-    divState[idx].venc = vencBate === false;
+  item.classList.remove('div-lote', 'div-qtd');
+  badge.className = 'badge-diverg';
 
-    // Auto-abre seção se detectar divergência
-    const temDiv = divState[idx].lote || divState[idx].fab || divState[idx].venc;
-    if (temDiv) {
-      const body = document.getElementById('conf-' + idx);
-      if (!body.classList.contains('open')) toggleConf(idx);
-    }
-
-    atualizarItemVisual(idx);
+  if (divLote) {
+    item.classList.add('div-lote');
+    badge.className = 'badge-diverg show-lote';
+    badge.textContent = '⚠ LOTE';
+  } else if (divQtd) {
+    item.classList.add('div-qtd');
+    badge.className = 'badge-diverg show-qtd';
+    badge.textContent = '⚠ QTD';
   }
 
-  function toggleDivergente(idx) {
-    divState[idx].manual = !divState[idx].manual;
-    const btn = document.getElementById('bdiv-btn-' + idx);
-    if (divState[idx].manual) {
-      btn.classList.add('ativo');
-      btn.textContent = '✓ Marcado como Divergente — toque para desfazer';
+  atualizarProgresso();
+}
+
+/* ──────────────────────────────────────────
+   Cálculo de divergência de quantidade
+   ────────────────────────────────────────── */
+function calcDiv(idx, sistema) {
+  const raw   = (document.getElementById('qtd-' + idx)?.value || '').trim();
+  const divEl = document.getElementById('div-' + idx);
+  if (!divEl) return;
+
+  if (!raw) {
+    // campo vazio → mostra divergência negativa total (ainda não contado)
+    divEl.textContent = '-' + Number(sistema).toLocaleString('pt-BR');
+    divEl.style.color = '#dc2626';
+    divEl.style.fontWeight = '700';
+    divState[idx].qtdDif = false; // não é divergência confirmada, só indica "não contado"
+  } else {
+    const val = parseFloat(raw.replace(',', '.'));
+    if (isNaN(val)) {
+      divEl.textContent = '—'; divEl.style.color = '#9ca3af'; divEl.style.fontWeight = '700';
+      divState[idx].qtdDif = false;
     } else {
-      btn.classList.remove('ativo');
-      btn.textContent = '⚠ Marcar como Divergente';
-    }
-    atualizarItemVisual(idx);
-  }
-
-  function atualizarItemVisual(idx) {
-    const s = divState[idx];
-    const temDivLote = s.lote || s.fab || s.venc || s.manual;
-    const temDivQtd  = s.qtd;
-    const ehDiv = temDivLote || temDivQtd;
-    const graveDiv = temDivLote; // divergência de dados do lote é grave
-    const item = document.getElementById('item-' + idx);
-    item.classList.toggle('divergente', ehDiv && !graveDiv);
-    item.classList.toggle('divergente-grave', graveDiv);
-    const badge = document.getElementById('bdiv-' + idx);
-    badge.classList.toggle('hidden', !ehDiv);
-    badge.classList.toggle('grave', graveDiv);
-    if (graveDiv) {
-      badge.textContent = '⚠ LOTE';
-    } else if (temDivQtd) {
-      badge.textContent = '⚠ QTD';
-    }
-    atualizarProgresso();
-  }
-
-  function calcDivergencia(idx, sistema) {
-    const raw = (document.getElementById('qtd-' + idx)?.value||'').trim();
-    const divEl = document.getElementById('div-' + idx);
-    if (!raw) {
-      divEl.textContent = '—'; divEl.style.color = '#9ca3af';
-      divState[idx].qtd = false;
-    } else {
-      const val = parseFloat(raw.replace(',','.'));
-      if (isNaN(val)) {
-        divEl.textContent = '—'; divEl.style.color = '#9ca3af';
-        divState[idx].qtd = false;
-      } else {
-        const dif = val - sistema;
-        divEl.textContent = (dif > 0 ? '+' : '') + dif.toFixed(0);
-        divEl.style.color = dif === 0 ? '#16a34a' : '#dc2626';
-        divState[idx].qtd = dif !== 0;
-      }
-    }
-    atualizarItemVisual(idx);
-  }
-
-  function marcarItem(idx, checked) {
-    document.getElementById('item-' + idx).classList.toggle('conferido', checked);
-    atualizarProgresso();
-  }
-
-  function atualizarProgresso() {
-    const conf = document.querySelectorAll('.item.conferido').length;
-    const pct = Math.round(conf / TOTAL * 100);
-    document.getElementById('prog').style.width = pct + '%';
-    document.getElementById('stat-conf').textContent = conf + ' / ' + TOTAL + ' conferidos';
-    const ndivs = Object.values(divState).filter(s => s.qtd || s.lote || s.fab || s.venc || s.manual).length;
-    const statDiv = document.getElementById('stat-divs');
-    if (ndivs > 0) {
-      statDiv.textContent = ndivs + ' divergência' + (ndivs > 1 ? 's' : '');
-      statDiv.classList.remove('hidden');
-    } else {
-      statDiv.classList.add('hidden');
+      const dif = val - sistema;
+      divEl.textContent = (dif > 0 ? '+' : '') + dif.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+      divEl.style.color = dif === 0 ? '#16a34a' : '#dc2626';
+      divEl.style.fontWeight = '700';
+      divState[idx].qtdDif = dif !== 0;
     }
   }
+  atualizarVisual(idx);
+}
 
-  // ── Assinaturas ──
-  function initCanvas(id) {
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-    function getPos(e) {
-      const r = canvas.getBoundingClientRect();
-      const sx = canvas.width / r.width, sy = canvas.height / r.height;
-      const src = e.touches ? e.touches[0] : e;
-      return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
+/* ──────────────────────────────────────────
+   Marcar item como conferido
+   ────────────────────────────────────────── */
+function marcarItem(idx, checked) {
+  document.getElementById('item-' + idx)?.classList.toggle('conferido', checked);
+  atualizarProgresso();
+}
+
+/* ──────────────────────────────────────────
+   Atualiza contadores no header
+   ────────────────────────────────────────── */
+function atualizarProgresso() {
+  const conf  = document.querySelectorAll('.item.conferido').length;
+  const pct   = TOTAL > 0 ? Math.round(conf / TOTAL * 100) : 0;
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('stat-conf').textContent = conf + ' / ' + TOTAL + ' conferidos (' + pct + '%)';
+
+  const ndivs = Object.values(divState)
+    .filter(s => s.qtdDif || s.lote || s.fab || s.venc || s.manual).length;
+  const statDiv = document.getElementById('stat-divs');
+  if (ndivs > 0) {
+    statDiv.textContent = ndivs + ' divergência' + (ndivs > 1 ? 's' : '');
+    statDiv.style.display = '';
+  } else {
+    statDiv.style.display = 'none';
+  }
+}
+
+/* ──────────────────────────────────────────
+   Inicialização: preenche divergência negativa
+   (todos os itens mostram -qtd até serem contados)
+   ────────────────────────────────────────── */
+(function initDivergencias() {
+  LOTES_REF.forEach(l => {
+    const inp   = document.getElementById('qtd-' + l.idx);
+    const divEl = document.getElementById('div-' + l.idx);
+    if (!inp || !divEl || inp.value.trim()) return;
+    divEl.textContent  = '-' + Number(l.qtd).toLocaleString('pt-BR');
+    divEl.style.color  = '#dc2626';
+    divEl.style.fontWeight = '700';
+  });
+  atualizarProgresso();
+})();
+
+/* ──────────────────────────────────────────
+   Busca / filtro de itens
+   ────────────────────────────────────────── */
+function buscarItens() {
+  const q   = (document.getElementById('busca-mobile')?.value || '').toLowerCase().trim();
+  const btn = document.getElementById('busca-limpar-btn');
+  const hint= document.getElementById('busca-hint');
+  if (btn) btn.style.display = q ? 'block' : 'none';
+
+  let encontrados = 0;
+  document.querySelectorAll('.item').forEach(el => {
+    const ok = !q || (el.dataset.busca || '').includes(q);
+    el.style.display = ok ? '' : 'none';
+    if (ok) encontrados++;
+  });
+  document.querySelectorAll('.grupo').forEach(g => {
+    const temVisivel = [...g.querySelectorAll('.item')].some(el => el.style.display !== 'none');
+    g.style.display = temVisivel ? '' : 'none';
+  });
+
+  if (hint) {
+    hint.textContent = q
+      ? encontrados + ' item' + (encontrados !== 1 ? 's' : '') + ' encontrado' + (encontrados !== 1 ? 's' : '')
+      : '';
+  }
+}
+
+function limparBusca() {
+  const inp = document.getElementById('busca-mobile');
+  if (inp) { inp.value = ''; inp.focus(); }
+  buscarItens();
+}
+
+/* ──────────────────────────────────────────
+   Assinaturas digitais
+   ────────────────────────────────────────── */
+function initCanvas(id) {
+  const cv = document.getElementById(id);
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  let on = false;
+  const pos = e => {
+    const r = cv.getBoundingClientRect();
+    const sx = cv.width / r.width, sy = cv.height / r.height;
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
+  };
+  cv.addEventListener('mousedown',  e => { on=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); });
+  cv.addEventListener('mousemove',  e => { if(!on) return; const p=pos(e); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#1e293b'; ctx.lineTo(p.x,p.y); ctx.stroke(); });
+  cv.addEventListener('mouseup',    ()=> on=false);
+  cv.addEventListener('touchstart', e => { e.preventDefault(); on=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }, {passive:false});
+  cv.addEventListener('touchmove',  e => { e.preventDefault(); if(!on)return; const p=pos(e); ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.strokeStyle='#1e293b'; ctx.lineTo(p.x,p.y); ctx.stroke(); }, {passive:false});
+  cv.addEventListener('touchend',   ()=> on=false);
+}
+function limparSig(id) { const c=document.getElementById(id); c.getContext('2d').clearRect(0,0,c.width,c.height); }
+['sig1','sig2','sig3'].forEach(initCanvas);
+
+/* ──────────────────────────────────────────
+   Toast
+   ────────────────────────────────────────── */
+let _tTimer;
+function mostrar(msg, dur) {
+  clearTimeout(_tTimer);
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  _tTimer = setTimeout(() => t.classList.remove('show'), dur || 2500);
+}
+
+/* ──────────────────────────────────────────
+   Overlay de resumo / divergências
+   ────────────────────────────────────────── */
+function abrirResumo() {
+  const body = document.getElementById('ov-body');
+  const conf = document.querySelectorAll('.item.conferido').length;
+  const divItems = Object.entries(divState)
+    .filter(([, s]) => s.qtdDif || s.lote || s.fab || s.venc || s.manual);
+  const nDivQtd  = divItems.filter(([, s]) => s.qtdDif).length;
+  const nDivLote = divItems.filter(([, s]) => s.lote || s.fab || s.venc || s.manual).length;
+
+  let h = \`
+    <div class="res-stat"><span>Total de itens</span><span class="res-val">\${TOTAL}</span></div>
+    <div class="res-stat"><span>Itens conferidos</span>
+      <span class="res-val \${conf===TOTAL?'res-ok':'res-warn'}">\${conf}</span></div>
+    <div class="res-stat"><span>Divergências de quantidade</span>
+      <span class="res-val \${nDivQtd>0?'res-err':'res-ok'}">\${nDivQtd}</span></div>
+    <div class="res-stat"><span>Divergências de dados do lote</span>
+      <span class="res-val \${nDivLote>0?'res-err':'res-ok'}">\${nDivLote}</span></div>
+  \`;
+
+  if (divItems.length > 0) {
+    h += \`<div class="div-sec-title">Itens com Divergência</div>\`;
+    for (const [idxStr, s] of divItems) {
+      const idx    = parseInt(idxStr);
+      const ref    = LOTES_REF.find(x => x.idx === idx) || {};
+      const nome   = ref.nome || '—';
+      const obs    = (document.getElementById('obs-'      + idx)?.value || '').trim();
+      const cfLote = (document.getElementById('cf-lote-'  + idx)?.value || '').trim();
+      const cfFab  = (document.getElementById('cf-fab-'   + idx)?.value || '').trim();
+      const cfVenc = (document.getElementById('cf-venc-'  + idx)?.value || '').trim();
+      const qtdTxt = document.getElementById('div-' + idx)?.textContent || '';
+      const grave  = s.lote || s.fab || s.venc || s.manual;
+      h += \`<div class="div-card \${grave ? 'lote' : 'qtd'}">
+        <div class="div-card-nome">\${nome}</div>
+        <div class="div-card-row">Cód: \${ref.cod||'—'} · Lote sistema: <strong>\${ref.lote||'—'}</strong></div>\`;
+      if (s.qtdDif) h += \`<div class="div-card-row">Diferença de estoque: <strong>\${qtdTxt}</strong></div>\`;
+      if (s.lote && cfLote) h += \`<div class="div-card-row">Lote físico: <strong>\${cfLote}</strong> (sistema: \${ref.lote||'—'})</div>\`;
+      if (s.fab  && cfFab)  h += \`<div class="div-card-row">Fabricação: <strong>\${cfFab}</strong> (sistema: \${ref.fab||'—'})</div>\`;
+      if (s.venc && cfVenc) h += \`<div class="div-card-row">Vencimento: <strong>\${cfVenc}</strong> (sistema: \${ref.venc||'—'})</div>\`;
+      if (s.manual) h += \`<div class="div-card-row">⚠ Marcado manualmente como divergente</div>\`;
+      if (obs) h += \`<div class="div-card-obs">Obs: \${obs}</div>\`;
+      h += \`</div>\`;
     }
-    canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); });
-    canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#1e293b'; ctx.lineTo(p.x,p.y); ctx.stroke(); });
-    canvas.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }, {passive:false});
-    canvas.addEventListener('touchmove', e => { e.preventDefault(); if(!drawing)return; const p=getPos(e); ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.strokeStyle='#1e293b'; ctx.lineTo(p.x,p.y); ctx.stroke(); }, {passive:false});
-    canvas.addEventListener('touchend', () => drawing = false);
-  }
-  function limparSig(id) { const c = document.getElementById(id); c.getContext('2d').clearRect(0,0,c.width,c.height); }
-  ['sig1','sig2','sig3'].forEach(initCanvas);
-
-  // ── Toast ──
-  function mostrar(msg, dur) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), dur || 2500);
+  } else {
+    h += \`<div class="div-empty">✓ Nenhuma divergência registrada</div>\`;
   }
 
-  // ── Resumo ──
-  function abrirResumo() {
-    const body = document.getElementById('overlay-body');
-    const conf = document.querySelectorAll('.item.conferido').length;
-    const divItems = Object.entries(divState).filter(([,s]) => s.qtd || s.lote || s.fab || s.venc || s.manual);
-    const divQtd  = divItems.filter(([,s]) => s.qtd).length;
-    const divLote = divItems.filter(([,s]) => s.lote || s.fab || s.venc || s.manual).length;
+  body.innerHTML = h;
+  document.getElementById('ov-resumo').classList.add('show');
+}
+function fecharResumo() {
+  document.getElementById('ov-resumo').classList.remove('show');
+}
 
-    let html = \`
-      <div class="resumo-stat"><span>Itens no checklist</span><span class="resumo-stat-val">\${TOTAL}</span></div>
-      <div class="resumo-stat"><span>Itens conferidos</span><span class="resumo-stat-val \${conf===TOTAL?'ok':'warn'}">\${conf}</span></div>
-      <div class="resumo-stat"><span>Divergências de quantidade</span><span class="resumo-stat-val \${divQtd>0?'err':'ok'}">\${divQtd}</span></div>
-      <div class="resumo-stat"><span>Divergências de dados do lote</span><span class="resumo-stat-val \${divLote>0?'err':'ok'}">\${divLote}</span></div>
-    \`;
+/* ──────────────────────────────────────────
+   Finalizar
+   ────────────────────────────────────────── */
+function finalizar() {
+  const conf  = document.querySelectorAll('.item.conferido').length;
+  const ndivs = Object.values(divState)
+    .filter(s => s.qtdDif || s.lote || s.fab || s.venc || s.manual).length;
+  if (conf < TOTAL) {
+    if (!confirm(conf + ' de ' + TOTAL + ' itens conferidos. Finalizar mesmo assim?')) return;
+  }
+  const btn = document.getElementById('btn-fin');
+  btn.textContent = '✓ Finalizado';
+  btn.style.background = '#16a34a';
+  mostrar(
+    ndivs > 0
+      ? '✓ Auditoria finalizada\\n' + ndivs + ' divergência' + (ndivs > 1 ? 's' : '') + ' registrada' + (ndivs > 1 ? 's' : '') + '.\\nSalve o PDF.'
+      : '✓ Auditoria finalizada sem divergências.\\nSalve o PDF.',
+    4500
+  );
+}
 
-    if (divItems.length > 0) {
-      html += \`<div class="div-section-title">Itens com Divergência</div>\`;
-      for (const [idxStr, s] of divItems) {
-        const idx = parseInt(idxStr);
-        const ref = LOTES_REF.find(x => x.idx === idx);
-        const nome = document.querySelector(\`#item-\${idx} .item-nome\`)?.textContent || '—';
-        const obs  = (document.getElementById('obs-' + idx)?.value||'').trim();
-        const cfLote = (document.getElementById('cf-lote-' + idx)?.value||'').trim();
-        const cfFab  = (document.getElementById('cf-fab-'  + idx)?.value||'').trim();
-        const cfVenc = (document.getElementById('cf-venc-' + idx)?.value||'').trim();
-        const qtdEl  = document.getElementById('div-' + idx);
-        const grave  = s.lote || s.fab || s.venc || s.manual;
-        html += \`<div class="div-item \${grave?'grave':''}">
-          <div class="div-item-nome">\${nome}</div>
-          <div class="div-item-linha">Lote sistema: <strong>\${ref?.lote||'—'}</strong></div>\`;
-        if (s.qtd && qtdEl) {
-          html += \`<div class="div-item-linha">Diferença de estoque: <strong>\${qtdEl.textContent}</strong></div>\`;
-        }
-        if (s.lote && cfLote) {
-          html += \`<div class="div-item-linha">Lote físico: <strong>\${cfLote}</strong> (sistema: \${ref?.lote||'—'})</div>\`;
-        }
-        if (s.fab && cfFab) {
-          html += \`<div class="div-item-linha">Fabricação física: <strong>\${cfFab}</strong> (sistema: \${ref?.fab||'—'})</div>\`;
-        }
-        if (s.venc && cfVenc) {
-          html += \`<div class="div-item-linha">Vencimento físico: <strong>\${cfVenc}</strong> (sistema: \${ref?.venc||'—'})</div>\`;
-        }
-        if (s.manual) {
-          html += \`<div class="div-item-linha">Marcado manualmente como divergente</div>\`;
-        }
-        if (obs) {
-          html += \`<div class="div-item-linha" style="margin-top:4px;padding-top:4px;border-top:1px solid #fcd34d;color:#92400e;">Obs: \${obs}</div>\`;
-        }
-        html += \`</div>\`;
-      }
-    } else {
-      html += \`<div class="div-empty">✓ Nenhuma divergência registrada</div>\`;
+/* ──────────────────────────────────────────
+   Gerar PDF
+   ────────────────────────────────────────── */
+async function gerarPDF() {
+  const btn = document.getElementById('btn-pdf');
+  btn.textContent = 'Gerando…'; btn.disabled = true;
+  const cont = document.getElementById('content-main');
+  cont.classList.add('print-cols');
+  try {
+    const { jsPDF } = window.jspdf;
+    const SCALE = 1.5;
+    const bd = document.body;
+    const fc = await html2canvas(bd, {
+      scale: SCALE, backgroundColor: '#fff', useCORS: true,
+      logging: false, scrollY: 0, height: bd.scrollHeight, windowHeight: bd.scrollHeight,
+    });
+    const bdTop = bd.getBoundingClientRect().top + window.scrollY;
+    const pts = [];
+    cont.querySelectorAll('.grupo').forEach(g => {
+      const gt = g.getBoundingClientRect().top + window.scrollY - bdTop;
+      pts.push(Math.round(gt * SCALE));
+      const tops = [...new Set([...g.querySelectorAll('.item')]
+        .map(it => Math.round(it.getBoundingClientRect().top + window.scrollY - bdTop)))].sort((a,b)=>a-b);
+      tops.slice(1).forEach(t => pts.push(Math.round(t * SCALE)));
+    });
+    const cortes = [...new Set(pts)].filter(y => y > 0).sort((a,b)=>a-b);
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const mg = 6, uw = pw - mg*2, uh = ph - mg*2;
+    const ppx = Math.floor((uh * fc.width) / uw);
+    let yS = 0, pg = 0, guard = 0;
+    while (yS < fc.height && guard < 100) {
+      guard++;
+      let yE = yS + ppx;
+      if (yE < fc.height) {
+        const cs = [...cortes].reverse().find(c => c > yS && c <= yE);
+        if (cs) yE = cs;
+      } else { yE = fc.height; }
+      const sh = yE - yS; if (sh <= 0) break;
+      const sc = document.createElement('canvas');
+      sc.width = fc.width; sc.height = sh;
+      const ctx = sc.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,sc.width,sc.height);
+      ctx.drawImage(fc, 0, yS, fc.width, sh, 0, 0, fc.width, sh);
+      if (pg > 0) doc.addPage();
+      doc.addImage(sc.toDataURL('image/jpeg', .82), 'JPEG', mg, mg, uw, (sh * uw) / fc.width);
+      yS = yE; pg++;
     }
-
-    body.innerHTML = html;
-    document.getElementById('overlay-resumo').classList.add('show');
+    doc.save('auditoria_lotes_${APP.sigla}_' + new Date().toLocaleDateString('pt-BR').replace(/\//g,'-') + '.pdf');
+    btn.textContent = '✓ PDF Salvo'; btn.style.background = '#16a34a';
+  } catch(e) {
+    btn.textContent = '⬇ PDF'; btn.disabled = false;
+    alert('Erro ao gerar PDF: ' + e.message);
+  } finally {
+    cont.classList.remove('print-cols');
   }
-  function fecharResumo() {
-    document.getElementById('overlay-resumo').classList.remove('show');
-  }
-
-  function finalizarContagem() {
-    const conf = document.querySelectorAll('.item.conferido').length;
-    const ndivs = Object.values(divState).filter(s => s.qtd || s.lote || s.fab || s.venc || s.manual).length;
-    if (conf < TOTAL) {
-      if (!confirm(conf + ' de ' + TOTAL + ' itens conferidos. Finalizar mesmo assim?')) return;
-    }
-    const btn = document.getElementById('btn-finalizar');
-    btn.textContent = '✓ Finalizado';
-    btn.style.background = '#16a34a';
-    const msg = ndivs > 0
-      ? '✓ Auditoria finalizada — ' + ndivs + ' divergência' + (ndivs>1?'s':'') + ' registrada' + (ndivs>1?'s':'') + '. Salve o PDF.'
-      : '✓ Auditoria finalizada sem divergências. Salve o PDF.';
-    mostrar(msg, 4000);
-  }
-
-  // ── PDF ──
-  async function gerarPDFMobile() {
-    const btn = document.getElementById('btn-pdf');
-    btn.textContent = 'Gerando...';
-    btn.disabled = true;
-    const contentEl = document.querySelector('.content');
-    contentEl.classList.add('print-cols');
-    try {
-      const { jsPDF } = window.jspdf;
-      const SCALE = 1.5;
-      const body = document.body;
-      const fullCanvas = await html2canvas(body, {
-        scale: SCALE, backgroundColor: '#ffffff', useCORS: true,
-        logging: false, scrollY: 0, height: body.scrollHeight, windowHeight: body.scrollHeight,
-      });
-      const bodyTop = body.getBoundingClientRect().top + window.scrollY;
-      const pontos = [];
-      document.querySelectorAll('.grupo').forEach(grupo => {
-        const gtop = grupo.getBoundingClientRect().top + window.scrollY - bodyTop;
-        pontos.push(Math.round(gtop * SCALE));
-        const items = [...grupo.querySelectorAll('.item')];
-        const tops = [...new Set(items.map(it => Math.round(it.getBoundingClientRect().top + window.scrollY - bodyTop)))].sort((a,b) => a-b);
-        tops.slice(1).forEach(t => pontos.push(Math.round(t * SCALE)));
-      });
-      const cortes = [...new Set(pontos)].filter(y => y > 0).sort((a,b) => a-b);
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-      const pageWmm = doc.internal.pageSize.getWidth();
-      const pageHmm = doc.internal.pageSize.getHeight();
-      const margin = 6, usableWmm = pageWmm - margin * 2, usableHmm = pageHmm - margin * 2;
-      const pageHpx = Math.floor((usableHmm * fullCanvas.width) / usableWmm);
-      let yStart = 0, page = 0, guard = 0;
-      const totalH = fullCanvas.height;
-      while (yStart < totalH && guard < 100) {
-        guard++;
-        let yEnd = yStart + pageHpx;
-        if (yEnd < totalH) {
-          const cs = [...cortes].reverse().find(c => c > yStart && c <= yEnd);
-          if (cs) yEnd = cs;
-        } else { yEnd = totalH; }
-        const sliceH = yEnd - yStart;
-        if (sliceH <= 0) break;
-        const sc = document.createElement('canvas');
-        sc.width = fullCanvas.width; sc.height = sliceH;
-        const ctx = sc.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0,0,sc.width,sc.height);
-        ctx.drawImage(fullCanvas, 0, yStart, fullCanvas.width, sliceH, 0, 0, fullCanvas.width, sliceH);
-        if (page > 0) doc.addPage();
-        const hmm = (sliceH * usableWmm) / fullCanvas.width;
-        doc.addImage(sc.toDataURL('image/jpeg', 0.82), 'JPEG', margin, margin, usableWmm, hmm);
-        yStart = yEnd; page++;
-      }
-      const d = new Date().toLocaleDateString('pt-BR').split('/').join('-');
-      doc.save('auditoria_lotes_${APP.sigla}_' + d + '.pdf');
-      btn.textContent = '✓ PDF Salvo';
-      btn.style.background = '#16a34a';
-    } catch(e) {
-      btn.textContent = '⬇ PDF'; btn.disabled = false;
-      alert('Erro ao gerar PDF: ' + e.message);
-    } finally {
-      contentEl.classList.remove('print-cols');
-    }
-  }
+}
 <\/script>
 </body>
 </html>`;
 
   const blob = new Blob([mobileHTML], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `contagem_lotes_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html`;
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = \`contagem_lotes_\${APP.sigla}_\${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html\`;
   a.click();
   URL.revokeObjectURL(url);
 }
