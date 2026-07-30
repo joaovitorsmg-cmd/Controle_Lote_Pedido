@@ -6714,7 +6714,7 @@ async function gerarPDF() {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = \`contagem_lotes_\${APP.sigla}_\${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html\`;
+  a.download = `contagem_lotes_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html`;
   a.click();
   URL.revokeObjectURL(url);
 }
