@@ -6322,12 +6322,12 @@ function navNext(e, idx) {
    Normalização para comparação de strings
    ────────────────────────────────────────── */
 function normStr(s) {
-  return String(s || '').trim().toUpperCase().replace(/[\s\-\.\/\\\\]/g, '');
+  return String(s || '').trim().toUpperCase().replace(/[\\s\\-\\.\\/\\\\]/g, '');
 }
 function normData(s) {
-  const n = String(s || '').trim().replace(/\s+/g, '');
+  const n = String(s || '').trim().replace(/\\s+/g, '');
   // aceita: DD/MM/AAAA  DD-MM-AAAA  DDMMAAAA  DD/MM/AA  D/M/AAAA
-  const m = n.match(/^(\d{1,2})[\/\-.]?(\d{1,2})[\/\-.]?(\d{2,4})$/);
+  const m = n.match(/^(\\d{1,2})[\\/\\-.]?(\\d{1,2})[\\/\\-.]?(\\d{2,4})$/);
   if (!m) return n.toUpperCase();
   const d = m[1].padStart(2, '0');
   const mo = m[2].padStart(2, '0');
