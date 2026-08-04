@@ -9895,13 +9895,14 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
   var p2 = porFolha === 2;
   var PCA = 'print-color-adjust:exact;-webkit-print-color-adjust:exact;';
 
-  function makeQRBlock(qrContent) {
+  function makeQRBlock(qrContent, sz) {
+    sz = sz || '58mm';
     var apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&ecc=M&data='
       + encodeURIComponent(qrContent);
     return '<img src="' + apiUrl + '" '
-      + 'style="width:58mm;height:58mm;display:block;image-rendering:pixelated;" '
+      + 'style="width:' + sz + ';height:' + sz + ';display:block;flex-shrink:0;image-rendering:pixelated;" '
       + 'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';" />'
-      + '<div style="display:none;width:58mm;height:58mm;border:1px solid #ccc;'
+      + '<div style="display:none;width:' + sz + ';height:' + sz + ';border:1px solid #ccc;flex-shrink:0;'
       + 'align-items:center;justify-content:center;font-size:9px;color:#aaa;text-align:center;'
       + 'font-family:Arial,sans-serif;">QR<br>indispon&iacute;vel</div>';
   }
@@ -9925,19 +9926,20 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
     var nomeFilial = (typeof lojaNome     === 'function' ? lojaNome(l.sigla)    : '') || l.sigla || l.filial || '—';
     var nomeLinha  = (typeof getNomeLinha === 'function' ? getNomeLinha(l.linha): '') || ('Linha ' + (l.linha||'—'));
 
-    var nameSz   = compact ? '13px' : '20px';
-    var codeSz   = compact ? '10px' : '12px';
-    var loteSz   = compact ? '23px' : '40px';
-    var dateSz   = compact ? '15px' : '23px';
-    var qtySz    = compact ? '18px' : '30px';
-    var logoH    = compact ? '28px' : '54px';
-    var headerFS = compact ? '11px' : '14px';
-    var headerH  = compact ? '18mm' : '26mm';
-    var bannerH  = compact ? '10mm' : '15mm';
-    var bannerFS = compact ? '12px' : '18px';
+    var nameSz   = compact ? '16px' : '34px';
+    var codeSz   = compact ? '11px' : '15px';
+    var loteSz   = compact ? '27px' : '50px';
+    var dateSz   = compact ? '18px' : '32px';
+    var qtySz    = compact ? '20px' : '36px';
+    var logoH    = compact ? '26px' : '48px';
+    var headerFS = compact ? '11px' : '15px';
+    var headerH  = compact ? '17mm' : '24mm';
+    var bannerH  = compact ? '9mm'  : '13mm';
+    var bannerFS = compact ? '13px' : '20px';
 
     var qrContent = _qrText(l, l._qty, hoje);
-    var qrBlock   = makeQRBlock(qrContent);
+    var qrSz      = compact ? '44mm' : '60mm';
+    var qrBlock   = makeQRBlock(qrContent, qrSz);
 
     return '<div class="placa" style="height:' + h + ';display:flex;flex-direction:column;'
       + 'border:3px solid #000;overflow:hidden;box-sizing:border-box;">'
@@ -9971,14 +9973,15 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
         + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">'
 
           /* product */
-          + '<div style="flex:2;min-height:0;display:flex;flex-direction:column;justify-content:center;'
-          + 'padding:5px 14px;border-bottom:1px solid #ccc;">'
+          + '<div style="flex:2.5;min-height:0;display:flex;flex-direction:column;justify-content:center;'
+          + 'padding:6px 14px;border-bottom:1px solid #ccc;">'
           + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'color:#666;letter-spacing:.08em;margin-bottom:2px;">Produto</div>'
+          + 'color:#666;letter-spacing:.08em;margin-bottom:3px;">Produto</div>'
           + '<div style="font-family:Arial Black,sans-serif;font-size:' + nameSz + ';font-weight:900;'
-          + 'color:#000;line-height:1.15;overflow:hidden;text-overflow:ellipsis;">'
+          + 'color:#000;line-height:1.2;word-break:break-word;overflow-wrap:break-word;">'
           + (l.nomeProduto||'—') + '</div>'
-          + '<div style="font-family:Courier New,monospace;font-size:' + codeSz + ';color:#444;margin-top:3px;">'
+          + '<div style="font-family:Courier New,monospace;font-size:' + codeSz + ';color:#444;'
+          + 'margin-top:4px;font-weight:700;">'
           + 'C&oacute;d: ' + (l.codProduto||'—') + '</div>'
           + '</div>'
 
@@ -9993,7 +9996,7 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
           + '</div>'
 
           /* dates */
-          + '<div style="flex:1.5;min-height:0;display:flex;border-bottom:1px solid #ccc;">'
+          + '<div style="flex:2;min-height:0;display:flex;border-bottom:1px solid #ccc;">'
           + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;'
           + 'padding:4px 14px;border-right:1px solid #ddd;">'
           + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
@@ -10011,29 +10014,29 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
 
           /* qty + contagem manual + fabricante */
           + (function(){
-              var bW  = compact ? '20px' : '28px';
-              var bH  = compact ? '28px' : '38px';
-              var bGap= compact ? '4px'  : '6px';
-              var bFS = compact ? '7px'  : '8px';
+              var bW  = compact ? '22px' : '40px';
+              var bH  = compact ? '30px' : '52px';
+              var bGap= compact ? '5px'  : '9px';
+              var bFS = compact ? '7px'  : '9px';
               var boxes = '';
               for (var _b = 0; _b < 4; _b++) {
                 boxes += '<div style="width:' + bW + ';height:' + bH + ';'
                   + 'border:2px solid #000;background:#fff;flex-shrink:0;'
                   + 'print-color-adjust:exact;-webkit-print-color-adjust:exact;"></div>';
               }
-              return '<div style="flex:1.3;min-height:0;display:flex;align-items:center;'
-                + 'padding:4px 14px;border-bottom:1px solid #ccc;gap:10px;">'
+              return '<div style="flex:1.8;min-height:0;display:flex;align-items:center;'
+                + 'padding:4px 14px;border-bottom:1px solid #ccc;gap:12px;">'
 
                 /* col 1 — sistema */
                 + '<div style="flex-shrink:0;">'
                 + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-                + 'color:#666;margin-bottom:1px;">Qtd. sistema</div>'
+                + 'color:#666;margin-bottom:2px;">Qtd. sistema</div>'
                 + '<div style="font-family:Courier New,monospace;font-size:' + qtySz + ';'
                 + 'font-weight:900;color:#000;">' + (l._qty||l.quantidade||'—') + '</div>'
                 + '</div>'
 
                 /* col 2 — caixinhas de contagem física */
-                + '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">'
+                + '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
                 + '<div style="font-family:Arial,sans-serif;font-size:' + bFS + ';font-weight:700;'
                 + 'text-transform:uppercase;letter-spacing:.06em;color:#000;white-space:nowrap;">'
                 + 'CONTAGEM F&Iacute;SICA</div>'
@@ -10043,10 +10046,10 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
                 + '</div>'
 
                 /* col 3 — fabricante */
-                + '<div style="flex-shrink:0;text-align:right;max-width:' + (compact?'110px':'150px') + ';">'
+                + '<div style="flex-shrink:0;text-align:right;max-width:' + (compact?'110px':'160px') + ';">'
                 + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-                + 'color:#666;margin-bottom:1px;">Fabricante</div>'
-                + '<div style="font-family:Arial,sans-serif;font-size:' + (compact?'9px':'10px') + ';font-weight:600;'
+                + 'color:#666;margin-bottom:2px;">Fabricante</div>'
+                + '<div style="font-family:Arial,sans-serif;font-size:' + (compact?'9px':'11px') + ';font-weight:600;'
                 + 'line-height:1.3;color:#000;">' + (l.fabricante||'—') + '</div>'
                 + '</div>'
 
@@ -10062,13 +10065,13 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
         + '</div>'
 
         /* right QR column */
-        + '<div style="width:74mm;flex-shrink:0;display:flex;flex-direction:column;'
-        + 'align-items:center;justify-content:center;padding:10px 8px;gap:8px;'
-        + 'border-left:2px solid #000;">'
+        + '<div style="width:' + (compact?'66mm':'76mm') + ';flex-shrink:0;display:flex;flex-direction:column;'
+        + 'align-items:center;justify-content:center;padding:8px 6px;gap:6px;'
+        + 'border-left:2px solid #000;overflow:hidden;">'
         + qrBlock
-        + '<div style="font-family:Arial,sans-serif;font-size:8px;text-align:center;'
-        + 'color:#444;line-height:1.5;">Escaneie para ver<br>todos os dados do lote</div>'
-        + '<div style="font-family:Arial,sans-serif;font-size:7px;color:#aaa;text-align:center;">'
+        + '<div style="font-family:Arial,sans-serif;font-size:' + (compact?'8px':'9px') + ';text-align:center;'
+        + 'color:#444;line-height:1.5;flex-shrink:0;">Escaneie para ver<br>todos os dados do lote</div>'
+        + '<div style="font-family:Arial,sans-serif;font-size:7px;color:#aaa;text-align:center;flex-shrink:0;">'
         + '&#10003; iOS &amp; Android</div>'
         + '</div>'
 
