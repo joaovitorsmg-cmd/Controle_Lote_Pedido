@@ -5844,12 +5844,17 @@ function baixarHTMLMobile() {
               </div>
               <div class="campo">
                 <label>Encontrado</label>
-                <input type="number" inputmode="decimal" class="campo-input"
-                       id="qtd-${itemIdx}" tabindex="${tabOrd}"
-                       data-sistema="${l.quantidade}" data-idx="${itemIdx}"
-                       placeholder="—" enterkeyhint="next" autocomplete="off"
-                       oninput="calcDiv(${itemIdx},${l.quantidade})"
-                       onkeydown="navNext(event,${itemIdx})">
+                <div class="campo-enc">
+                  <input type="number" inputmode="decimal" class="campo-input"
+                         id="qtd-${itemIdx}" tabindex="${tabOrd}"
+                         data-sistema="${l.quantidade}" data-idx="${itemIdx}"
+                         placeholder="—" enterkeyhint="next" autocomplete="off"
+                         oninput="calcDiv(${itemIdx},${l.quantidade})"
+                         onkeydown="navNext(event,${itemIdx})">
+                  <button class="btn-calc-item" type="button"
+                          data-target="qtd-${itemIdx}"
+                          onclick="abrirCalc(this.dataset.target)">📦 Pallets</button>
+                </div>
               </div>
               <div class="campo">
                 <label>Diferença</label>
@@ -6205,33 +6210,77 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
 .fab-calc { background: #1e3a6e; color: #fff; font-size: 22px; }
 .fab-add  { background: #16a34a; color: #fff; font-size: 28px; font-weight: 300; line-height: 1; }
 
-/* ─── Calculator ─────────────────────────── */
+/* ─── Calculadora de Pallets ─────────────── */
 .calc-panel { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-              width: min(380px, 100vw); background: #f1f5f9;
-              border-radius: 20px 20px 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.22);
+              width: min(430px, 100vw); background: #fff;
+              border-radius: 20px 20px 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.25);
               z-index: 500; overflow: hidden; }
 .calc-drag  { width: 36px; height: 4px; background: #cbd5e1; border-radius: 2px;
-              margin: 10px auto 0; }
-.calc-disp  { background: #1e293b; color: #fff; padding: 16px 18px 12px; text-align: right; }
-.calc-expr  { font-size: 13px; color: #64748b; min-height: 18px; overflow: hidden;
-              word-break: break-all; }
-.calc-val   { font-size: 40px; font-weight: 300; line-height: 1.2; overflow: hidden;
-              word-break: break-all; }
-.calc-grid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #d1d5db; }
-.cbtn       { background: #fff; border: none; height: 68px; font-size: 22px; font-weight: 400;
-              cursor: pointer; display: flex; align-items: center; justify-content: center;
-              -webkit-tap-highlight-color: transparent; transition: background .1s; }
-.cbtn:active { background: #dbeafe; }
-.cbtn.op    { background: #eff6ff; color: #1e40af; font-weight: 700; }
-.cbtn.op:active { background: #bfdbfe; }
-.cbtn.eq    { background: #1a4a8a; color: #fff; font-weight: 700; }
-.cbtn.eq:active { background: #153c75; }
-.cbtn.fn    { background: #f1f5f9; color: #64748b; font-size: 17px; }
-.cbtn.fn:active { background: #e2e8f0; }
-.cbtn.w2    { grid-column: span 2; }
-.calc-foot  { display: flex; justify-content: center; padding: 8px; background: #f1f5f9; }
-.calc-close { background: #e2e8f0; border: none; border-radius: 20px; padding: 8px 32px;
-              font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; }
+              margin: 10px auto 6px; }
+.calc-head  { display: flex; align-items: center; justify-content: space-between;
+              padding: 2px 16px 12px; border-bottom: 1px solid #f1f5f9; }
+.calc-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+.calc-close-x { background: #f1f5f9; border: none; width: 30px; height: 30px;
+                border-radius: 50%; cursor: pointer; font-size: 14px; color: #64748b;
+                display: flex; align-items: center; justify-content: center; }
+.calc-body  { padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+.calc-sec-lbl { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+                letter-spacing: .6px; margin-bottom: 8px; }
+.calc-presets { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
+.cp         { flex: 1; min-width: 46px; height: 44px; border-radius: 10px;
+              border: 2px solid #e2e8f0; background: #f8fafc; font-size: 15px;
+              font-weight: 700; color: #475569; cursor: pointer; transition: all .12s;
+              -webkit-tap-highlight-color: transparent; }
+.cp:active  { transform: scale(.93); }
+.cp.ativo   { border-color: #1a4a8a; background: #1a4a8a; color: #fff; }
+.cp-outro   { font-size: 12px; color: #64748b; }
+.cp-custom  { width: 100%; padding: 10px 12px; border: 2px solid #3b82f6;
+              border-radius: 10px; font-size: 16px; font-weight: 600; outline: none;
+              margin-bottom: 10px; color: #1e293b; background: #f0f9ff;
+              box-sizing: border-box; }
+.calc-row   { display: flex; align-items: flex-end; gap: 8px; margin: 10px 0; }
+.calc-inp-grp { flex: 1; }
+.calc-inp-lbl { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+                margin-bottom: 4px; text-align: center; }
+.calc-inp   { width: 100%; padding: 10px 6px; border: 2px solid #e2e8f0; border-radius: 10px;
+              font-size: 20px; font-weight: 700; text-align: center; outline: none;
+              color: #1e293b; background: #f8fafc; box-sizing: border-box; display: block; }
+.calc-inp:focus { border-color: #3b82f6; background: #fff; }
+.calc-inp-sz { display: flex; align-items: center; justify-content: center;
+               color: #94a3b8; font-size: 16px; font-weight: 600;
+               border: 2px dashed #e2e8f0; border-radius: 10px; min-height: 46px; }
+.calc-sym   { font-size: 20px; font-weight: 300; color: #94a3b8; flex-shrink: 0;
+              padding-bottom: 12px; }
+.calc-total-box { background: #f0fdf4; border: 2px solid #16a34a; border-radius: 12px;
+                  display: flex; justify-content: space-between; align-items: center;
+                  padding: 12px 16px; margin: 10px 0; }
+.calc-total-box > span:first-child { font-size: 13px; font-weight: 700; color: #16a34a; }
+.calc-total-num { font-size: 30px; font-weight: 800; color: #15803d; }
+.calc-usar  { width: 100%; padding: 14px; border: none; border-radius: 12px;
+              background: #16a34a; color: #fff; font-size: 16px; font-weight: 700;
+              cursor: pointer; margin-bottom: 8px; -webkit-tap-highlight-color: transparent; }
+.calc-usar:disabled { background: #d1d5db; color: #9ca3af; cursor: default; }
+.calc-fechar { width: 100%; padding: 10px; border: none; border-radius: 12px;
+               background: #f1f5f9; color: #64748b; font-size: 14px; font-weight: 600;
+               cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+/* ─── Botão calc por item ────────────────── */
+.campo-enc  { display: flex; flex-direction: column; gap: 4px; }
+.btn-calc-item { padding: 5px 10px; border: none; background: #dbeafe; color: #1d4ed8;
+                 border-radius: 7px; font-size: 11px; font-weight: 700; cursor: pointer;
+                 -webkit-tap-highlight-color: transparent; align-self: flex-start; }
+
+/* ─── Offline badge ──────────────────────── */
+.offline-badge { display: none; position: fixed; top: 8px; left: 50%;
+                 transform: translateX(-50%); background: #dc2626; color: #fff;
+                 font-size: 11px; font-weight: 700; padding: 4px 14px;
+                 border-radius: 20px; z-index: 9999; letter-spacing: .5px;
+                 box-shadow: 0 2px 8px rgba(220,38,38,.4); }
+
+/* ─── Auto-confirm pulse ─────────────────── */
+@keyframes pulse-ok { 0%{box-shadow:0 0 0 0 rgba(22,163,74,.5);}
+                      70%{box-shadow:0 0 0 10px rgba(22,163,74,0);} 100%{box-shadow:0 0 0 0;} }
+.pulse-ok { animation: pulse-ok .7s ease-out; }
 
 /* ─── Add lot sheet ──────────────────────── */
 .al-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
@@ -6344,13 +6393,21 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
   <div class="ov-card">
     <div class="ov-header">
       <span>📋 Resumo da Auditoria</span>
-      <button class="ov-close" type="button" onclick="fecharResumo()">✕</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button type="button" onclick="copiarResumo()"
+                style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:8px;
+                       padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;">
+          📋 Copiar
+        </button>
+        <button class="ov-close" type="button" onclick="fecharResumo()">✕</button>
+      </div>
     </div>
     <div class="ov-body" id="ov-body"></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="offline-badge" id="offline-badge">⚠ Sem conexão</div>
 
 <!-- FABs flutuantes -->
 <div class="fab-group">
@@ -6358,36 +6415,51 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
   <button class="fab fab-calc" type="button" onclick="toggleCalc()" title="Calculadora">🧮</button>
 </div>
 
-<!-- Calculadora -->
+<!-- Calculadora de Pallets -->
 <div class="calc-panel" id="calc-panel" style="display:none">
   <div class="calc-drag"></div>
-  <div class="calc-disp">
-    <div class="calc-expr" id="calc-expr"></div>
-    <div class="calc-val"  id="calc-val">0</div>
+  <div class="calc-head">
+    <span class="calc-title">📦 Calculadora de Pallets</span>
+    <button class="calc-close-x" type="button" onclick="fecharCalc()">✕</button>
   </div>
-  <div class="calc-grid">
-    <button class="cbtn fn" onclick="cAc()">C</button>
-    <button class="cbtn fn" onclick="cSgn()">±</button>
-    <button class="cbtn fn" onclick="cPct()">%</button>
-    <button class="cbtn op" onclick="cOp('÷')">÷</button>
-    <button class="cbtn" onclick="cD('7')">7</button>
-    <button class="cbtn" onclick="cD('8')">8</button>
-    <button class="cbtn" onclick="cD('9')">9</button>
-    <button class="cbtn op" onclick="cOp('×')">×</button>
-    <button class="cbtn" onclick="cD('4')">4</button>
-    <button class="cbtn" onclick="cD('5')">5</button>
-    <button class="cbtn" onclick="cD('6')">6</button>
-    <button class="cbtn op" onclick="cOp('−')">−</button>
-    <button class="cbtn" onclick="cD('1')">1</button>
-    <button class="cbtn" onclick="cD('2')">2</button>
-    <button class="cbtn" onclick="cD('3')">3</button>
-    <button class="cbtn op" onclick="cOp('+')">+</button>
-    <button class="cbtn w2"  onclick="cD('0')">0</button>
-    <button class="cbtn"    onclick="cDot()">.</button>
-    <button class="cbtn eq" onclick="cEq()">=</button>
-  </div>
-  <div class="calc-foot">
-    <button class="calc-close" onclick="toggleCalc()">Fechar Calculadora</button>
+  <div class="calc-body">
+    <div class="calc-sec-lbl">Tamanho do Pallet (caixas/unid.)</div>
+    <div class="calc-presets">
+      <button class="cp" type="button" data-ps="40"  onclick="selecionarPallet(40)">40</button>
+      <button class="cp" type="button" data-ps="45"  onclick="selecionarPallet(45)">45</button>
+      <button class="cp" type="button" data-ps="48"  onclick="selecionarPallet(48)">48</button>
+      <button class="cp" type="button" data-ps="30"  onclick="selecionarPallet(30)">30</button>
+      <button class="cp" type="button" data-ps="46"  onclick="selecionarPallet(46)">46</button>
+      <button class="cp cp-outro" type="button" id="cp-outro-btn" onclick="ativarCustomPallet()">Outro</button>
+    </div>
+    <input class="cp-custom" id="cp-custom" type="number" inputmode="numeric"
+           placeholder="Qtd por pallet (ex: 36)" style="display:none"
+           oninput="calcRecalc()">
+    <div class="calc-row">
+      <div class="calc-inp-grp">
+        <div class="calc-inp-lbl">Pallets</div>
+        <input type="number" inputmode="numeric" id="calc-pallets" class="calc-inp"
+               placeholder="0" oninput="calcRecalc()">
+      </div>
+      <div class="calc-sym">×</div>
+      <div class="calc-inp-grp">
+        <div class="calc-inp-lbl">Tam.</div>
+        <div class="calc-inp calc-inp-sz" id="calc-sz-disp">—</div>
+      </div>
+      <div class="calc-sym">+</div>
+      <div class="calc-inp-grp">
+        <div class="calc-inp-lbl">Avulsos</div>
+        <input type="number" inputmode="numeric" id="calc-avulso" class="calc-inp"
+               placeholder="0" oninput="calcRecalc()">
+      </div>
+    </div>
+    <div class="calc-total-box">
+      <span>Total</span>
+      <span class="calc-total-num" id="calc-total-num">—</span>
+    </div>
+    <button class="calc-usar" id="calc-usar-btn" type="button"
+            onclick="calcUsar()" disabled>Usar resultado</button>
+    <button class="calc-fechar" type="button" onclick="fecharCalc()">Fechar</button>
   </div>
 </div>
 
@@ -6603,7 +6675,15 @@ function calcDiv(idx, sistema) {
    Marcar item como conferido
    ────────────────────────────────────────── */
 function marcarItem(idx, checked) {
-  document.getElementById('item-' + idx)?.classList.toggle('conferido', checked);
+  var el = document.getElementById('item-' + idx);
+  if (!el) return;
+  el.classList.toggle('conferido', checked);
+  if (checked) {
+    el.classList.remove('pulse-ok');
+    void el.offsetWidth; // reflow to restart animation
+    el.classList.add('pulse-ok');
+    setTimeout(function(){ el.classList.remove('pulse-ok'); }, 750);
+  }
   atualizarProgresso();
 }
 
@@ -6765,6 +6845,49 @@ function abrirResumo() {
 }
 function fecharResumo() {
   document.getElementById('ov-resumo').classList.remove('show');
+}
+
+function copiarResumo() {
+  const conf = document.querySelectorAll('.item.conferido').length;
+  const divItems = Object.entries(divState)
+    .filter(([, s]) => s.qtdDif || s.lote || s.fab || s.venc || s.manual);
+  let txt = '📋 AUDITORIA — ${APP.sigla}\\n';
+  txt += 'Data: ${hoje} | Filial: ${filialNome}\\n';
+  txt += \`Itens conferidos: \${conf}/\${_nextIdx}\\n\`;
+  txt += \`Divergências: \${divItems.length}\\n\`;
+  if (divItems.length > 0) {
+    txt += \`\\n— DIVERGÊNCIAS —\\n\`;
+    for (const [idxStr, s] of divItems) {
+      const idx = parseInt(idxStr);
+      const ref = LOTES_REF.find(x => x.idx === idx) || {};
+      txt += \`• \${ref.nome || '—'} (Lote: \${ref.lote||'—'})\`;
+      if (s.qtdDif) {
+        const d = document.getElementById('div-' + idx)?.textContent || '';
+        txt += \` | Dif: \${d}\`;
+      }
+      if (s.manual) txt += \` | ⚠ Marcado divergente\`;
+      const obs = (document.getElementById('obs-'+idx)?.value||'').trim();
+      if (obs) txt += \` | Obs: \${obs}\`;
+      txt += \`\\n\`;
+    }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(function(){
+      mostrar('📋 Resumo copiado ✓', 2000);
+    }).catch(function(){
+      _fallbackCopy(txt);
+    });
+  } else {
+    _fallbackCopy(txt);
+  }
+}
+function _fallbackCopy(txt) {
+  var ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); mostrar('📋 Resumo copiado ✓', 2000); }
+  catch(e) { mostrar('Não foi possível copiar', 2000); }
+  document.body.removeChild(ta);
 }
 
 /* ──────────────────────────────────────────
@@ -6942,47 +7065,107 @@ document.addEventListener('change', function(e) {
 }, true);
 
 /* ─────────────────────────────────────────────
-   CALCULADORA
+   CALCULADORA DE PALLETS
    ─────────────────────────────────────────── */
-var _cBuf = '0', _cOp = null, _cPrev = null, _cNew = true;
+var _calcTargetId = null;
+var _calcPalletSize = 0;
+var _calcCustomActive = false;
+var _calcTotal = 0;
 
-function cAc()  { _cBuf='0'; _cOp=null; _cPrev=null; _cNew=true; _cRender(); }
-function cSgn() { if (_cBuf!=='0') { _cBuf = _cBuf[0]==='-' ? _cBuf.slice(1) : '-'+_cBuf; _cRender(); } }
-function cPct() { var v=parseFloat(_cBuf); if (!isNaN(v)) { _cBuf=String(v/100); _cRender(); } }
-function cD(d) {
-  if (_cNew) { _cBuf = (d==='0')?'0':d; _cNew=false; }
-  else { _cBuf = (_cBuf==='0'&&d!=='.')?d:_cBuf+d; }
-  if (_cBuf.length>15) return; _cRender();
+function abrirCalc(targetId) {
+  _calcTargetId = targetId || null;
+  _calcPalletSize = 0;
+  _calcCustomActive = false;
+  _calcTotal = 0;
+  document.querySelectorAll('.cp').forEach(function(b){ b.classList.remove('ativo'); });
+  var ci=document.getElementById('cp-custom');
+  if (ci) { ci.style.display='none'; ci.value=''; }
+  var pi=document.getElementById('calc-pallets');
+  if (pi) pi.value='';
+  var ai=document.getElementById('calc-avulso');
+  if (ai) ai.value='';
+  var tn=document.getElementById('calc-total-num');
+  if (tn) tn.textContent='—';
+  var ub=document.getElementById('calc-usar-btn');
+  if (ub) ub.disabled=true;
+  var sd=document.getElementById('calc-sz-disp');
+  if (sd) sd.textContent='—';
+  var p=document.getElementById('calc-panel');
+  if (p) p.style.display='block';
+  setTimeout(function(){
+    var inp=document.getElementById('calc-pallets');
+    if (inp) inp.focus();
+  }, 150);
 }
-function cDot() {
-  if (_cNew) { _cBuf='0.'; _cNew=false; }
-  else if (_cBuf.indexOf('.')<0) _cBuf+='.';
-  _cRender();
+
+function fecharCalc() {
+  var p=document.getElementById('calc-panel');
+  if (p) p.style.display='none';
+  _calcTargetId=null;
 }
-function cOp(op) {
-  if (_cOp && !_cNew) cEq(true);
-  _cPrev=parseFloat(_cBuf); _cOp=op; _cNew=true; _cRender();
-}
-function cEq(chain) {
-  if (_cOp===null||_cPrev===null) return;
-  var a=_cPrev, b=parseFloat(_cBuf), r;
-  if (_cOp==='+') r=a+b;
-  else if (_cOp==='−') r=a-b;
-  else if (_cOp==='×') r=a*b;
-  else if (_cOp==='÷') r=b!==0?a/b:0;
-  else r=b;
-  var rs=String(parseFloat(r.toFixed(10)));
-  if (!chain) { _cOp=null; _cPrev=null; }
-  _cBuf=rs; _cNew=!chain; _cRender();
-}
-function _cRender() {
-  var dEl=document.getElementById('calc-val'), xEl=document.getElementById('calc-expr');
-  if (dEl) { var n=parseFloat(_cBuf); dEl.textContent=isNaN(n)?_cBuf:n.toLocaleString('pt-BR',{maximumFractionDigits:10}); }
-  if (xEl) xEl.textContent=(_cPrev!==null&&_cOp)?_cPrev.toLocaleString('pt-BR',{maximumFractionDigits:10})+' '+_cOp:'';
-}
+
 function toggleCalc() {
   var p=document.getElementById('calc-panel');
-  if (p) p.style.display=(p.style.display==='none'?'block':'none');
+  if (!p) return;
+  if (p.style.display==='none'||!p.style.display) abrirCalc(null);
+  else fecharCalc();
+}
+
+function selecionarPallet(size) {
+  _calcPalletSize=size;
+  _calcCustomActive=false;
+  var ci=document.getElementById('cp-custom');
+  if (ci) ci.style.display='none';
+  document.querySelectorAll('.cp').forEach(function(b){
+    b.classList.toggle('ativo', parseInt(b.dataset.ps||'0')===size);
+  });
+  var sd=document.getElementById('calc-sz-disp');
+  if (sd) sd.textContent=String(size);
+  calcRecalc();
+}
+
+function ativarCustomPallet() {
+  _calcCustomActive=true;
+  _calcPalletSize=0;
+  document.querySelectorAll('.cp').forEach(function(b){ b.classList.remove('ativo'); });
+  document.getElementById('cp-outro-btn').classList.add('ativo');
+  var ci=document.getElementById('cp-custom');
+  if (ci) { ci.style.display='block'; ci.focus(); }
+  var sd=document.getElementById('calc-sz-disp');
+  if (sd) sd.textContent='?';
+  calcRecalc();
+}
+
+function calcRecalc() {
+  var sz=_calcPalletSize;
+  if (_calcCustomActive) {
+    var ci=document.getElementById('cp-custom');
+    sz=ci?(parseInt(ci.value)||0):0;
+    var sd=document.getElementById('calc-sz-disp');
+    if (sd) sd.textContent=sz?String(sz):'?';
+  }
+  var pal=parseInt((document.getElementById('calc-pallets')||{}).value)||0;
+  var av =parseInt((document.getElementById('calc-avulso') ||{}).value)||0;
+  _calcTotal=pal*sz+av;
+  var tn=document.getElementById('calc-total-num');
+  if (tn) tn.textContent=_calcTotal>0?_calcTotal.toLocaleString('pt-BR'):(sz===0&&pal===0&&av===0?'—':'0');
+  var ub=document.getElementById('calc-usar-btn');
+  if (ub) ub.disabled=(_calcTotal<=0);
+}
+
+function calcUsar() {
+  if (_calcTotal<=0) return;
+  fecharCalc();
+  if (!_calcTargetId) {
+    mostrar('Total calculado: '+_calcTotal.toLocaleString('pt-BR')+' unid.', 3000);
+    return;
+  }
+  var inp=document.getElementById(_calcTargetId);
+  if (!inp) return;
+  inp.value=String(_calcTotal);
+  inp.dispatchEvent(new Event('input',{bubbles:true}));
+  inp.scrollIntoView({behavior:'smooth',block:'center'});
+  mostrar('✓ '+_calcTotal.toLocaleString('pt-BR')+' inserido', 2000);
 }
 
 /* ─────────────────────────────────────────────
@@ -7052,7 +7235,10 @@ function _inserirLote(l, animar) {
     +'<div class="campo-row">'
     +'<div class="campo"><label>No Sistema</label><div class="campo-valor">'+qtdFmt+'</div></div>'
     +'<div class="campo"><label>Encontrado</label>'
+    +'<div class="campo-enc">'
     +'<input type="number" inputmode="decimal" class="campo-input" id="qtd-'+idx+'" data-sistema="'+l.qtd+'" data-idx="'+idx+'" placeholder="—" enterkeyhint="next" autocomplete="off" oninput="calcDiv('+idx+','+l.qtd+')" onkeydown="navNext(event,'+idx+')">'
+    +'<button class="btn-calc-item" type="button" data-target="qtd-'+idx+'" onclick="abrirCalc(this.dataset.target)">📦 Pallets</button>'
+    +'</div>'
     +'</div>'
     +'<div class="campo"><label>Diferença</label><div class="campo-valor" id="div-'+idx+'">-'+qtdFmt+'</div></div>'
     +'</div>'
@@ -7099,9 +7285,18 @@ function _inserirLote(l, animar) {
   }
 }
 
+/* ─── Offline badge ─── */
+function _atualizarOffline() {
+  var badge = document.getElementById('offline-badge');
+  if (badge) badge.style.display = navigator.onLine ? 'none' : 'block';
+}
+window.addEventListener('online',  _atualizarOffline);
+window.addEventListener('offline', _atualizarOffline);
+
 /* ─── Init ─── */
 window.addEventListener('DOMContentLoaded', function() {
   restaurarRascunho();
+  _atualizarOffline();
 });
 <\/script>
 </body>
