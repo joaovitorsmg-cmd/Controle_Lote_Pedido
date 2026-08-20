@@ -5954,7 +5954,7 @@ function baixarHTMLMobile() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Contagem — ${APP.sigla}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
@@ -5964,7 +5964,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
        background: #f1f5f9; color: #1e293b; font-size: 14px; }
 
 /* ─── Header ─────────────────────────────── */
-.header { background: #1a4a8a; color: #fff; padding: 12px 14px 10px;
+.header { background: #1a4a8a; color: #fff;
+          padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 10px;
           position: sticky; top: 0; z-index: 100;
           box-shadow: 0 2px 10px rgba(0,0,0,.35); }
 .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -6146,7 +6147,8 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
              background: #f1f5f9; color: #475569; }
 
 /* ─── Rodapé ──────────────────────────────── */
-.footer-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0 32px; }
+.footer-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+               margin: 16px 0 0; padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
 .btn-prim { background: #1a4a8a; color: #fff; border: none; border-radius: 10px;
              padding: 14px 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .btn-sec  { background: #fff; color: #1a4a8a; border: 2px solid #1a4a8a;
@@ -6199,9 +6201,22 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
 .save-ind.saved  { color: #86efac; }
 .save-ind.saving { color: #fde68a; }
 
+/* ─── Filtro chips ───────────────────────── */
+.filter-chips { display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; margin-top: 8px;
+                -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.filter-chips::-webkit-scrollbar { display: none; }
+.fchip { flex-shrink: 0; padding: 4px 12px; border-radius: 20px;
+         border: 1.5px solid rgba(255,255,255,.3); background: rgba(255,255,255,.12);
+         color: rgba(255,255,255,.8); font-size: 11px; font-weight: 600;
+         cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+         transition: background .15s, border-color .15s; }
+.fchip.ativo { background: rgba(255,255,255,.28); border-color: rgba(255,255,255,.75); color: #fff; }
+.fchip-prox  { border-color: rgba(96,165,250,.6); color: #bfdbfe; }
+.fchip-prox.ativo, .fchip-prox:active { background: rgba(96,165,250,.3); border-color: #60a5fa; }
+
 /* ─── FAB group ──────────────────────────── */
-.fab-group { position: fixed; bottom: 88px; right: 14px; display: flex; flex-direction: column;
-             align-items: flex-end; gap: 10px; z-index: 150; }
+.fab-group { position: fixed; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); right: 14px;
+             display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 150; }
 .fab { width: 54px; height: 54px; border-radius: 50%; border: none; cursor: pointer;
        display: flex; align-items: center; justify-content: center;
        box-shadow: 0 4px 16px rgba(0,0,0,.3); -webkit-tap-highlight-color: transparent;
@@ -6338,6 +6353,13 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
   <div class="header-stats">
     <span class="stat-pill" id="stat-conf">0 / ${itemIdx} conferidos</span>
     <span class="stat-pill warn" id="stat-divs" style="display:none"></span>
+  </div>
+  <div class="filter-chips">
+    <button class="fchip ativo" id="fchip-todos" type="button" onclick="aplicarFiltro('todos')">Todos</button>
+    <button class="fchip" id="fchip-pend" type="button" onclick="aplicarFiltro('pend')">⏳ Pendentes</button>
+    <button class="fchip" id="fchip-div"  type="button" onclick="aplicarFiltro('div')">⚠ Divergentes</button>
+    <button class="fchip" id="fchip-conf" type="button" onclick="aplicarFiltro('conf')">✓ Conferidos</button>
+    <button class="fchip fchip-prox" type="button" onclick="irProximoPendente()">→ Próximo</button>
   </div>
   <div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
   <div class="save-ind" id="save-ind"></div>
@@ -6644,17 +6666,25 @@ function atualizarVisual(idx) {
 /* ──────────────────────────────────────────
    Cálculo de divergência de quantidade
    ────────────────────────────────────────── */
+var _autoConferidos = new Set();
+
 function calcDiv(idx, sistema) {
   const raw   = (document.getElementById('qtd-' + idx)?.value || '').trim();
   const divEl = document.getElementById('div-' + idx);
+  const chk   = document.getElementById('chk-' + idx);
   if (!divEl) return;
 
   if (!raw) {
-    // campo vazio → mostra divergência negativa total (ainda não contado)
     divEl.textContent = '-' + Number(sistema).toLocaleString('pt-BR');
     divEl.style.color = '#dc2626';
     divEl.style.fontWeight = '700';
-    divState[idx].qtdDif = false; // não é divergência confirmada, só indica "não contado"
+    divState[idx].qtdDif = false;
+    // campo zerado → desfaz auto-confirmação se houver
+    if (_autoConferidos.has(idx)) {
+      _autoConferidos.delete(idx);
+      if (chk) chk.checked = false;
+      marcarItem(idx, false);
+    }
   } else {
     const val = parseFloat(raw.replace(',', '.'));
     if (isNaN(val)) {
@@ -6666,6 +6696,23 @@ function calcDiv(idx, sistema) {
       divEl.style.color = dif === 0 ? '#16a34a' : '#dc2626';
       divEl.style.fontWeight = '700';
       divState[idx].qtdDif = dif !== 0;
+
+      if (dif === 0) {
+        // auto-confirma apenas se ainda não foi manualmente conferido
+        if (!_autoConferidos.has(idx) && chk && !chk.checked) {
+          _autoConferidos.add(idx);
+          chk.checked = true;
+          marcarItem(idx, true);
+          mostrar('✓ Quantidade confere — conferido automaticamente!', 2000);
+        }
+      } else {
+        // divergência → desfaz auto-confirmação se houver
+        if (_autoConferidos.has(idx)) {
+          _autoConferidos.delete(idx);
+          if (chk) chk.checked = false;
+          marcarItem(idx, false);
+        }
+      }
     }
   }
   atualizarVisual(idx);
@@ -6677,14 +6724,18 @@ function calcDiv(idx, sistema) {
 function marcarItem(idx, checked) {
   var el = document.getElementById('item-' + idx);
   if (!el) return;
+  // se está desmarcando manualmente um item que foi auto-confirmado, remove do set
+  if (!checked && _autoConferidos.has(idx)) _autoConferidos.delete(idx);
   el.classList.toggle('conferido', checked);
   if (checked) {
+    if (navigator.vibrate) navigator.vibrate(35);
     el.classList.remove('pulse-ok');
-    void el.offsetWidth; // reflow to restart animation
+    void el.offsetWidth;
     el.classList.add('pulse-ok');
     setTimeout(function(){ el.classList.remove('pulse-ok'); }, 750);
   }
   atualizarProgresso();
+  if (typeof _filtroAtual !== 'undefined' && _filtroAtual !== 'todos') buscarItens();
 }
 
 /* ──────────────────────────────────────────
@@ -6727,34 +6778,75 @@ function atualizarProgresso() {
 /* ──────────────────────────────────────────
    Busca / filtro de itens
    ────────────────────────────────────────── */
+var _filtroAtual = 'todos';
+
 function buscarItens() {
-  const q   = (document.getElementById('busca-mobile')?.value || '').toLowerCase().trim();
-  const btn = document.getElementById('busca-limpar-btn');
-  const hint= document.getElementById('busca-hint');
+  var q   = (document.getElementById('busca-mobile')?.value || '').toLowerCase().trim();
+  var btn = document.getElementById('busca-limpar-btn');
+  var hint= document.getElementById('busca-hint');
   if (btn) btn.style.display = q ? 'block' : 'none';
 
-  let encontrados = 0;
-  document.querySelectorAll('.item').forEach(el => {
-    const ok = !q || (el.dataset.busca || '').includes(q);
+  var encontrados = 0;
+  document.querySelectorAll('.item').forEach(function(el) {
+    var idx = parseInt(el.id.replace('item-', ''));
+    var textoOk = !q || (el.dataset.busca || '').includes(q);
+    var statusOk = true;
+    if (_filtroAtual === 'pend') {
+      statusOk = !el.classList.contains('conferido');
+    } else if (_filtroAtual === 'conf') {
+      statusOk = el.classList.contains('conferido');
+    } else if (_filtroAtual === 'div') {
+      var s = divState[idx] || {};
+      statusOk = !!(s.qtdDif || s.lote || s.fab || s.venc || s.manual);
+    }
+    var ok = textoOk && statusOk;
     el.style.display = ok ? '' : 'none';
     if (ok) encontrados++;
   });
-  document.querySelectorAll('.grupo').forEach(g => {
-    const temVisivel = [...g.querySelectorAll('.item')].some(el => el.style.display !== 'none');
+  document.querySelectorAll('.grupo').forEach(function(g) {
+    var temVisivel = [].some.call(g.querySelectorAll('.item'), function(el) { return el.style.display !== 'none'; });
     g.style.display = temVisivel ? '' : 'none';
   });
 
   if (hint) {
+    var label = _filtroAtual === 'todos' ? '' :
+      encontrados + ' item' + (encontrados !== 1 ? 's' : '') + ' ' +
+      (_filtroAtual === 'pend' ? 'pendente' : _filtroAtual === 'conf' ? 'conferido' : 'divergente') +
+      (encontrados !== 1 ? 's' : '');
     hint.textContent = q
       ? encontrados + ' item' + (encontrados !== 1 ? 's' : '') + ' encontrado' + (encontrados !== 1 ? 's' : '')
-      : '';
+      : label;
   }
 }
 
 function limparBusca() {
-  const inp = document.getElementById('busca-mobile');
+  var inp = document.getElementById('busca-mobile');
   if (inp) { inp.value = ''; inp.focus(); }
   buscarItens();
+}
+
+function aplicarFiltro(tipo) {
+  _filtroAtual = tipo;
+  document.querySelectorAll('.fchip[id^="fchip-"]').forEach(function(c) {
+    c.classList.toggle('ativo', c.id === 'fchip-' + tipo);
+  });
+  buscarItens();
+}
+
+function irProximoPendente() {
+  var itens = document.querySelectorAll('.item');
+  for (var i = 0; i < itens.length; i++) {
+    var item = itens[i];
+    if (item.style.display === 'none') continue;
+    if (!item.classList.contains('conferido')) {
+      var idx = parseInt(item.id.replace('item-', ''));
+      item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      var inp = document.getElementById('qtd-' + idx);
+      if (inp) setTimeout(function() { inp.focus(); inp.select(); }, 400);
+      return;
+    }
+  }
+  mostrar('✓ Todos os itens visíveis foram conferidos!', 2500);
 }
 
 /* ──────────────────────────────────────────
@@ -7284,6 +7376,24 @@ function _inserirLote(l, animar) {
     autoSave();
   }
 }
+
+/* ─── Previne alteração acidental por scroll em inputs numéricos ─── */
+document.addEventListener('wheel', function(e) {
+  if (document.activeElement && document.activeElement.type === 'number') {
+    document.activeElement.blur();
+  }
+}, { passive: true });
+
+/* ─── Aviso ao sair com dados não salvos ─── */
+window.addEventListener('beforeunload', function(e) {
+  var temDados = [].some.call(document.querySelectorAll('input[id^="qtd-"]'), function(inp) {
+    return inp.value.trim() !== '';
+  });
+  if (temDados) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 /* ─── Offline badge ─── */
 function _atualizarOffline() {
