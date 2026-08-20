@@ -7496,8 +7496,14 @@ function _gravarRegistroVencidos(override = {}) {
   const totalVencidos = override.totalVencidos !== undefined ? override.totalVencidos : APP.vencidos.length;
   const valorVencidos = override.valorVencidos !== undefined ? override.valorVencidos : APP.vencidos.reduce((s, l) => s + l.vlrCustoTotal, 0);
   const semGiroProd = override.semGiroProd !== undefined ? override.semGiroProd : new Set(APP.semGiro.map(l => l.codProduto)).size;
-  // Determinar mês/período: usa a data da auditoria
-  const d = APP.dataAuditoria || new Date();
+  // Determinar mês/período: usa override de data, ou a data da auditoria, ou hoje
+  let d;
+  if (override.dataAuditoria) {
+    const _dp = override.dataAuditoria.split('-');
+    d = new Date(parseInt(_dp[0]), parseInt(_dp[1]) - 1, parseInt(_dp[2]));
+  } else {
+    d = APP.dataAuditoria || new Date();
+  }
   const mes = String(d.getMonth() + 1).padStart(2, '0');
   const ano = d.getFullYear();
   const periodo = `${mes}/${ano}`;
@@ -9218,10 +9224,16 @@ function _gravarRegistroPedidos(override = {}) {
 
   const pctPed = pedConf > 0 ? parseFloat((pedAss/pedConf*100).toFixed(2)) : 0;
   const pctCan = canConf > 0 ? parseFloat((canAss/canConf*100).toFixed(2)) : 0;
-  const semPend = risco.itens.length;
+  const semPend = override.semPend !== undefined ? override.semPend : risco.itens.length;
 
-  // Período a partir do período calculado
-  const dPeriodo = APP_PED.dtPeriodoMax || new Date();
+  // Período a partir do override de data, do período calculado, ou hoje
+  let dPeriodo;
+  if (override.dataAuditoria) {
+    const _dp2 = override.dataAuditoria.split('-');
+    dPeriodo = new Date(parseInt(_dp2[0]), parseInt(_dp2[1]) - 1, parseInt(_dp2[2]));
+  } else {
+    dPeriodo = APP_PED.dtPeriodoMax || new Date();
+  }
   const periodo = `${String(dPeriodo.getMonth()+1).padStart(2,'0')}/${dPeriodo.getFullYear()}`;
 
   const registro = {
@@ -9449,9 +9461,10 @@ function registrarAuditoriaUnificada() {
   const _totalVencidos = APP.vencidos.length;
   const _valorVencidos = APP.vencidos.reduce((s, l) => s + l.vlrCustoTotal, 0);
   const _semGiroProd = new Set(APP.semGiro.map(l => l.codProduto)).size;
+  const _semPend = (PED_agRiscoSementes ? PED_agRiscoSementes() : {itens:[]}).itens.length;
 
   // Guarda no modal para referência e limpa campos
-  window._ajusteAutoVals = { pedConf:_pedConf, pedAss:_pedAss, pedPend:_pedPend, canConf:_canConf, canAss:_canAss, canPend:_canPend, totalVencidos:_totalVencidos, valorVencidos:_valorVencidos, semGiroProd:_semGiroProd };
+  window._ajusteAutoVals = { pedConf:_pedConf, pedAss:_pedAss, pedPend:_pedPend, canConf:_canConf, canAss:_canAss, canPend:_canPend, totalVencidos:_totalVencidos, valorVencidos:_valorVencidos, semGiroProd:_semGiroProd, semPend:_semPend };
   const camposPed = ['pedConf','pedAss','pedPend','canConf','canAss','canPend'];
   const camposVenc = { totalVencidos: _totalVencidos, valorVencidos: _valorVencidos.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}), semGiroProd: _semGiroProd };
   [...camposPed, 'totalVencidos','valorVencidos','semGiroProd'].forEach(k => {
@@ -9460,6 +9473,16 @@ function registrarAuditoriaUnificada() {
     const lbl = document.getElementById('ajp-auto-' + k);
     if (lbl) lbl.textContent = 'Sistema: ' + (camposVenc[k] !== undefined ? camposVenc[k] : window._ajusteAutoVals[k]);
   });
+  // Limpar e rotular campo de data
+  const _dataAudEl = document.getElementById('ajp-dataAuditoria');
+  if (_dataAudEl) _dataAudEl.value = '';
+  const _dataAudLbl = document.getElementById('ajp-auto-dataAuditoria');
+  if (_dataAudLbl) _dataAudLbl.textContent = 'Sistema: ' + new Date().toLocaleDateString('pt-BR') + ' (hoje)';
+  // Limpar e rotular campo de sementes
+  const _semPendEl = document.getElementById('ajp-semPend');
+  if (_semPendEl) _semPendEl.value = '';
+  const _semPendLbl = document.getElementById('ajp-auto-semPend');
+  if (_semPendLbl) _semPendLbl.textContent = 'Sistema: ' + _semPend;
   ajusteRecalcScore();
   document.getElementById('modal-ajuste-ped').style.display = 'flex';
 }
@@ -9472,7 +9495,7 @@ function ajusteRecalcScore() {
   const totalVenc = val('totalVencidos');
   const pctPed = pedConf > 0 ? parseFloat((pedAss/pedConf*100).toFixed(2)) : 0;
   const pctCan = canConf > 0 ? parseFloat((canAss/canConf*100).toFixed(2)) : 0;
-  const semPend = (PED_agRiscoSementes ? PED_agRiscoSementes() : { itens: [] }).itens.length;
+  const semPend = val('semPend');
   const sSem = semPend === 0 ? 40 : 0;
   const sPed = (pedConf > 0 && pctPed >= 95) ? 30 : 0;
   const sVenc = (calcScoreVencPrev(totalVenc) / 100) * 20;
@@ -9494,6 +9517,14 @@ function confirmarAjusteRegistro() {
   const tv = valInt('totalVencidos'); if (tv !== null) overrideVenc.totalVencidos = tv;
   const vv = valFloat('valorVencidos'); if (vv !== null) overrideVenc.valorVencidos = vv;
   const sg = valInt('semGiroProd'); if (sg !== null) overrideVenc.semGiroProd = sg;
+
+  // Data da auditoria (campo date: YYYY-MM-DD ou vazio = hoje)
+  const _dataAudEl2 = document.getElementById('ajp-dataAuditoria');
+  const _dataAudVal = _dataAudEl2 && _dataAudEl2.value.trim() !== '' ? _dataAudEl2.value.trim() : null;
+  if (_dataAudVal) { overridePed.dataAuditoria = _dataAudVal; overrideVenc.dataAuditoria = _dataAudVal; }
+
+  // Sementes pendentes manual
+  const spv = valInt('semPend'); if (spv !== null) overridePed.semPend = spv;
 
   // Calcula score preliminar de vencidos com base no total de lotes
   const _totalVencFinal = overrideVenc.totalVencidos !== undefined
@@ -9684,6 +9715,28 @@ function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTr
                 style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
             </label>
           </div>
+        </div>
+      </div>
+
+      <!-- DATA + SEMENTES -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 20px; margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,.08);">
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#c4a35a; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid rgba(196,163,90,.2);">📅 Data</div>
+          <label style="font-size:11.5px; color:#8ba8c8;">
+            Data da auditoria
+            <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-dataAuditoria"></div>
+            <input id="ajp-dataAuditoria" type="date"
+              style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+          </label>
+        </div>
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#a78bfa; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid rgba(167,139,250,.2);">🌱 Sementes</div>
+          <label style="font-size:11.5px; color:#8ba8c8;">
+            Pedidos de sementes pend.
+            <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-semPend"></div>
+            <input id="ajp-semPend" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+              style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
+          </label>
         </div>
       </div>
 
