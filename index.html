@@ -5936,6 +5936,15 @@ function baixarHTMLMobile() {
 
   const lotesRefJSON = JSON.stringify(lotesRef);
 
+  // Embute todos os lotes para permitir adição dinâmica na folha
+  const todosLotesLight = (APP.lotes || []).map(l => ({
+    cod: String(l.codProduto), nome: String(l.nomeProduto || '').trim(),
+    lote: String(l.lote || '').trim(), fab: String(l.dtFabricacao || ''),
+    venc: String(l.dtVencimento || ''), qtd: l.quantidade || 0,
+    linha: String(l.linha || ''), nivel: String(l.nivel || 'OK'),
+  }));
+  const todosLotesJSON = JSON.stringify(todosLotesLight);
+
   const mobileHTML = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6178,6 +6187,75 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
 .div-card-obs  { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,.08);
                  color: #92400e; font-style: italic; }
 .div-empty     { color: #94a3b8; font-size: 13px; text-align: center; padding: 20px 0; }
+
+/* ─── Save indicator ─────────────────────── */
+.save-ind { font-size: 10px; color: rgba(255,255,255,.55); margin-top: 4px; min-height: 14px;
+            text-align: right; transition: color .4s; }
+.save-ind.saved  { color: #86efac; }
+.save-ind.saving { color: #fde68a; }
+
+/* ─── FAB group ──────────────────────────── */
+.fab-group { position: fixed; bottom: 88px; right: 14px; display: flex; flex-direction: column;
+             align-items: flex-end; gap: 10px; z-index: 150; }
+.fab { width: 54px; height: 54px; border-radius: 50%; border: none; cursor: pointer;
+       display: flex; align-items: center; justify-content: center;
+       box-shadow: 0 4px 16px rgba(0,0,0,.3); -webkit-tap-highlight-color: transparent;
+       transition: transform .15s, box-shadow .15s; }
+.fab:active { transform: scale(.9); }
+.fab-calc { background: #1e3a6e; color: #fff; font-size: 22px; }
+.fab-add  { background: #16a34a; color: #fff; font-size: 28px; font-weight: 300; line-height: 1; }
+
+/* ─── Calculator ─────────────────────────── */
+.calc-panel { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+              width: min(380px, 100vw); background: #f1f5f9;
+              border-radius: 20px 20px 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.22);
+              z-index: 500; overflow: hidden; }
+.calc-drag  { width: 36px; height: 4px; background: #cbd5e1; border-radius: 2px;
+              margin: 10px auto 0; }
+.calc-disp  { background: #1e293b; color: #fff; padding: 16px 18px 12px; text-align: right; }
+.calc-expr  { font-size: 13px; color: #64748b; min-height: 18px; overflow: hidden;
+              word-break: break-all; }
+.calc-val   { font-size: 40px; font-weight: 300; line-height: 1.2; overflow: hidden;
+              word-break: break-all; }
+.calc-grid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #d1d5db; }
+.cbtn       { background: #fff; border: none; height: 68px; font-size: 22px; font-weight: 400;
+              cursor: pointer; display: flex; align-items: center; justify-content: center;
+              -webkit-tap-highlight-color: transparent; transition: background .1s; }
+.cbtn:active { background: #dbeafe; }
+.cbtn.op    { background: #eff6ff; color: #1e40af; font-weight: 700; }
+.cbtn.op:active { background: #bfdbfe; }
+.cbtn.eq    { background: #1a4a8a; color: #fff; font-weight: 700; }
+.cbtn.eq:active { background: #153c75; }
+.cbtn.fn    { background: #f1f5f9; color: #64748b; font-size: 17px; }
+.cbtn.fn:active { background: #e2e8f0; }
+.cbtn.w2    { grid-column: span 2; }
+.calc-foot  { display: flex; justify-content: center; padding: 8px; background: #f1f5f9; }
+.calc-close { background: #e2e8f0; border: none; border-radius: 20px; padding: 8px 32px;
+              font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; }
+
+/* ─── Add lot sheet ──────────────────────── */
+.al-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
+              z-index: 400; align-items: flex-end; }
+.al-overlay.show { display: flex; }
+.al-sheet  { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-height: 80vh;
+             display: flex; flex-direction: column; }
+.al-head   { padding: 16px 16px 10px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+.al-title  { font-size: 15px; font-weight: 700; color: #1e293b;
+             display: flex; justify-content: space-between; align-items: center; }
+.al-search { width: 100%; margin-top: 10px; padding: 10px 12px; border: 2px solid #e2e8f0;
+             border-radius: 10px; font-size: 14px; outline: none; background: #f8fafc; }
+.al-search:focus { border-color: #3b82f6; background: #fff; }
+.al-list   { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.al-item   { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
+             transition: background .12s; }
+.al-item:active { background: #f0fdf4; }
+.al-nome   { font-size: 13px; font-weight: 700; color: #1e293b; }
+.al-meta   { font-size: 11px; color: #64748b; margin-top: 3px; line-height: 1.6; }
+.al-empty  { padding: 28px; text-align: center; color: #94a3b8; font-size: 13px; }
+.item-extra-tag { font-size: 9px; font-weight: 700; background: #dcfce7; color: #16a34a;
+                  padding: 2px 7px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+@keyframes slideDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:none; } }
+.item-novo { animation: slideDown .35s ease; }
 </style>
 </head>
 <body>
@@ -6213,6 +6291,7 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
     <span class="stat-pill warn" id="stat-divs" style="display:none"></span>
   </div>
   <div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+  <div class="save-ind" id="save-ind"></div>
 </div>
 
 <div class="content" id="content-main">
@@ -6273,12 +6352,72 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
 
 <div class="toast" id="toast"></div>
 
+<!-- FABs flutuantes -->
+<div class="fab-group">
+  <button class="fab fab-add" type="button" onclick="abrirAddLot()" title="Adicionar lote">+</button>
+  <button class="fab fab-calc" type="button" onclick="toggleCalc()" title="Calculadora">🧮</button>
+</div>
+
+<!-- Calculadora -->
+<div class="calc-panel" id="calc-panel" style="display:none">
+  <div class="calc-drag"></div>
+  <div class="calc-disp">
+    <div class="calc-expr" id="calc-expr"></div>
+    <div class="calc-val"  id="calc-val">0</div>
+  </div>
+  <div class="calc-grid">
+    <button class="cbtn fn" onclick="cAc()">C</button>
+    <button class="cbtn fn" onclick="cSgn()">±</button>
+    <button class="cbtn fn" onclick="cPct()">%</button>
+    <button class="cbtn op" onclick="cOp('÷')">÷</button>
+    <button class="cbtn" onclick="cD('7')">7</button>
+    <button class="cbtn" onclick="cD('8')">8</button>
+    <button class="cbtn" onclick="cD('9')">9</button>
+    <button class="cbtn op" onclick="cOp('×')">×</button>
+    <button class="cbtn" onclick="cD('4')">4</button>
+    <button class="cbtn" onclick="cD('5')">5</button>
+    <button class="cbtn" onclick="cD('6')">6</button>
+    <button class="cbtn op" onclick="cOp('−')">−</button>
+    <button class="cbtn" onclick="cD('1')">1</button>
+    <button class="cbtn" onclick="cD('2')">2</button>
+    <button class="cbtn" onclick="cD('3')">3</button>
+    <button class="cbtn op" onclick="cOp('+')">+</button>
+    <button class="cbtn w2"  onclick="cD('0')">0</button>
+    <button class="cbtn"    onclick="cDot()">.</button>
+    <button class="cbtn eq" onclick="cEq()">=</button>
+  </div>
+  <div class="calc-foot">
+    <button class="calc-close" onclick="toggleCalc()">Fechar Calculadora</button>
+  </div>
+</div>
+
+<!-- Adicionar lote -->
+<div class="al-overlay" id="al-overlay" onclick="if(event.target===this)fecharAddLot()">
+  <div class="al-sheet">
+    <div class="al-head">
+      <div class="al-title">
+        <span>➕ Adicionar Lote</span>
+        <button class="ov-close" type="button" onclick="fecharAddLot()"
+                style="background:#f1f5f9;color:#475569;font-size:18px;">✕</button>
+      </div>
+      <input class="al-search" id="al-busca" type="search"
+             placeholder="Buscar por produto, código ou lote…"
+             autocomplete="off" oninput="filtrarAddLot()" onfocus="this.select()">
+    </div>
+    <div class="al-list" id="al-lista"></div>
+  </div>
+</div>
+
 <script>
 /* ──────────────────────────────────────────
    Dados e estado
    ────────────────────────────────────────── */
-const TOTAL     = ${itemIdx};
-const LOTES_REF = ${lotesRefJSON};
+const TOTAL      = ${itemIdx};
+const LOTES_REF  = ${lotesRefJSON};
+const TODOS_LOTES = ${todosLotesJSON};
+const SAVE_KEY   = 'cnt_${APP.sigla}_${hoje.split('/').join('-')}';
+let _nextIdx = TOTAL;
+window._lotesExt = [];
 
 // divState[idx] = { qtdDif: bool, lote: bool, fab: bool, venc: bool, manual: bool }
 const divState = {};
@@ -6306,7 +6445,7 @@ function toggleConf(idx) {
 function navNext(e, idx) {
   if (e.key !== 'Enter' && e.keyCode !== 13) return;
   e.preventDefault();
-  for (let n = idx + 1; n <= TOTAL; n++) {
+  for (let n = idx + 1; n <= _nextIdx; n++) {
     const el = document.getElementById('qtd-' + n);
     if (el && el.closest('.item') && el.closest('.item').style.display !== 'none') {
       el.focus(); el.select();
@@ -6473,9 +6612,10 @@ function marcarItem(idx, checked) {
    ────────────────────────────────────────── */
 function atualizarProgresso() {
   const conf  = document.querySelectorAll('.item.conferido').length;
-  const pct   = TOTAL > 0 ? Math.round(conf / TOTAL * 100) : 0;
+  const tot   = _nextIdx;
+  const pct   = tot > 0 ? Math.round(conf / tot * 100) : 0;
   document.getElementById('prog').style.width = pct + '%';
-  document.getElementById('stat-conf').textContent = conf + ' / ' + TOTAL + ' conferidos (' + pct + '%)';
+  document.getElementById('stat-conf').textContent = conf + ' / ' + tot + ' conferidos (' + pct + '%)';
 
   const ndivs = Object.values(divState)
     .filter(s => s.qtdDif || s.lote || s.fab || s.venc || s.manual).length;
@@ -6584,9 +6724,9 @@ function abrirResumo() {
   const nDivLote = divItems.filter(([, s]) => s.lote || s.fab || s.venc || s.manual).length;
 
   let h = \`
-    <div class="res-stat"><span>Total de itens</span><span class="res-val">\${TOTAL}</span></div>
+    <div class="res-stat"><span>Total de itens</span><span class="res-val">\${_nextIdx}</span></div>
     <div class="res-stat"><span>Itens conferidos</span>
-      <span class="res-val \${conf===TOTAL?'res-ok':'res-warn'}">\${conf}</span></div>
+      <span class="res-val \${conf===_nextIdx?'res-ok':'res-warn'}">\${conf}</span></div>
     <div class="res-stat"><span>Divergências de quantidade</span>
       <span class="res-val \${nDivQtd>0?'res-err':'res-ok'}">\${nDivQtd}</span></div>
     <div class="res-stat"><span>Divergências de dados do lote</span>
@@ -6634,8 +6774,8 @@ function finalizar() {
   const conf  = document.querySelectorAll('.item.conferido').length;
   const ndivs = Object.values(divState)
     .filter(s => s.qtdDif || s.lote || s.fab || s.venc || s.manual).length;
-  if (conf < TOTAL) {
-    if (!confirm(conf + ' de ' + TOTAL + ' itens conferidos. Finalizar mesmo assim?')) return;
+  if (conf < _nextIdx) {
+    if (!confirm(conf + ' de ' + _nextIdx + ' itens conferidos. Finalizar mesmo assim?')) return;
   }
   const btn = document.getElementById('btn-fin');
   btn.textContent = '✓ Finalizado';
@@ -6706,17 +6846,287 @@ async function gerarPDF() {
     cont.classList.remove('print-cols');
   }
 }
+
+/* ─────────────────────────────────────────────
+   AUTO-SAVE — localStorage
+   ─────────────────────────────────────────── */
+var _saveTimer = null;
+
+function _coletarEstado() {
+  var s = { v: 3, q: {}, ch: {}, ob: {}, cf: {}, sn: [], ext: window._lotesExt.slice() };
+  for (var i = 1; i <= _nextIdx; i++) {
+    var qEl = document.getElementById('qtd-' + i); if (qEl) s.q[i] = qEl.value;
+    var cEl = document.querySelector('#item-' + i + ' input[type=checkbox]'); if (cEl) s.ch[i] = cEl.checked;
+    var oEl = document.getElementById('obs-' + i); if (oEl) s.ob[i] = oEl.value;
+    ['lote','fab','venc'].forEach(function(f) {
+      var el = document.getElementById('cf-' + f + '-' + i); if (el) s.cf['cf-' + f + '-' + i] = el.value;
+    });
+  }
+  s.sn = [].map.call(document.querySelectorAll('.sig-nome'), function(el) { return el.value; });
+  return s;
+}
+
+function salvarRascunho() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(_coletarEstado()));
+    var ind = document.getElementById('save-ind');
+    if (ind) { ind.textContent = '✓ Rascunho salvo automaticamente'; ind.className = 'save-ind saved'; }
+  } catch(e) {}
+}
+
+function autoSave() {
+  var ind = document.getElementById('save-ind');
+  if (ind) { ind.textContent = '⟳ Salvando…'; ind.className = 'save-ind saving'; }
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(salvarRascunho, 1500);
+}
+
+function restaurarRascunho() {
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    var s = JSON.parse(raw);
+    if (s.v !== 3) { localStorage.removeItem(SAVE_KEY); return; }
+    // Primeiro recria lotes extras
+    (s.ext || []).forEach(function(l) { _inserirLote(l, false); });
+    // Quantidades
+    Object.keys(s.q || {}).forEach(function(i) {
+      var el = document.getElementById('qtd-' + i);
+      if (el && s.q[i] !== '') {
+        el.value = s.q[i];
+        var sis = parseFloat(el.dataset.sistema);
+        if (!isNaN(sis)) calcDiv(parseInt(i), sis);
+      }
+    });
+    // Checkboxes
+    Object.keys(s.ch || {}).forEach(function(i) {
+      var el = document.querySelector('#item-' + i + ' input[type=checkbox]');
+      if (el) { el.checked = s.ch[i]; marcarItem(parseInt(i), s.ch[i]); }
+    });
+    // Observações
+    Object.keys(s.ob || {}).forEach(function(i) {
+      var el = document.getElementById('obs-' + i); if (el) el.value = s.ob[i] || '';
+    });
+    // Conf fields
+    Object.keys(s.cf || {}).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && s.cf[id]) {
+        el.value = s.cf[id];
+        var m = id.match(/cf-(?:lote|fab|venc)-(\\d+)/);
+        if (m) verificarLote(parseInt(m[1]));
+      }
+    });
+    // Nomes de assinatura
+    var sigEls = document.querySelectorAll('.sig-nome');
+    (s.sn || []).forEach(function(v, i) { if (sigEls[i]) sigEls[i].value = v; });
+    for (var i = 1; i <= _nextIdx; i++) atualizarVisual(i);
+    atualizarProgresso();
+    mostrar('📂 Rascunho restaurado!', 2500);
+    var ind = document.getElementById('save-ind');
+    if (ind) { ind.textContent = '✓ Rascunho salvo automaticamente'; ind.className = 'save-ind saved'; }
+  } catch(e) {}
+}
+
+function limparRascunho() {
+  if (!confirm('Limpar rascunho salvo e reiniciar a contagem?')) return;
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+  location.reload();
+}
+
+// Dispara auto-save em qualquer digitação/mudança
+document.addEventListener('input', function(e) {
+  if (e.target.matches('input:not(.al-search),textarea')) autoSave();
+}, true);
+document.addEventListener('change', function(e) {
+  if (e.target.type === 'checkbox') autoSave();
+}, true);
+
+/* ─────────────────────────────────────────────
+   CALCULADORA
+   ─────────────────────────────────────────── */
+var _cBuf = '0', _cOp = null, _cPrev = null, _cNew = true;
+
+function cAc()  { _cBuf='0'; _cOp=null; _cPrev=null; _cNew=true; _cRender(); }
+function cSgn() { if (_cBuf!=='0') { _cBuf = _cBuf[0]==='-' ? _cBuf.slice(1) : '-'+_cBuf; _cRender(); } }
+function cPct() { var v=parseFloat(_cBuf); if (!isNaN(v)) { _cBuf=String(v/100); _cRender(); } }
+function cD(d) {
+  if (_cNew) { _cBuf = (d==='0')?'0':d; _cNew=false; }
+  else { _cBuf = (_cBuf==='0'&&d!=='.')?d:_cBuf+d; }
+  if (_cBuf.length>15) return; _cRender();
+}
+function cDot() {
+  if (_cNew) { _cBuf='0.'; _cNew=false; }
+  else if (_cBuf.indexOf('.')<0) _cBuf+='.';
+  _cRender();
+}
+function cOp(op) {
+  if (_cOp && !_cNew) cEq(true);
+  _cPrev=parseFloat(_cBuf); _cOp=op; _cNew=true; _cRender();
+}
+function cEq(chain) {
+  if (_cOp===null||_cPrev===null) return;
+  var a=_cPrev, b=parseFloat(_cBuf), r;
+  if (_cOp==='+') r=a+b;
+  else if (_cOp==='−') r=a-b;
+  else if (_cOp==='×') r=a*b;
+  else if (_cOp==='÷') r=b!==0?a/b:0;
+  else r=b;
+  var rs=String(parseFloat(r.toFixed(10)));
+  if (!chain) { _cOp=null; _cPrev=null; }
+  _cBuf=rs; _cNew=!chain; _cRender();
+}
+function _cRender() {
+  var dEl=document.getElementById('calc-val'), xEl=document.getElementById('calc-expr');
+  if (dEl) { var n=parseFloat(_cBuf); dEl.textContent=isNaN(n)?_cBuf:n.toLocaleString('pt-BR',{maximumFractionDigits:10}); }
+  if (xEl) xEl.textContent=(_cPrev!==null&&_cOp)?_cPrev.toLocaleString('pt-BR',{maximumFractionDigits:10})+' '+_cOp:'';
+}
+function toggleCalc() {
+  var p=document.getElementById('calc-panel');
+  if (p) p.style.display=(p.style.display==='none'?'block':'none');
+}
+
+/* ─────────────────────────────────────────────
+   ADICIONAR LOTE DINAMICAMENTE
+   ─────────────────────────────────────────── */
+function abrirAddLot() {
+  var ov=document.getElementById('al-overlay'); if (ov) ov.classList.add('show');
+  var b=document.getElementById('al-busca'); if (b) { b.value=''; setTimeout(function(){b.focus();},100); }
+  filtrarAddLot();
+}
+function fecharAddLot() {
+  var ov=document.getElementById('al-overlay'); if (ov) ov.classList.remove('show');
+}
+function _ns(s) { return String(s||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,''); }
+function filtrarAddLot() {
+  var q=_ns((document.getElementById('al-busca')||{}).value||'');
+  var lista=document.getElementById('al-lista'); if (!lista) return;
+  var jaInc=new Set();
+  LOTES_REF.forEach(function(r){ jaInc.add(r.cod+'|'+r.lote); });
+  window._lotesExt.forEach(function(l){ jaInc.add(l.cod+'|'+l.lote); });
+  var pool=TODOS_LOTES.filter(function(l){ return !jaInc.has(l.cod+'|'+l.lote); });
+  if (q) pool=pool.filter(function(l){ return _ns(l.nome).includes(q)||_ns(l.cod).includes(q)||_ns(l.lote).includes(q); });
+  if (!pool.length) { lista.innerHTML='<div class="al-empty">Nenhum lote encontrado</div>'; return; }
+  lista.innerHTML=pool.slice(0,50).map(function(l) {
+    var nb=l.nivel==='CRÍTICO'?'#fee2e2':l.nivel==='ALERTA'?'#fef3c7':'#f0fdf4';
+    var nc=l.nivel==='CRÍTICO'?'#991b1b':l.nivel==='ALERTA'?'#92400e':'#065f46';
+    var enc=encodeURIComponent(JSON.stringify(l));
+    return '<div class="al-item" onclick="selecionarLote(this)" data-l="'+enc+'">'
+      +'<div class="al-nome">'+l.nome+'</div>'
+      +'<div class="al-meta">Cód: <b>'+l.cod+'</b> · Lote: <b>'+l.lote+'</b>'
+      +' · Qtd: <b>'+Number(l.qtd).toLocaleString('pt-BR')+'</b>'
+      +' &nbsp;<span style="background:'+nb+';color:'+nc+';padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;">'+l.nivel+'</span></div>'
+      +'<div class="al-meta">Vence: '+(l.venc||'—')+' · Fab: '+(l.fab||'—')+'</div>'
+      +'</div>';
+  }).join('');
+}
+function selecionarLote(el) {
+  var l; try { l=JSON.parse(decodeURIComponent(el.dataset.l)); } catch(e){ return; }
+  _inserirLote(l, true);
+  fecharAddLot();
+  mostrar('✓ '+l.nome+' adicionado', 2500);
+}
+
+function _inserirLote(l, animar) {
+  _nextIdx++;
+  var idx=_nextIdx;
+  window._lotesExt.push(l);
+  LOTES_REF.push({ idx:idx, lote:l.lote, fab:l.fab, venc:l.venc, qtd:l.qtd, nome:l.nome, cod:l.cod });
+  divState[idx]={ qtdDif:false, lote:false, fab:false, venc:false, manual:false };
+  var nk=(l.nivel||'OK').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+  var vc=l.nivel==='CRÍTICO'?'#ef4444':l.nivel==='ALERTA'?'#f59e0b':'#374151';
+  var qtdFmt=Number(l.qtd).toLocaleString('pt-BR');
+  var html='<div class="item item-novo" id="item-'+idx+'" data-busca="'+(_ns(l.nome)+' '+_ns(l.cod)+' '+_ns(l.lote))+'">'
+    +'<div class="item-header">'
+    +'<label class="checkbox-wrap" onclick="event.stopPropagation()">'
+    +'<input type="checkbox" onchange="marcarItem('+idx+',this.checked)"><span class="checkmark"></span></label>'
+    +'<div class="item-info">'
+    +'<div class="item-nome">'+l.nome+'<span class="item-extra-tag">+ adicionado</span></div>'
+    +'<div class="item-meta">Cód: <strong class="cod-tag">'+l.cod+'</strong> · Lote: <strong>'+l.lote+'</strong></div>'
+    +'<div class="item-meta">Fab: <strong>'+(l.fab||'—')+'</strong> · Vence: <strong style="color:'+vc+'">'+(l.venc||'—')+'</strong></div>'
+    +'</div>'
+    +'<div class="item-badges"><span class="nivel nivel-'+nk+'">'+(l.nivel||'OK')+'</span>'
+    +'<span class="badge-diverg" id="bdiv-'+idx+'">— —</span></div>'
+    +'</div>'
+    +'<div class="item-body">'
+    +'<div class="section-sep">Contagem de Estoque</div>'
+    +'<div class="campo-row">'
+    +'<div class="campo"><label>No Sistema</label><div class="campo-valor">'+qtdFmt+'</div></div>'
+    +'<div class="campo"><label>Encontrado</label>'
+    +'<input type="number" inputmode="decimal" class="campo-input" id="qtd-'+idx+'" data-sistema="'+l.qtd+'" data-idx="'+idx+'" placeholder="—" enterkeyhint="next" autocomplete="off" oninput="calcDiv('+idx+','+l.qtd+')" onkeydown="navNext(event,'+idx+')">'
+    +'</div>'
+    +'<div class="campo"><label>Diferença</label><div class="campo-valor" id="div-'+idx+'">-'+qtdFmt+'</div></div>'
+    +'</div>'
+    +'<button class="conf-toggle" id="ctog-'+idx+'" type="button" onclick="toggleConf('+idx+')">🔍 Conferir dados do lote &nbsp;<span id="carr-'+idx+'">▼</span></button>'
+    +'<div class="conf-body" id="conf-'+idx+'">'
+    +'<div class="conf-ref"><div class="conf-ref-title">📋 Sistema — dados de referência</div>'
+    +'<div class="conf-ref-grid">'
+    +'<div class="conf-ref-cell"><span class="conf-ref-lbl">Lote</span><span class="conf-ref-val">'+(l.lote||'—')+'</span></div>'
+    +'<div class="conf-ref-cell"><span class="conf-ref-lbl">Fabricação</span><span class="conf-ref-val">'+(l.fab||'—')+'</span></div>'
+    +'<div class="conf-ref-cell"><span class="conf-ref-lbl">Vencimento</span><span class="conf-ref-val">'+(l.venc||'—')+'</span></div>'
+    +'</div></div>'
+    +'<div class="conf-inputs"><div class="conf-ref-title">📦 O que está na embalagem física</div>'
+    +'<div class="conf-field"><div class="conf-field-lbl">Lote na embalagem</div><div class="conf-input-wrap">'
+    +'<input type="text" id="cf-lote-'+idx+'" class="conf-input" placeholder="Digite o lote encontrado" autocomplete="off" oninput="verificarLote('+idx+')">'
+    +'<span id="cf-lote-st-'+idx+'" class="match-badge match-nd">—</span></div></div>'
+    +'<div class="conf-fields-2col">'
+    +'<div class="conf-field"><div class="conf-field-lbl">Data de Fabricação</div><div class="conf-input-wrap">'
+    +'<input type="text" id="cf-fab-'+idx+'" class="conf-input mono" placeholder="DD/MM/AAAA" autocomplete="off" oninput="verificarLote('+idx+')">'
+    +'<span id="cf-fab-st-'+idx+'" class="match-badge match-nd">—</span></div></div>'
+    +'<div class="conf-field"><div class="conf-field-lbl">Data de Vencimento</div><div class="conf-input-wrap">'
+    +'<input type="text" id="cf-venc-'+idx+'" class="conf-input mono" placeholder="DD/MM/AAAA" autocomplete="off" oninput="verificarLote('+idx+')">'
+    +'<span id="cf-venc-st-'+idx+'" class="match-badge match-nd">—</span></div></div>'
+    +'</div>'
+    +'<button class="btn-marcar-div" id="bdiv-btn-'+idx+'" type="button" onclick="toggleDivergente('+idx+')">⚠ Marcar como Divergente</button>'
+    +'</div></div>'
+    +'<div class="obs-area"><label class="obs-lbl">Observações</label>'
+    +'<textarea class="campo-textarea" id="obs-'+idx+'" rows="2" placeholder="Divergência, condição, localização..."></textarea>'
+    +'</div></div>';
+  var cont=document.getElementById('content-main');
+  var grupo=document.getElementById('extra-lotes-grp');
+  if (!grupo) {
+    grupo=document.createElement('div');
+    grupo.className='grupo'; grupo.id='extra-lotes-grp';
+    grupo.innerHTML='<div class="grupo-header">➕ Lotes Adicionados Manualmente</div>';
+    cont.insertBefore(grupo, cont.querySelector('.assinaturas'));
+  }
+  var tmp=document.createElement('div'); tmp.innerHTML=html;
+  grupo.appendChild(tmp.firstChild);
+  atualizarProgresso();
+  if (animar) {
+    var el=document.getElementById('item-'+idx);
+    if (el) el.scrollIntoView({behavior:'smooth',block:'center'});
+    autoSave();
+  }
+}
+
+/* ─── Init ─── */
+window.addEventListener('DOMContentLoaded', function() {
+  restaurarRascunho();
+});
 <\/script>
 </body>
 </html>`;
 
   const blob = new Blob([mobileHTML], { type: 'text/html;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `contagem_lotes_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
+  // Abre em nova aba (link provisório da sessão)
+  const novaAba = window.open(url, '_blank');
+  if (!novaAba) {
+    // Fallback se popup bloqueado: faz download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contagem_lotes_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+  // Também disponibiliza para download
+  setTimeout(() => {
+    const a2 = document.createElement('a');
+    a2.href = url;
+    a2.download = `contagem_lotes_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html`;
+    document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+    // Não revogar imediatamente; mantém URL viva por 30 min (recarga da aba)
+    setTimeout(() => URL.revokeObjectURL(url), 1800000);
+  }, 1500);
 }
 
 
@@ -6884,7 +7294,16 @@ function renderPlanoAcao() {
 }
 
 // ==================== HELPERS ====================
-// Seleção do checklist: 5 PRODUTOS por linha (de maior risco) com TODOS os lotes
+// Fisher-Yates shuffle — seleção aleatória para o checklist
+function _shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Seleção do checklist: 5 PRODUTOS por linha (aleatorios) com TODOS os lotes
 // respectivos de cada produto, mais os lotes adicionados manualmente pelo auditor.
 // Retorna { linha: [ { cod, nome, maxScore, extra, lotes:[...] } ] }
 function getChecklistSelecao() {
@@ -6910,7 +7329,7 @@ function getChecklistSelecao() {
       maxScore: Math.max(...lotes.map(x => x.score)),
       lotesDisp: lotes.filter(l => !excluidos.has(l.codProduto + '|' + String(l.lote).trim())).sort((a, b) => b.score - a.score),
     })).filter(p => p.lotesDisp.length > 0);
-    todosProdutos.sort((a, b) => b.maxScore - a.maxScore);
+    _shuffle(todosProdutos); // seleção aleatória, não por risco
 
     const escolhidos = []; // { cod, nome, lote }
     const usados = new Set();
@@ -6946,7 +7365,7 @@ function getChecklistSelecao() {
             if (!usados.has(key)) poolExtra.push({ cod: p.cod, nome: p.nome, lote });
           }
         }
-        poolExtra.sort((a, b) => b.lote.score - a.lote.score);
+        _shuffle(poolExtra);
         for (const item of poolExtra) {
           if (escolhidos.length >= MIN_ITENS) break;
           escolhidos.push(item);
@@ -6957,9 +7376,8 @@ function getChecklistSelecao() {
       // Passo 3: se a linha não tem nem 5 lotes em risco, completa com os demais
       // lotes da linha (fora de risco), priorizando os que vencem mais perto
       if (escolhidos.length < MIN_ITENS) {
-        const poolGeral = (APP.lotes || [])
-          .filter(l => l.linha === linha && !excluidos.has(l.codProduto + '|' + String(l.lote).trim()) && !usados.has(l.codProduto + '|' + String(l.lote).trim()))
-          .sort((a, b) => a.diasVencimento - b.diasVencimento);
+        const poolGeral = _shuffle((APP.lotes || [])
+          .filter(l => l.linha === linha && !excluidos.has(l.codProduto + '|' + String(l.lote).trim()) && !usados.has(l.codProduto + '|' + String(l.lote).trim())));
         for (const lote of poolGeral) {
           if (escolhidos.length >= MIN_ITENS) break;
           const key = lote.codProduto + '|' + String(lote.lote).trim();
@@ -6978,8 +7396,8 @@ function getChecklistSelecao() {
       }
       porProduto[it.cod].lotes.push(it.lote);
     }
-    const arr = Object.values(porProduto).sort((a, b) => b.maxScore - a.maxScore);
-    arr.forEach(p => p.lotes.sort((a, b) => b.score - a.score));
+    const arr = _shuffle(Object.values(porProduto));
+    arr.forEach(p => _shuffle(p.lotes));
     resultado[linha] = arr;
   }
 
