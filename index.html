@@ -6409,6 +6409,15 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
     <button class="btn-sec btn-pdf" type="button" onclick="gerarPDF()" id="btn-pdf">⬇ PDF</button>
     <button class="btn-prim" type="button" onclick="finalizar()" id="btn-fin">✓ Finalizar</button>
   </div>
+  <div style="text-align:center;margin:10px 0 0;">
+    <button type="button" id="btn-colapsar"
+            onclick="toggleColapsarConferidos()"
+            style="background:none;border:none;color:#64748b;font-size:12px;
+                   font-weight:600;cursor:pointer;padding:6px 12px;
+                   -webkit-tap-highlight-color:transparent;">
+      ▲ Ocultar conferidos
+    </button>
+  </div>
 </div>
 
 <div class="overlay" id="ov-resumo" onclick="if(event.target===this)fecharResumo()">
@@ -6680,6 +6689,7 @@ function atualizarVisual(idx) {
    Cálculo de divergência de quantidade
    ────────────────────────────────────────── */
 var _autoConferidos = new Set();
+var _restaurando    = false;
 
 function calcDiv(idx, sistema) {
   const raw   = (document.getElementById('qtd-' + idx)?.value || '').trim();
@@ -6716,7 +6726,7 @@ function calcDiv(idx, sistema) {
           _autoConferidos.add(idx);
           chk.checked = true;
           marcarItem(idx, true);
-          mostrar('✓ Quantidade confere — conferido automaticamente!', 2000);
+          if (!_restaurando) mostrar('✓ Quantidade confere — conferido automaticamente!', 2000);
         }
       } else {
         // divergência → desfaz auto-confirmação se houver
@@ -6748,6 +6758,11 @@ function marcarItem(idx, checked) {
     setTimeout(function(){ el.classList.remove('pulse-ok'); }, 750);
   }
   atualizarProgresso();
+  // Respeita colapso de conferidos
+  if (typeof _conferidosOcultos !== 'undefined' && _conferidosOcultos) {
+    var elColapso = document.getElementById('item-' + idx);
+    if (elColapso) elColapso.style.display = checked ? 'none' : '';
+  }
   if (typeof _filtroAtual !== 'undefined' && _filtroAtual !== 'todos') buscarItens();
 }
 
@@ -6781,6 +6796,29 @@ function atualizarProgresso() {
   if (cPend)  cPend.textContent  = '⏳ Pendentes (' + pend + ')';
   if (cConf)  cConf.textContent  = '✓ Conferidos (' + conf + ')';
   if (cDiv)   cDiv.textContent   = '⚠ Divergentes (' + ndivs + ')';
+
+  // Chip "Próximo" mostra pendentes restantes
+  var cProx = document.querySelector('.fchip-prox');
+  if (cProx) {
+    if (pend === 0) {
+      cProx.textContent = '🎉 Tudo conferido!';
+      cProx.style.background = 'rgba(22,163,74,.4)';
+      cProx.style.borderColor = '#86efac';
+      cProx.style.color = '#bbf7d0';
+    } else {
+      cProx.textContent = '→ Próximo (' + pend + ')';
+      cProx.style.background = '';
+      cProx.style.borderColor = '';
+      cProx.style.color = '';
+    }
+  }
+
+  // Toast de conclusão quando chega a 100%
+  if (tot > 0 && pend === 0 && !_restaurando && typeof _jaFestejou === 'undefined') {
+    window._jaFestejou = true;
+    mostrar('🎉 Todos os ' + tot + ' itens conferidos!', 4000);
+  }
+  if (pend > 0) window._jaFestejou = undefined;
 }
 
 /* ──────────────────────────────────────────
@@ -7135,6 +7173,7 @@ function restaurarRascunho() {
     if (!raw) return;
     var s = JSON.parse(raw);
     if (s.v !== 3) { localStorage.removeItem(SAVE_KEY); return; }
+    _restaurando = true;
     // Primeiro recria lotes extras
     (s.ext || []).forEach(function(l) { _inserirLote(l, false); });
     // Quantidades
@@ -7146,10 +7185,17 @@ function restaurarRascunho() {
         if (!isNaN(sis)) calcDiv(parseInt(i), sis);
       }
     });
-    // Checkboxes
+    // Checkboxes — restaura estado salvo (sobrescreve auto-confirmações do calcDiv acima)
     Object.keys(s.ch || {}).forEach(function(i) {
-      var el = document.querySelector('#item-' + i + ' input[type=checkbox]');
-      if (el) { el.checked = s.ch[i]; marcarItem(parseInt(i), s.ch[i]); }
+      var chkEl = document.getElementById('chk-' + i);
+      var itemEl = document.getElementById('item-' + i);
+      if (!chkEl || !itemEl) return;
+      var salvo = !!s.ch[i];
+      // Se o calcDiv auto-confirmou, mas o estado salvo era "não conferido",
+      // respeita o estado salvo (usuário tinha desmarcado intencionalmente)
+      if (!salvo && _autoConferidos.has(parseInt(i))) _autoConferidos.delete(parseInt(i));
+      chkEl.checked = salvo;
+      itemEl.classList.toggle('conferido', salvo);
     });
     // Observações
     Object.keys(s.ob || {}).forEach(function(i) {
@@ -7169,10 +7215,12 @@ function restaurarRascunho() {
     (s.sn || []).forEach(function(v, i) { if (sigEls[i]) sigEls[i].value = v; });
     for (var i = 1; i <= _nextIdx; i++) atualizarVisual(i);
     atualizarProgresso();
-    mostrar('📂 Rascunho restaurado!', 2500);
+    _restaurando = false;
+    var conf = document.querySelectorAll('.item.conferido').length;
+    mostrar('📂 Rascunho restaurado! (' + conf + ' itens já conferidos)', 3000);
     var ind = document.getElementById('save-ind');
     if (ind) { ind.textContent = '✓ Rascunho salvo automaticamente'; ind.className = 'save-ind saved'; }
-  } catch(e) {}
+  } catch(e) { _restaurando = false; }
 }
 
 function limparRascunho() {
@@ -7432,6 +7480,25 @@ function _inserirLote(l, animar) {
     if (el) el.scrollIntoView({behavior:'smooth',block:'center'});
     autoSave();
   }
+}
+
+/* ─── Colapsar/expandir itens conferidos ─── */
+var _conferidosOcultos = false;
+function toggleColapsarConferidos() {
+  _conferidosOcultos = !_conferidosOcultos;
+  var btn = document.getElementById('btn-colapsar');
+  document.querySelectorAll('.item.conferido').forEach(function(el) {
+    el.style.display = _conferidosOcultos ? 'none' : '';
+  });
+  // Oculta grupos que ficarem vazios
+  document.querySelectorAll('.grupo').forEach(function(g) {
+    var temVisivel = [].some.call(g.querySelectorAll('.item'), function(el) {
+      return el.style.display !== 'none';
+    });
+    g.style.display = temVisivel ? '' : 'none';
+  });
+  if (btn) btn.textContent = _conferidosOcultos ? '▼ Mostrar conferidos' : '▲ Ocultar conferidos';
+  if (_conferidosOcultos) mostrar('Itens conferidos ocultados — use "Mostrar" para ver de novo', 2500);
 }
 
 /* ─── Previne alteração acidental por scroll em inputs numéricos ─── */
