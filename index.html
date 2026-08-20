@@ -7109,24 +7109,68 @@ window.addEventListener('DOMContentLoaded', function() {
 
   const blob = new Blob([mobileHTML], { type: 'text/html;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
-  // Abre em nova aba (link provisório da sessão)
-  const novaAba = window.open(url, '_blank');
-  if (!novaAba) {
-    // Fallback se popup bloqueado: faz download
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `contagem_lotes_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }
-  // Também disponibiliza para download
-  setTimeout(() => {
-    const a2 = document.createElement('a');
-    a2.href = url;
-    a2.download = `contagem_lotes_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html`;
-    document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
-    // Não revogar imediatamente; mantém URL viva por 30 min (recarga da aba)
-    setTimeout(() => URL.revokeObjectURL(url), 1800000);
-  }, 1500);
+  const nomeArq = `contagem_lotes_${APP.sigla}_${new Date().toLocaleDateString('pt-BR').split('/').join('-')}.html`;
+
+  // Download direto
+  const a = document.createElement('a');
+  a.href = url; a.download = nomeArq;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+  // Guia o usuário a enviar para o celular
+  _mostrarModalCompartilharMobile(nomeArq);
+}
+
+function _mostrarModalCompartilharMobile(nomeArq) {
+  const prev = document.getElementById('modal-compartilhar-mob');
+  if (prev) prev.remove();
+  const sigla = APP.sigla || '';
+  const m = document.createElement('div');
+  m.id = 'modal-compartilhar-mob';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  m.innerHTML = `
+    <div style="background:#0d2137;border:1px solid #1e3a5f;border-radius:16px;padding:26px 28px;max-width:480px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.7);">
+      <div style="font-size:17px;font-weight:700;color:#4fc3f7;margin-bottom:5px;">📱 Como abrir no celular</div>
+      <div style="font-size:12.5px;color:#8ba8c8;margin-bottom:18px;">
+        Links <code style="background:#0a1a2a;padding:1px 5px;border-radius:4px;">blob:</code> só funcionam no PC que gerou o arquivo.<br>
+        Envie o arquivo baixado para o celular:
+      </div>
+      <div style="font-size:11.5px;font-weight:600;color:#5a7a9a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Arquivo baixado</div>
+      <div style="background:#0a1a2a;border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#cde;margin-bottom:18px;word-break:break-all;">
+        📄 ${nomeArq}
+      </div>
+      <div style="font-size:11.5px;font-weight:600;color:#5a7a9a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Enviar para o celular</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+        <a href="https://web.whatsapp.com" target="_blank"
+           style="display:flex;align-items:center;gap:12px;background:#0d1f0d;border:1px solid #25d366;border-radius:10px;padding:13px 16px;color:#25d366;text-decoration:none;font-weight:600;font-size:13.5px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#25d366"><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.118 1.528 5.847L0 24l6.335-1.51A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm6.073 16.413c-.253.712-1.469 1.36-2.02 1.448-.514.083-1.16.117-1.873-.118a17.3 17.3 0 01-1.697-.627c-2.982-1.29-4.932-4.297-5.082-4.497-.147-.2-1.203-1.6-1.203-3.052s.762-2.167 1.033-2.463c.27-.296.59-.37.786-.37.2 0 .4.002.574.01.184.009.431-.07.675.515.253.606.857 2.094.933 2.244.074.15.124.326.025.526-.098.2-.147.326-.294.503-.147.176-.31.393-.443.527-.148.148-.302.309-.13.606.173.296.768 1.267 1.649 2.053 1.133 1.01 2.088 1.322 2.384 1.47.297.148.47.124.643-.074.176-.2.754-.882 1.154-1.297h.001c.297-.312.592-.264.986-.1.395.165 2.507 1.182 2.937 1.397.43.214.716.32.82.5.1.177.1 1.02-.152 1.73z"/></svg>
+          <div>
+            <div>WhatsApp Web → 📎 → Documento</div>
+            <div style="font-size:11px;font-weight:400;color:#1a8a3a;margin-top:2px;">Selecione o arquivo na pasta Downloads</div>
+          </div>
+        </a>
+        <a href="mailto:?subject=Folha%20de%20Contagem%20${encodeURIComponent(sigla)}&body=Segue%20em%20anexo%20a%20folha%20de%20contagem.%20Adicione%20o%20arquivo%20baixado%20como%20anexo."
+           style="display:flex;align-items:center;gap:12px;background:#0d1a2a;border:1px solid #4fc3f7;border-radius:10px;padding:13px 16px;color:#4fc3f7;text-decoration:none;font-weight:600;font-size:13.5px;">
+          <span style="font-size:20px;">✉️</span>
+          <div>
+            <div>Email → Adicionar Anexo</div>
+            <div style="font-size:11px;font-weight:400;color:#3a7aaa;margin-top:2px;">Abre o email, anexe o arquivo manualmente</div>
+          </div>
+        </a>
+      </div>
+      <div style="background:#0a1a2a;border-left:3px solid #4fc3f7;border-radius:0 8px 8px 0;padding:12px 14px;font-size:12px;color:#6a8aaa;line-height:1.8;">
+        <strong style="color:#8ba8c8;">No celular, após receber:</strong><br>
+        Toque no arquivo recebido → <em>"Abrir com…"</em> → <strong style="color:#cde;">Chrome</strong><br>
+        O arquivo abre direto, funciona offline e salva automaticamente.
+      </div>
+      <button onclick="document.getElementById('modal-compartilhar-mob').remove()"
+        style="margin-top:16px;width:100%;padding:11px;background:#1e3a5f;border:1px solid #2a4a7f;border-radius:8px;color:#8ba8c8;cursor:pointer;font-size:13px;font-weight:600;">
+        Entendido — Fechar
+      </button>
+    </div>
+  `;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
 }
 
 
