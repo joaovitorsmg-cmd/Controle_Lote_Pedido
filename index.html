@@ -5804,7 +5804,8 @@ function baixarHTMLMobile() {
       const obsIni   = (APP.checklistObs[l.codProduto+'|'+String(l.lote).trim()]||'').replace(/</g,'&lt;');
       const nivelKey = (l.nivel||'OK').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
       const vencCor  = l.nivel==='CRÍTICO' ? '#ef4444' : l.nivel==='ALERTA' ? '#f59e0b' : '#374151';
-      const buscaAttr = (l.nomeProduto+' '+l.codProduto+' '+String(l.lote||'')+' '+nomeL).toLowerCase();
+      const _normBA = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+      const buscaAttr = (_normBA(l.nomeProduto)+' '+_normBA(String(l.codProduto))+' '+_normBA(String(l.lote||''))+' '+_normBA(nomeL)).replace(/"/g,'&quot;');
 
       lotesRef.push({
         idx: itemIdx,
@@ -6760,8 +6761,7 @@ function marcarItem(idx, checked) {
   atualizarProgresso();
   // Respeita colapso de conferidos
   if (typeof _conferidosOcultos !== 'undefined' && _conferidosOcultos) {
-    var elColapso = document.getElementById('item-' + idx);
-    if (elColapso) elColapso.style.display = checked ? 'none' : '';
+    if (el) el.style.display = checked ? 'none' : '';
   }
   if (typeof _filtroAtual !== 'undefined' && _filtroAtual !== 'todos') buscarItens();
 }
@@ -6842,8 +6842,10 @@ function atualizarProgresso() {
    ────────────────────────────────────────── */
 var _filtroAtual = 'todos';
 
+function _normQ(s) { return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+
 function buscarItens() {
-  var q   = (document.getElementById('busca-mobile')?.value || '').toLowerCase().trim();
+  var q   = _normQ(document.getElementById('busca-mobile')?.value || '');
   var btn = document.getElementById('busca-limpar-btn');
   var hint= document.getElementById('busca-hint');
   if (btn) btn.style.display = q ? 'block' : 'none';
@@ -6862,6 +6864,8 @@ function buscarItens() {
       statusOk = !!(s.qtdDif || s.lote || s.fab || s.venc || s.manual);
     }
     var ok = textoOk && statusOk;
+    // Se colapso ativo, itens conferidos ficam ocultos independente do filtro/busca
+    if (ok && _conferidosOcultos && el.classList.contains('conferido')) ok = false;
     el.style.display = ok ? '' : 'none';
     if (ok) encontrados++;
   });
@@ -7082,6 +7086,8 @@ async function gerarPDF() {
   btn.textContent = 'Gerando…'; btn.disabled = true;
   const cont = document.getElementById('content-main');
   cont.classList.add('print-cols');
+  const fabGrp = document.querySelector('.fab-group');
+  if (fabGrp) fabGrp.style.visibility = 'hidden';
   try {
     const { jsPDF } = window.jspdf;
     const SCALE = 1.5;
@@ -7125,11 +7131,14 @@ async function gerarPDF() {
     }
     doc.save('auditoria_lotes_${APP.sigla}_' + new Date().toLocaleDateString('pt-BR').split('/').join('-') + '.pdf');
     btn.textContent = '✓ PDF Salvo'; btn.style.background = '#16a34a';
+    btn.disabled = false;
+    setTimeout(function() { btn.textContent = '⬇ PDF'; btn.style.background = ''; }, 3000);
   } catch(e) {
     btn.textContent = '⬇ PDF'; btn.disabled = false;
     alert('Erro ao gerar PDF: ' + e.message);
   } finally {
     cont.classList.remove('print-cols');
+    if (fabGrp) fabGrp.style.visibility = '';
   }
 }
 
@@ -7139,7 +7148,7 @@ async function gerarPDF() {
 var _saveTimer = null;
 
 function _coletarEstado() {
-  var s = { v: 3, q: {}, ch: {}, ob: {}, cf: {}, sn: [], ext: window._lotesExt.slice() };
+  var s = { v: 3, q: {}, ch: {}, ob: {}, cf: {}, manual: {}, sn: [], ext: window._lotesExt.slice() };
   for (var i = 1; i <= _nextIdx; i++) {
     var qEl = document.getElementById('qtd-' + i); if (qEl) s.q[i] = qEl.value;
     var cEl = document.querySelector('#item-' + i + ' input[type=checkbox]'); if (cEl) s.ch[i] = cEl.checked;
@@ -7147,6 +7156,7 @@ function _coletarEstado() {
     ['lote','fab','venc'].forEach(function(f) {
       var el = document.getElementById('cf-' + f + '-' + i); if (el) s.cf['cf-' + f + '-' + i] = el.value;
     });
+    if (divState[i] && divState[i].manual) s.manual[i] = true;
   }
   s.sn = [].map.call(document.querySelectorAll('.sig-nome'), function(el) { return el.value; });
   return s;
@@ -7210,6 +7220,13 @@ function restaurarRascunho() {
         if (m) verificarLote(parseInt(m[1]));
       }
     });
+    // Estado manual (divergência marcada manualmente)
+    Object.keys(s.manual || {}).forEach(function(i) {
+      var idx = parseInt(i);
+      if (divState[idx]) divState[idx].manual = true;
+      var btn = document.getElementById('btn-manual-' + idx);
+      if (btn) btn.classList.add('ativo');
+    });
     // Nomes de assinatura
     var sigEls = document.querySelectorAll('.sig-nome');
     (s.sn || []).forEach(function(v, i) { if (sigEls[i]) sigEls[i].value = v; });
@@ -7217,6 +7234,7 @@ function restaurarRascunho() {
     atualizarProgresso();
     _restaurando = false;
     var conf = document.querySelectorAll('.item.conferido').length;
+    if (conf === _nextIdx && _nextIdx > 0) window._jaFestejou = true;
     mostrar('📂 Rascunho restaurado! (' + conf + ' itens já conferidos)', 3000);
     var ind = document.getElementById('save-ind');
     if (ind) { ind.textContent = '✓ Rascunho salvo automaticamente'; ind.className = 'save-ind saved'; }
@@ -7487,16 +7505,8 @@ var _conferidosOcultos = false;
 function toggleColapsarConferidos() {
   _conferidosOcultos = !_conferidosOcultos;
   var btn = document.getElementById('btn-colapsar');
-  document.querySelectorAll('.item.conferido').forEach(function(el) {
-    el.style.display = _conferidosOcultos ? 'none' : '';
-  });
-  // Oculta grupos que ficarem vazios
-  document.querySelectorAll('.grupo').forEach(function(g) {
-    var temVisivel = [].some.call(g.querySelectorAll('.item'), function(el) {
-      return el.style.display !== 'none';
-    });
-    g.style.display = temVisivel ? '' : 'none';
-  });
+  // Delega ao buscarItens para não conflitar com filtros/busca ativos
+  buscarItens();
   if (btn) btn.textContent = _conferidosOcultos ? '▼ Mostrar conferidos' : '▲ Ocultar conferidos';
   if (_conferidosOcultos) mostrar('Itens conferidos ocultados — use "Mostrar" para ver de novo', 2500);
 }
