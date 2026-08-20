@@ -5820,7 +5820,7 @@ function baixarHTMLMobile() {
         <div class="item" id="item-${itemIdx}" data-busca="${buscaAttr}">
           <div class="item-header">
             <label class="checkbox-wrap" onclick="event.stopPropagation()">
-              <input type="checkbox" onchange="marcarItem(${itemIdx},this.checked)">
+              <input type="checkbox" id="chk-${itemIdx}" onchange="marcarItem(${itemIdx},this.checked)">
               <span class="checkmark"></span>
             </label>
             <div class="item-info">
@@ -6156,7 +6156,7 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
 .btn-pdf  { background: #1a4a8a; color: #fff; }
 
 /* ─── Toast ───────────────────────────────── */
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+.toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
          background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px;
          font-size: 13px; font-weight: 600; z-index: 300;
          opacity: 0; transition: opacity .3s; pointer-events: none;
@@ -6286,7 +6286,7 @@ canvas.sig-canvas { display: block; width: 100%; height: 80px; touch-action: non
                  -webkit-tap-highlight-color: transparent; align-self: flex-start; }
 
 /* ─── Offline badge ──────────────────────── */
-.offline-badge { display: none; position: fixed; top: 8px; left: 50%;
+.offline-badge { display: none; position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 50%;
                  transform: translateX(-50%); background: #dc2626; color: #fff;
                  font-size: 11px; font-weight: 700; padding: 4px 14px;
                  border-radius: 20px; z-index: 9999; letter-spacing: .5px;
@@ -6539,15 +6539,28 @@ function toggleConf(idx) {
 function navNext(e, idx) {
   if (e.key !== 'Enter' && e.keyCode !== 13) return;
   e.preventDefault();
+  // tenta primeiro o próximo pendente
   for (let n = idx + 1; n <= _nextIdx; n++) {
     const el = document.getElementById('qtd-' + n);
-    if (el && el.closest('.item') && el.closest('.item').style.display !== 'none') {
+    if (!el) continue;
+    const item = el.closest('.item');
+    if (item && item.style.display !== 'none' && !item.classList.contains('conferido')) {
       el.focus(); el.select();
-      el.closest('.item').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      item.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
   }
-  // último item: remove foco
+  // se não há pendentes adiante, aceita qualquer item visível
+  for (let n = idx + 1; n <= _nextIdx; n++) {
+    const el = document.getElementById('qtd-' + n);
+    if (!el) continue;
+    const item = el.closest('.item');
+    if (item && item.style.display !== 'none') {
+      el.focus(); el.select();
+      item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+  }
   document.getElementById('qtd-' + idx)?.blur();
 }
 
@@ -6757,6 +6770,17 @@ function atualizarProgresso() {
   } else {
     statDiv.style.display = 'none';
   }
+
+  // Atualiza contagens nos chips de filtro
+  const pend = tot - conf;
+  var cTodos = document.getElementById('fchip-todos');
+  var cPend  = document.getElementById('fchip-pend');
+  var cConf  = document.getElementById('fchip-conf');
+  var cDiv   = document.getElementById('fchip-div');
+  if (cTodos) cTodos.textContent = 'Todos (' + tot + ')';
+  if (cPend)  cPend.textContent  = '⏳ Pendentes (' + pend + ')';
+  if (cConf)  cConf.textContent  = '✓ Conferidos (' + conf + ')';
+  if (cDiv)   cDiv.textContent   = '⚠ Divergentes (' + ndivs + ')';
 }
 
 /* ──────────────────────────────────────────
@@ -6985,6 +7009,8 @@ function _fallbackCopy(txt) {
 /* ──────────────────────────────────────────
    Finalizar
    ────────────────────────────────────────── */
+var _finalizado = false;
+
 function finalizar() {
   const conf  = document.querySelectorAll('.item.conferido').length;
   const ndivs = Object.values(divState)
@@ -6992,9 +7018,16 @@ function finalizar() {
   if (conf < _nextIdx) {
     if (!confirm(conf + ' de ' + _nextIdx + ' itens conferidos. Finalizar mesmo assim?')) return;
   }
+  _finalizado = true;
   const btn = document.getElementById('btn-fin');
-  btn.textContent = '✓ Finalizado';
-  btn.style.background = '#16a34a';
+  btn.textContent = '🔄 Nova Contagem';
+  btn.style.background = '#0f766e';
+  btn.onclick = function() {
+    if (confirm('Iniciar nova contagem? O rascunho salvo será apagado.')) {
+      try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+      location.reload();
+    }
+  };
   mostrar(
     ndivs > 0
       ? '✓ Auditoria finalizada\\n' + ndivs + ' divergência' + (ndivs > 1 ? 's' : '') + ' registrada' + (ndivs > 1 ? 's' : '') + '.\\nSalve o PDF.'
@@ -7196,6 +7229,30 @@ function fecharCalc() {
   _calcTargetId=null;
 }
 
+/* swipe down na alça da calculadora fecha o painel */
+(function() {
+  var drag=null, startY=0;
+  function onStart(e) {
+    drag=true; startY=(e.touches?e.touches[0]:e).clientY;
+  }
+  function onMove(e) {
+    if (!drag) return;
+    var dy=(e.touches?e.touches[0]:e).clientY - startY;
+    if (dy > 60) { drag=false; fecharCalc(); }
+  }
+  function onEnd() { drag=false; }
+  window.addEventListener('DOMContentLoaded', function() {
+    var handle=document.querySelector('.calc-drag');
+    if (!handle) return;
+    handle.addEventListener('touchstart', onStart, {passive:true});
+    handle.addEventListener('touchmove',  onMove,  {passive:true});
+    handle.addEventListener('touchend',   onEnd);
+    handle.addEventListener('mousedown',  onStart);
+    window.addEventListener('mousemove',  onMove);
+    window.addEventListener('mouseup',    onEnd);
+  });
+})();
+
 function toggleCalc() {
   var p=document.getElementById('calc-panel');
   if (!p) return;
@@ -7313,7 +7370,7 @@ function _inserirLote(l, animar) {
   var html='<div class="item item-novo" id="item-'+idx+'" data-busca="'+(_ns(l.nome)+' '+_ns(l.cod)+' '+_ns(l.lote))+'">'
     +'<div class="item-header">'
     +'<label class="checkbox-wrap" onclick="event.stopPropagation()">'
-    +'<input type="checkbox" onchange="marcarItem('+idx+',this.checked)"><span class="checkmark"></span></label>'
+    +'<input type="checkbox" id="chk-'+idx+'" onchange="marcarItem('+idx+',this.checked)"><span class="checkmark"></span></label>'
     +'<div class="item-info">'
     +'<div class="item-nome">'+l.nome+'<span class="item-extra-tag">+ adicionado</span></div>'
     +'<div class="item-meta">Cód: <strong class="cod-tag">'+l.cod+'</strong> · Lote: <strong>'+l.lote+'</strong></div>'
@@ -7386,6 +7443,7 @@ document.addEventListener('wheel', function(e) {
 
 /* ─── Aviso ao sair com dados não salvos ─── */
 window.addEventListener('beforeunload', function(e) {
+  if (_finalizado) return;
   var temDados = [].some.call(document.querySelectorAll('input[id^="qtd-"]'), function(inp) {
     return inp.value.trim() !== '';
   });
