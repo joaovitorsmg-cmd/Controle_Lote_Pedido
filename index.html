@@ -10862,6 +10862,14 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
       + 'font-family:Arial,sans-serif;">QR<br>indispon&iacute;vel</div>';
   }
 
+  /* Retorna o maior font-size que cabe em 'maxChars' chars por linha com 2 linhas disponíveis.
+     Tabela: [limiteCharsTotal, tamanho] — percorre até encontrar o primeiro que comporta. */
+  function _afs(text, tbl) {
+    var len = (text || '').length;
+    for (var t = 0; t < tbl.length; t++) { if (len <= tbl[t][0]) return tbl[t][1]; }
+    return tbl[tbl.length - 1][1];
+  }
+
   function makePlaca(l, idx, h, compact) {
     var st     = _placaSituacao(l);
     var isVenc = st === 'Vencido';
@@ -10880,21 +10888,47 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
 
     var nomeFilial = (typeof lojaNome     === 'function' ? lojaNome(l.sigla)    : '') || l.sigla || l.filial || '—';
     var nomeLinha  = (typeof getNomeLinha === 'function' ? getNomeLinha(l.linha): '') || ('Linha ' + (l.linha||'—'));
+    var nomeProd   = l.nomeProduto || '—';
+    var loteStr    = l.lote || '—';
 
-    var nameSz   = compact ? '16px' : '34px';
-    var codeSz   = compact ? '11px' : '15px';
-    var loteSz   = compact ? '27px' : '50px';
-    var dateSz   = compact ? '18px' : '32px';
-    var qtySz    = compact ? '20px' : '36px';
-    var logoH    = compact ? '26px' : '48px';
-    var headerFS = compact ? '11px' : '15px';
-    var headerH  = compact ? '17mm' : '24mm';
-    var bannerH  = compact ? '9mm'  : '13mm';
-    var bannerFS = compact ? '13px' : '20px';
+    /* ── Tamanhos adaptativos ──────────────────────────────────────────────
+       Para nome: 2 linhas disponíveis → capacidade ≈ 2× chars/linha
+         Arial Black ~0.65ch/px → chars/linha ≈ largura(px)/0.65/fontSize(px)
+         largura útil 1ppp: ≈ 480px  | 2ppp: ≈ 455px
+       Para lote: 1 linha — Courier New ~0.6ch/px
+    ─────────────────────────────────────────────────────────────────────── */
+    var nameSz, loteSz, dateSz, qtySz, codeSz;
+    var logoH, headerFS, headerH, bannerH, bannerFS;
+
+    if (compact) {
+      /* 2 por folha — espaço vertical menor */
+      nameSz  = _afs(nomeProd, [[7,'28px'],[12,'22px'],[18,'17px'],[26,'13px'],[36,'11px'],[999,'9px']]);
+      loteSz  = _afs(loteStr,  [[5,'42px'],[8,'34px'],[12,'26px'],[16,'21px'],[999,'17px']]);
+      dateSz  = '16px'; qtySz = '20px'; codeSz = '10px';
+      logoH = '24px'; headerFS = '10px'; headerH = '15mm'; bannerH = '8mm'; bannerFS = '12px';
+    } else {
+      /* 1 por folha — maximizar nome e lote */
+      nameSz  = _afs(nomeProd, [[7,'70px'],[10,'58px'],[14,'46px'],[20,'36px'],[28,'28px'],[38,'22px'],[999,'17px']]);
+      loteSz  = _afs(loteStr,  [[5,'88px'],[7,'72px'],[10,'58px'],[14,'46px'],[18,'36px'],[999,'28px']]);
+      dateSz  = '28px'; qtySz = '34px'; codeSz = '14px';
+      logoH = '46px'; headerFS = '14px'; headerH = '22mm'; bannerH = '12mm'; bannerFS = '18px';
+    }
 
     var qrContent = _qrText(l, l._qty, hoje);
     var qrSz      = compact ? '44mm' : '60mm';
     var qrBlock   = makeQRBlock(qrContent, qrSz);
+
+    var bW  = compact ? '22px' : '40px';
+    var bH  = compact ? '28px' : '50px';
+    var bGap= compact ? '5px'  : '9px';
+    var bFS = compact ? '7px'  : '9px';
+    var boxes = '';
+    for (var _b = 0; _b < 4; _b++) {
+      boxes += '<div style="width:' + bW + ';height:' + bH + ';border:2px solid #000;'
+        + 'background:#fff;flex-shrink:0;' + PCA + '"></div>';
+    }
+    var pad = compact ? '5px 12px' : '8px 16px';
+    var lbl = compact ? '8px' : '11px';
 
     return '<div class="placa" style="height:' + h + ';display:flex;flex-direction:column;'
       + 'border:3px solid #000;overflow:hidden;box-sizing:border-box;">'
@@ -10907,7 +10941,7 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
       + '<span>' + bannerIcon + '</span><span>' + bannerLabel + '</span><span>' + bannerIcon + '</span>'
       + '</div>'
 
-      /* HEADER: centered logo + filial/linha */
+      /* HEADER: logo + filial/linha */
       + '<div style="flex-shrink:0;height:' + headerH + ';display:flex;align-items:center;'
       + 'justify-content:center;gap:20px;padding:0 18px;border-bottom:2px solid #000;">'
       + '<img src="' + logoSrc + '" alt="Agroquima" '
@@ -10927,100 +10961,84 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
         /* left content column */
         + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">'
 
-          /* product */
-          + '<div style="flex:2.5;min-height:0;display:flex;flex-direction:column;justify-content:center;'
-          + 'padding:6px 14px;border-bottom:1px solid #ccc;">'
-          + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'color:#666;letter-spacing:.08em;margin-bottom:3px;">Produto</div>'
+          /* PRODUTO — seção maior, nome adaptativo preenche o espaço */
+          + '<div style="flex:3.2;min-height:0;display:flex;flex-direction:column;justify-content:center;'
+          + 'padding:' + pad + ';border-bottom:2px solid #000;">'
+          + '<div style="font-family:Arial,sans-serif;font-size:' + lbl + ';font-weight:700;'
+          + 'text-transform:uppercase;letter-spacing:.12em;color:#555;'
+          + 'margin-bottom:' + (compact?'4px':'7px') + ';">PRODUTO</div>'
           + '<div style="font-family:Arial Black,sans-serif;font-size:' + nameSz + ';font-weight:900;'
-          + 'color:#000;line-height:1.2;word-break:break-word;overflow-wrap:break-word;">'
-          + (l.nomeProduto||'—') + '</div>'
-          + '<div style="font-family:Courier New,monospace;font-size:' + codeSz + ';color:#444;'
-          + 'margin-top:4px;font-weight:700;">'
+          + 'color:#000;line-height:1.15;word-break:break-word;overflow-wrap:break-word;hyphens:auto;">'
+          + nomeProd + '</div>'
+          + '<div style="font-family:Courier New,monospace;font-size:' + codeSz + ';color:#555;'
+          + 'margin-top:' + (compact?'4px':'6px') + ';font-weight:700;letter-spacing:.04em;">'
           + 'C&oacute;d: ' + (l.codProduto||'—') + '</div>'
           + '</div>'
 
-          /* lote */
-          + '<div style="flex:2;min-height:0;display:flex;flex-direction:column;justify-content:center;'
-          + 'padding:5px 14px;background:#000;' + PCA + 'color:#fff;border-bottom:2px solid #000;">'
-          + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'letter-spacing:.1em;color:#aaa;margin-bottom:2px;">N&uacute;mero do Lote</div>'
+          /* LOTE — fundo preto, número enorme, preenche bloco */
+          + '<div style="flex:2.8;min-height:0;display:flex;flex-direction:column;justify-content:center;'
+          + 'padding:' + pad + ';background:#000;' + PCA + 'color:#fff;border-bottom:3px solid #000;">'
+          + '<div style="font-family:Arial,sans-serif;font-size:' + lbl + ';font-weight:700;'
+          + 'text-transform:uppercase;letter-spacing:.14em;color:#888;'
+          + 'margin-bottom:' + (compact?'3px':'6px') + ';">N&Uacute;MERO DO LOTE</div>'
           + '<div style="font-family:Courier New,monospace;font-size:' + loteSz + ';font-weight:900;'
-          + 'letter-spacing:.05em;white-space:nowrap;overflow:hidden;">'
-          + (l.lote||'—') + '</div>'
+          + 'letter-spacing:.04em;line-height:1;white-space:nowrap;overflow:hidden;'
+          + 'text-overflow:ellipsis;' + PCA + '">'
+          + loteStr + '</div>'
           + '</div>'
 
-          /* dates */
+          /* DATAS */
           + '<div style="flex:2;min-height:0;display:flex;border-bottom:1px solid #ccc;">'
           + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;'
-          + 'padding:4px 14px;border-right:1px solid #ddd;">'
-          + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'color:#666;letter-spacing:.07em;margin-bottom:2px;">Fabrica&ccedil;&atilde;o</div>'
+          + 'padding:' + (compact?'3px 12px':'5px 16px') + ';border-right:1px solid #ddd;">'
+          + '<div style="font-family:Arial,sans-serif;font-size:' + lbl + ';font-weight:700;'
+          + 'text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:2px;">FABRICA&Ccedil;&Atilde;O</div>'
           + '<div style="font-family:Courier New,monospace;font-size:' + dateSz + ';'
           + 'font-weight:700;color:#000;">' + _fmtDt(l.dtFabricacao) + '</div>'
           + '</div>'
-          + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 14px;">'
-          + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-          + 'color:#666;letter-spacing:.07em;margin-bottom:2px;">Validade</div>'
+          + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;'
+          + 'padding:' + (compact?'3px 12px':'5px 16px') + ';">'
+          + '<div style="font-family:Arial,sans-serif;font-size:' + lbl + ';font-weight:700;'
+          + 'text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:2px;">VALIDADE</div>'
           + '<div style="font-family:Courier New,monospace;font-size:' + dateSz + ';'
           + dtVencDeco + 'font-weight:900;color:#000;">' + _fmtDt(l.dtVencimento) + '</div>'
           + '</div>'
           + '</div>'
 
-          /* qty + contagem manual + fabricante */
-          + (function(){
-              var bW  = compact ? '22px' : '40px';
-              var bH  = compact ? '30px' : '52px';
-              var bGap= compact ? '5px'  : '9px';
-              var bFS = compact ? '7px'  : '9px';
-              var boxes = '';
-              for (var _b = 0; _b < 4; _b++) {
-                boxes += '<div style="width:' + bW + ';height:' + bH + ';'
-                  + 'border:2px solid #000;background:#fff;flex-shrink:0;'
-                  + 'print-color-adjust:exact;-webkit-print-color-adjust:exact;"></div>';
-              }
-              return '<div style="flex:1.8;min-height:0;display:flex;align-items:center;'
-                + 'padding:4px 14px;border-bottom:1px solid #ccc;gap:12px;">'
+          /* QTD + CONTAGEM FÍSICA + FABRICANTE */
+          + '<div style="flex:2;min-height:0;display:flex;align-items:center;'
+          + 'padding:' + (compact?'3px 12px':'5px 16px') + ';border-bottom:1px solid #ccc;gap:12px;">'
+          + '<div style="flex-shrink:0;">'
+          + '<div style="font-family:Arial,sans-serif;font-size:' + lbl + ';font-weight:700;'
+          + 'text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:2px;">QTD. SISTEMA</div>'
+          + '<div style="font-family:Courier New,monospace;font-size:' + qtySz + ';font-weight:900;color:#000;">'
+          + (l._qty||l.quantidade||'—') + '</div>'
+          + '</div>'
+          + '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
+          + '<div style="font-family:Arial,sans-serif;font-size:' + bFS + ';font-weight:700;'
+          + 'text-transform:uppercase;letter-spacing:.06em;color:#000;white-space:nowrap;">'
+          + 'CONTAGEM F&Iacute;SICA</div>'
+          + '<div style="display:flex;gap:' + bGap + ';align-items:flex-end;">' + boxes + '</div>'
+          + '</div>'
+          + '<div style="flex-shrink:0;text-align:right;max-width:' + (compact?'100px':'150px') + ';">'
+          + '<div style="font-family:Arial,sans-serif;font-size:' + lbl + ';font-weight:700;'
+          + 'text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:2px;">FABRICANTE</div>'
+          + '<div style="font-family:Arial,sans-serif;font-size:' + (compact?'9px':'11px') + ';font-weight:600;'
+          + 'line-height:1.3;color:#000;">' + (l.fabricante||'—') + '</div>'
+          + '</div>'
+          + '</div>'
 
-                /* col 1 — sistema */
-                + '<div style="flex-shrink:0;">'
-                + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-                + 'color:#666;margin-bottom:2px;">Qtd. sistema</div>'
-                + '<div style="font-family:Courier New,monospace;font-size:' + qtySz + ';'
-                + 'font-weight:900;color:#000;">' + (l._qty||l.quantidade||'—') + '</div>'
-                + '</div>'
-
-                /* col 2 — caixinhas de contagem física */
-                + '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
-                + '<div style="font-family:Arial,sans-serif;font-size:' + bFS + ';font-weight:700;'
-                + 'text-transform:uppercase;letter-spacing:.06em;color:#000;white-space:nowrap;">'
-                + 'CONTAGEM F&Iacute;SICA</div>'
-                + '<div style="display:flex;gap:' + bGap + ';align-items:flex-end;">'
-                + boxes
-                + '</div>'
-                + '</div>'
-
-                /* col 3 — fabricante */
-                + '<div style="flex-shrink:0;text-align:right;max-width:' + (compact?'110px':'160px') + ';">'
-                + '<div style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;'
-                + 'color:#666;margin-bottom:2px;">Fabricante</div>'
-                + '<div style="font-family:Arial,sans-serif;font-size:' + (compact?'9px':'11px') + ';font-weight:600;'
-                + 'line-height:1.3;color:#000;">' + (l.fabricante||'—') + '</div>'
-                + '</div>'
-
-                + '</div>';
-            })()
-
-          /* footer */
-          + '<div style="flex-shrink:0;padding:3px 14px;text-align:right;background:#f4f4f4;">'
-          + '<span style="font-family:Arial,sans-serif;font-size:8px;color:#999;">'
-          + 'Impresso em: ' + hoje + '</span>'
+          /* RODAPÉ */
+          + '<div style="flex-shrink:0;padding:' + (compact?'2px 12px':'3px 16px') + ';'
+          + 'text-align:right;background:#f0f0f0;' + PCA + '">'
+          + '<span style="font-family:Arial,sans-serif;font-size:' + (compact?'7px':'8px') + ';color:#999;">'
+          + 'RDC &mdash; AGROQUIMA &bull; AGROQUIMAPRODUTOS &bull; Impresso em: ' + hoje + '</span>'
           + '</div>'
 
         + '</div>'
 
-        /* right QR column */
-        + '<div style="width:' + (compact?'66mm':'76mm') + ';flex-shrink:0;display:flex;flex-direction:column;'
+        /* coluna QR */
+        + '<div style="width:' + (compact?'64mm':'74mm') + ';flex-shrink:0;display:flex;flex-direction:column;'
         + 'align-items:center;justify-content:center;padding:8px 6px;gap:6px;'
         + 'border-left:2px solid #000;overflow:hidden;">'
         + qrBlock
