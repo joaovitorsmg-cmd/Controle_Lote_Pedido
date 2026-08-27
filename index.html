@@ -4618,10 +4618,15 @@ function computarCacaErros() {
   //   • Qualquer fabricante "90xx" que não seja 9013/9024/9025 é, por definição, um código inválido da Agroquima.
   const CODIGOS_AGROQUIMA = new Set(['9013', '9024', '9025']);
   const terminaEmCB = nome => /\bCB\b/i.test(String(nome || '').trim());
+  // Embalagens (EMBALAGEM... ou EMB...) são insumos comprados de terceiros usados nas
+  // fábricas 24/25 — a Agroquima não as fabrica, portanto são isentas de toda validação
+  // de fabricante.
+  const isEmbalagem = nome => /^(EMBALAGEM\b|EMB[\s.])/i.test(String(nome || '').trim());
 
   for (const l of lotes) {
     const cod = codFab(l.fabricante);
     if (!cod) continue;
+    if (isEmbalagem(l.nomeProduto)) continue;
     if (/^90/.test(cod) && !CODIGOS_AGROQUIMA.has(cod)) {
       findings.push({
         tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante Agroquima inválido',
@@ -4638,6 +4643,7 @@ function computarCacaErros() {
   for (const l of lotes) {
     const cod = codFab(l.fabricante);
     if (!cod) continue;
+    if (isEmbalagem(l.nomeProduto)) continue;
     const p = fabPorProd[l.codProduto] = fabPorProd[l.codProduto] || {};
     (p[cod] = p[cod] || []).push(l);
   }
