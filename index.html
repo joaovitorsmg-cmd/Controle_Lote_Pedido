@@ -2816,7 +2816,6 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Validade</th>
           <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Dias</th>
           <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Status</th>
-          <th style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);">Qtd Impressão</th>
         </tr>
       </thead>
       <tbody id="placa-tbody"></tbody>
@@ -10766,10 +10765,6 @@ function _renderPlacasTabela() {
       <td style="padding:8px 12px;text-align:center;">
         <span style="padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:${stColor};background:${stBg};">${st}</span>
       </td>
-      <td style="padding:8px 12px;text-align:center;">
-        <input type="number" min="1" max="999" value="${l._qty}" onchange="_placaQty(${i},this.value)"
-          style="width:60px;padding:4px 6px;border-radius:5px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);text-align:center;font-size:12px;" />
-      </td>
     </tr>`;
   }).join('');
   tbody.innerHTML = rows;
@@ -10813,7 +10808,7 @@ function _atualizarContadorPlacas() {
   if (badge) { badge.textContent = n; badge.classList.toggle('hidden', n === 0); }
 }
 
-function _qrText(l, qty, hoje) {
+function _qrText(l, hoje) {
   var nomeFilial = (typeof lojaNome === 'function' ? lojaNome(l.sigla) : '') || l.sigla || l.filial || '';
   var nomeLinha  = (typeof getNomeLinha === 'function' ? getNomeLinha(l.linha) : '') || ('Linha ' + (l.linha || ''));
   var data = {
@@ -10826,7 +10821,6 @@ function _qrText(l, qty, hoje) {
     dv: _fmtDt(l.dtVencimento),
     st: _placaSituacao(l),
     d:  String(l.diasVencimento !== undefined ? l.diasVencimento : ''),
-    q:  String(qty || ''),
     fab: l.fabricante || '',
     i:  hoje
   };
@@ -10920,7 +10914,7 @@ function _buildPrintHTML(lotes, porFolha, hoje) {
       logoH = '46px'; headerFS = '14px'; headerH = '22mm'; bannerH = '12mm'; bannerFS = '18px';
     }
 
-    var qrContent = _qrText(l, l._qty, hoje);
+    var qrContent = _qrText(l, hoje);
     var qrSz      = compact ? '44mm' : '60mm';
     var qrBlock   = makeQRBlock(qrContent, qrSz);
 
