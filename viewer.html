@@ -323,14 +323,7 @@ body{
 
     var dvClass  = cs.st==='Vencido'?'venc-bad': cs.st==='Próximo'?'venc-warn':'venc-ok';
 
-    /* ── 4. Quantidade zero ── */
-    var qty     = parseInt(d.q, 10);
-    var qtyDisp = isNaN(qty) ? (d.q||'—') : String(qty);
-    var zeroStockHtml = (!isNaN(qty) && qty === 0)
-      ? '<div class="zero-stock">&#9888; Sem estoque registrado</div>'
-      : '';
-
-    /* ── 5. Progress bar ── */
+    /* ── 4. Progress bar ── */
     var progressHtml = makeProgress(d.df, d.dv);
 
     /* ── 6. Realtime badge ── */
@@ -387,12 +380,6 @@ body{
       +'<div class="i-val" style="font-size:13px;line-height:1.3;">'+filialLabel+'</div></div>'
       +'<div class="info-card"><div class="sec-label">Linha</div>'
       +'<div class="i-val" style="font-size:13px;line-height:1.3;">'+linhaLabel+'</div></div>'
-      +'</div>'
-
-      +'<div class="info-full">'
-      +'<div class="sec-label">Quantidade em estoque</div>'
-      +'<div class="i-val mono big">'+esc(qtyDisp)+'</div>'
-      +zeroStockHtml
       +'</div>'
 
       +'<div class="info-full">'
