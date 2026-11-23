@@ -37,7 +37,10 @@ no topo do script com o nome **exato** da coluna do seu arquivo.
   Os `5922/6922` são faturamento para entrega futura — é **venda**, conta no mês
   do faturamento (não no da entrega).
 - **Exclui** remessa de entrega futura (não é venda): `5116 5117 6116 6117`.
-- Mantém o período **Jan/2024 a Jun/2026** (configurável no topo do script).
+- Mantém o período **desde Jan/2024 até o mês atual** — o limite superior é calculado
+  sozinho a cada execução (data do computador), então o script nunca fica desatualizado
+  cortando vendas recentes. O campo `ate` do JSON reflete o mês da venda mais recente
+  realmente encontrada no arquivo importado.
 - Sazonalidade em **unidades** (soma da quantidade), por mês e por filial.
 - CFOP `5116 5117 6116 6117` (remessa de entrega futura) **não conta como venda**, mas é
   registrado num campo separado (`remessa`) no `sazonal_base.json` — serve para o app avisar
