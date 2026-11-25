@@ -2688,7 +2688,7 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
   </div>
 
   <div style="margin-top:20px;font-size:11px;color:var(--text3);padding:12px 16px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);">
-    <strong>Score de Vencidos:</strong> O score é calculado no <em>Ranking Geral</em> após importar o faturamento das filiais via relatório de Resumo CFOP. Aqui são registrados apenas os dados de vencidos (quantidade, valor, sem giro).
+    <strong>Score de Vencidos:</strong> calculado direto pelo valor vencido em R$ no momento do registro (0 a 100%, conforme as faixas de valor) — não depende de faturamento da filial.
   </div>
 </div>
 <!-- /ABA HISTÓRICO -->
@@ -3299,9 +3299,9 @@ tr.tr-na td{color:var(--text3);font-style:italic;}
           <thead><tr><th>Item</th><th>Peso</th><th>Critério</th><th>Fórmula</th></tr></thead>
           <tbody>
             <tr><td>🔴 <b>Pedido de Semente</b></td><td><b>40 pts</b></td><td>Zero tolerância</td><td>40 se sem pendências / 0 se qualquer pendência</td></tr>
-            <tr><td>🔵 <b>Pedido de Venda</b></td><td><b>30 pts</b></td><td>Meta ≥ 95%</td><td>MIN(% atingido / 95, 1) × 30</td></tr>
-            <tr><td>🟡 <b>Produtos Vencidos</b></td><td><b>20 pts</b></td><td>Painel Vencidos</td><td>Prévia local por valor (R$): 0=100%, até 1.000=90%, até 5.000=70%, até 20.000=40%, até 50.000=15%, acima=0%. O score oficial usa % do valor vencido sobre o faturamento, calculado no Ranking Geral.</td></tr>
-            <tr><td>🟢 <b>Canhoto</b></td><td><b>10 pts</b></td><td>Meta ≥ 95%</td><td>MIN(% atingido / 95, 1) × 10</td></tr>
+            <tr><td>🔵 <b>Pedido de Venda</b></td><td><b>30 pts</b></td><td>Meta ≥ 95%</td><td>30 se % assinados ≥ 95% / 0 se abaixo (sem pontuação parcial)</td></tr>
+            <tr><td>🟡 <b>Produtos Vencidos</b></td><td><b>20 pts</b></td><td>Painel Vencidos</td><td>Por valor vencido (R$) no momento do registro: 0=100%, até 1.000=90%, até 5.000=70%, até 20.000=40%, até 50.000=15%, acima=0%.</td></tr>
+            <tr><td>🟢 <b>Canhoto</b></td><td><b>10 pts</b></td><td>Meta ≥ 95%</td><td>10 se % assinados ≥ 95% / 0 se abaixo (sem pontuação parcial)</td></tr>
             <tr style="font-weight:700;background:var(--az-cl)"><td colspan="2"><b>TOTAL MÁXIMO: 100 pts</b></td><td colspan="2">🥇 ≥90 pts | 🟢 ≥75 | 🟡 ≥60 | 🔴 &lt;60</td></tr>
           </tbody>
         </table>
@@ -4456,7 +4456,16 @@ function normFab(s) { return String(s || '').replace(/^\s*\d+\s*-\s*/, '').toUpp
 // Extrai só o código do fabricante ("9025 - AGROQUIMA..." -> "9025")
 function codFab(s) { const m = String(s || '').match(/^\s*(\d+)\s*-/); return m ? m[1] : ''; }
 // Assinatura estrutural do lote ("053-22-03000" -> "9-9-9"; "ABC12" -> "A9") para comparar formatos
-function loteSig(s) { return String(s).toUpperCase().replace(/[0-9]+/g, '9').replace(/[A-Z]+/g, 'A').replace(/\s+/g, ' ').trim(); }
+// Assinatura estrutural do lote p/ comparar formato entre filiais (ex.: "AB1234" -> "AA9999").
+// Preserva o COMPRIMENTO de cada bloco de letras/dígitos — sem isso, "A123" e "A123456"
+// caíam na mesma assinatura ("A9"), então um lote truncado/com dígitos a mais passava
+// despercebido como "mesmo formato".
+function loteSig(s) {
+  return String(s).toUpperCase().trim()
+    .replace(/[0-9]+/g, m => '9'.repeat(m.length))
+    .replace(/[A-Z]+/g, m => 'A'.repeat(m.length))
+    .replace(/\s+/g, ' ');
+}
 
 function computarCacaErros() {
   const lotes = APP.allLotes || [];
@@ -4662,17 +4671,21 @@ function computarCacaErros() {
     }
 
     if (linha === '15') {
-      // Vetoquinol: fabricantes aceitos são o próprio Vetoquinol (70) e a Biogênese,
+      // Vetoquinol: fabricantes aceitos são o próprio Vetoquinol (70) e a Biogenesis (Bagó),
       // que também fabrica para essa linha — não é mais erro ter os dois.
+      // Grafia real nos dados é "BIOGENESIS" (ex.: "8955 - BIOGENESIS BAGO SAUDE ANIMAL
+      // LTDA."), não "BIOGÊNESE" em português — o regex antigo exigia terminar em "...NESE"
+      // e nunca batia com "...NESIS", então continuava marcando erro. Casa só o radical
+      // comum "BIOGENES" (cobre BIOGENESIS e a variante em português BIOGÊNESE/BIOGENESE).
       for (const c of codigos) {
-        if (c === '70' || /BIOG[EÊ]NESE/i.test(normFab(fabs[c][0]?.fabricante))) continue;
+        if (c === '70' || /BIOG[EÊ]NES/i.test(normFab(fabs[c][0]?.fabricante))) continue;
         const recs = fabs[c];
         const fils = [...new Set(recs.map(r => r.sigla))];
         findings.push({
           tipo: 'grave', cat: 'fabricante', catLabel: 'Fabricante divergente — Vetoquinol',
           codProduto: cod, produto: prodNome, lote: '',
           filiais: fils,
-          titulo: `<strong>Fabricante incorreto (Vetoquinol):</strong> ${prodNome} só pode ser fabricado por "70 - Vetoquinol" ou Biogênese, mas ${fils.map(lojaNome).join(', ')} está com o fabricante "${c} - ${normFab(recs[0]?.fabricante)}".`,
+          titulo: `<strong>Fabricante incorreto (Vetoquinol):</strong> ${prodNome} só pode ser fabricado por "70 - Vetoquinol" ou Biogenesis, mas ${fils.map(lojaNome).join(', ')} está com o fabricante "${c} - ${normFab(recs[0]?.fabricante)}".`,
           cols: [{ h: 'LOJA', k: 'loja' }, { h: 'FABRICANTE', k: 'fab' }, { h: 'VENC', k: 'vencimento' }],
           rows: recs.slice(0, 8).map(r => ({ sigla: r.sigla, loja: lojaNome(r.sigla), fab: r.fabricante || '—', vencimento: r.dtVencimento || '—', flag: 'erro' }))
         });
@@ -8505,24 +8518,15 @@ function _salvarVencHist() {
   try { localStorage.setItem('aqVencHist', JSON.stringify(VENC_HIST)); } catch(e) {}
 }
 
-// Score de vencidos baseado no % (valor vencidos / faturamento)
-// Quanto menor o %, maior a nota — escala por faixas definida
-function calcScoreVenc(valorVencidos, faturamento) {
-  if (!faturamento || faturamento <= 0) return 100; // sem faturamento informado → assume 100%
-  const pct = (valorVencidos / faturamento) * 100;
-  if (pct === 0)        return 100;
-  if (pct <= 0.05)      return 95;
-  if (pct <= 0.1)       return 85;
-  if (pct <= 0.25)      return 70;
-  if (pct <= 0.5)       return 55;
-  if (pct <= 1.0)       return 35;
-  if (pct <= 2.0)       return 15;
-  return 0;
-}
-
-// Score estimado baseado no VALOR vencido (sem necessidade de faturamento, que só é
-// importado no Ranking Geral). É só uma prévia local — o score final e oficial usa
-// % do valor vencido sobre o faturamento da filial, calculado no Ranking Geral.
+// Score de vencidos baseado no VALOR vencido (R$) no momento do registro — é o único
+// cálculo que este app usa e exibe (Registrar Auditoria e Histórico). Havia uma função
+// calcScoreVenc(valorVencidos, faturamento) para um 2º cálculo por % sobre faturamento,
+// supostamente feito numa tela "Ranking Geral" — mas essa tela nunca existiu neste app e
+// a função nunca era chamada por nada aqui (código morto, removido). Se existir um sistema
+// externo de ranking que também calcula score por faturamento (ex.: a partir do JSON de
+// exportarArquivoVencidosPadrao), ele é independente deste app; dentro daqui, o número que
+// o auditor vê no registro JÁ É o final — os textos de ajuda que diziam "provisório até o
+// Ranking Geral" foram corrigidos para não confundir o auditor.
 function calcScoreVencPrevValor(valor) {
   if (!valor || valor <= 0) return 100;
   if (valor <= 1000)  return 90;
@@ -8548,7 +8552,7 @@ function normalizarFilialArq(sigla, loja) {
   return nome || 'FILIAL';
 }
 
-// Botão Registrar: vai direto ao registro (faturamento é gerenciado no Ranking Geral)
+// Botão Registrar: vai direto ao registro (score de vencidos calculado por valor, sem faturamento)
 function _gravarRegistroVencidos(override = {}) {
   const sigla = override.filial || APP.sigla || '—';
   const filialNome = lojaNome(sigla) || '—';
@@ -10714,7 +10718,9 @@ function registrarAuditoriaUnificada() {
 
 function ajusteRecalcScore() {
   const auto = window._ajusteAutoVals || {};
-  const val = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseFloat(el.value) : null; return v !== null && !isNaN(v) ? v : (auto[k] ?? 0); };
+  // Mesmo risco do campo de vencidos: contagens >= 1000 digitadas em formato BR ("1.234")
+  // seriam lidas erradas por parseFloat puro ("1.234" -> 1,234). parseValorBR cobre isso.
+  const val = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseValorBR(el.value) : null; return v !== null ? v : (auto[k] ?? 0); };
   const pedConf = val('pedConf'), pedAss = val('pedAss'), pedPend = val('pedPend');
   const canConf = val('canConf'), canAss = val('canAss'), canPend = val('canPend');
   const _elVenc = document.getElementById('ajp-valorVencidos');
@@ -10736,7 +10742,7 @@ function ajusteRecalcScore() {
 }
 
 function confirmarAjusteRegistro() {
-  const valInt = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseInt(el.value) : null; return v !== null && !isNaN(v) ? v : null; };
+  const valInt = k => { const el = document.getElementById('ajp-' + k); const v = el && el.value.trim() !== '' ? parseValorBR(el.value) : null; return v !== null ? Math.round(v) : null; };
   const valFloat = k => { const el = document.getElementById('ajp-' + k); return el && el.value.trim() !== '' ? parseValorBR(el.value) : null; };
 
   const temLotes = APP.lotes.length > 0;
@@ -10915,19 +10921,19 @@ function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTr
             <label style="font-size:11.5px; color:#8ba8c8;">
               Conferidos (total)
               <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-pedConf"></div>
-              <input id="ajp-pedConf" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+              <input id="ajp-pedConf" type="text" inputmode="numeric" placeholder="auto" oninput="ajusteRecalcScore()"
                 style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
             </label>
             <label style="font-size:11.5px; color:#8ba8c8;">
               Assinados
               <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-pedAss"></div>
-              <input id="ajp-pedAss" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+              <input id="ajp-pedAss" type="text" inputmode="numeric" placeholder="auto" oninput="ajusteRecalcScore()"
                 style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
             </label>
             <label style="font-size:11.5px; color:#8ba8c8;">
               Pendentes
               <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-pedPend"></div>
-              <input id="ajp-pedPend" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+              <input id="ajp-pedPend" type="text" inputmode="numeric" placeholder="auto" oninput="ajusteRecalcScore()"
                 style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
             </label>
           </div>
@@ -10940,19 +10946,19 @@ function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTr
             <label style="font-size:11.5px; color:#8ba8c8;">
               Conferidos (total)
               <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-canConf"></div>
-              <input id="ajp-canConf" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+              <input id="ajp-canConf" type="text" inputmode="numeric" placeholder="auto" oninput="ajusteRecalcScore()"
                 style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
             </label>
             <label style="font-size:11.5px; color:#8ba8c8;">
               Assinados
               <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-canAss"></div>
-              <input id="ajp-canAss" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+              <input id="ajp-canAss" type="text" inputmode="numeric" placeholder="auto" oninput="ajusteRecalcScore()"
                 style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
             </label>
             <label style="font-size:11.5px; color:#8ba8c8;">
               Pendentes
               <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-canPend"></div>
-              <input id="ajp-canPend" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+              <input id="ajp-canPend" type="text" inputmode="numeric" placeholder="auto" oninput="ajusteRecalcScore()"
                 style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
             </label>
           </div>
@@ -10988,7 +10994,7 @@ function PED_dropArq(e){e.preventDefault();PED_dlDrag();PED_handleFiles(e.dataTr
           <label style="font-size:11.5px; color:#8ba8c8;">
             Pedidos de sementes pend.
             <div style="font-size:10px; color:#4a6a8a; margin-bottom:3px;" id="ajp-auto-semPend"></div>
-            <input id="ajp-semPend" type="number" min="0" placeholder="auto" oninput="ajusteRecalcScore()"
+            <input id="ajp-semPend" type="text" inputmode="numeric" placeholder="auto" oninput="ajusteRecalcScore()"
               style="width:100%; padding:7px 10px; background:#0a1a30; border:1px solid #1e3a5f; border-radius:6px; color:#fff; font-size:13px; box-sizing:border-box;">
           </label>
         </div>
